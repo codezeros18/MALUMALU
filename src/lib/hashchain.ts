@@ -6,6 +6,8 @@ import {
   getLastHashEntry,
   putHashEntryRaw,
   putKartu,
+  enqueueSync,
+  getDeviceAgentId,
 } from './db';
 
 const GENESIS_HASH = 'GENESIS';
@@ -50,7 +52,18 @@ export async function appendEntry(payload: unknown): Promise<HashChainEntry> {
   const timestamp = Date.now();
   const dataHash = computeDataHash(payload);
   const hash = computeEntryHash(index, timestamp, dataHash, previousHash);
-  return addHashEntry({ index, timestamp, payload, dataHash, previousHash, hash });
+  const entry = await addHashEntry({
+    index,
+    timestamp,
+    payload,
+    dataHash,
+    previousHash,
+    hash,
+    agentId: getDeviceAgentId(),
+    syncStatus: 'local',
+  });
+  await enqueueSync('hashchain', entry.id, 'create', entry);
+  return entry;
 }
 
 export interface VerifyChainResult {

@@ -3,10 +3,33 @@ import { Link } from 'react-router-dom';
 import MapView from '../components/MapView';
 import PlotForm, { type PlotFormValues } from '../components/PlotForm';
 import { useGeolocation } from '../hooks/useGeolocation';
-import { addPetani, addPlot, listAllPlot } from '../lib/db';
+import { addPetani, addPlot, listAllPlot, listSyncQueue } from '../lib/db';
 import { setItem } from '../lib/storage';
 import { seedDummyData, isDemoPlot } from '../data/dummyData';
+import { useAppContext } from '../context/AppContext';
 import type { Plot } from '../types';
+
+function SyncBadge({ status, attempts }: { status?: Plot['syncStatus']; attempts: number }) {
+  if (attempts > 0) {
+    return (
+      <span className="shrink-0 text-[10px] font-semibold bg-red-100 text-red-800 px-1.5 py-0.5 rounded">
+        Gagal sinkron
+      </span>
+    );
+  }
+  if (status === 'synced') {
+    return (
+      <span className="shrink-0 text-[10px] font-semibold bg-green-100 text-green-800 px-1.5 py-0.5 rounded">
+        Tersinkron
+      </span>
+    );
+  }
+  return (
+    <span className="shrink-0 text-[10px] font-semibold bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded">
+      Tersimpan lokal
+    </span>
+  );
+}
 
 export default function Home() {
   const {
@@ -15,18 +38,27 @@ export default function Home() {
     error: gpsError,
     request: requestGps,
   } = useGeolocation();
+  const { syncVersion, triggerSync } = useAppContext();
 
   const [picked, setPicked] = useState<{ lat: number; lng: number } | null>(null);
   const [accuracyM, setAccuracyM] = useState<number | null>(null);
   const [plots, setPlots] = useState<Plot[]>([]);
+  const [queueAttempts, setQueueAttempts] = useState<Map<string, number>>(new Map());
   const [saving, setSaving] = useState(false);
   const [savedMessage, setSavedMessage] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [seeding, setSeeding] = useState(false);
+  const [syncing, setSyncing] = useState(false);
 
   const refreshPlots = useCallback(async () => {
     try {
       setPlots(await listAllPlot());
+      const queue = await listSyncQueue();
+      const map = new Map<string, number>();
+      for (const item of queue) {
+        if (item.attempts > 0) map.set(item.entityId, item.attempts);
+      }
+      setQueueAttempts(map);
     } catch (err) {
       console.error(err);
     }
@@ -34,7 +66,16 @@ export default function Home() {
 
   useEffect(() => {
     refreshPlots();
-  }, [refreshPlots]);
+  }, [refreshPlots, syncVersion]);
+
+  const handleSyncNow = async () => {
+    setSyncing(true);
+    try {
+      await triggerSync();
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   useEffect(() => {
     if (gpsPosition) {
@@ -106,14 +147,24 @@ export default function Home() {
         <p className="text-sm text-slate-600">
           Tap peta atau pakai GPS untuk menandai lokasi kebun, lalu isi data petani singkat.
         </p>
-        <button
-          type="button"
-          onClick={handleSeedDemo}
-          disabled={seeding}
-          className="mt-2 text-xs px-3 py-1.5 rounded-md border border-brand-400 text-brand-800 disabled:opacity-50"
-        >
-          {seeding ? 'Memuat…' : 'Muat data demo (3 petani contoh Pangalengan)'}
-        </button>
+        <div className="mt-2 flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={handleSeedDemo}
+            disabled={seeding}
+            className="text-xs px-3 py-1.5 rounded-md border border-brand-400 text-brand-800 disabled:opacity-50"
+          >
+            {seeding ? 'Memuat…' : 'Muat data demo (3 petani contoh Pangalengan)'}
+          </button>
+          <button
+            type="button"
+            onClick={handleSyncNow}
+            disabled={syncing}
+            className="text-xs px-3 py-1.5 rounded-md border border-slate-300 text-slate-600 disabled:opacity-50"
+          >
+            {syncing ? 'Menyinkron…' : 'Sinkron sekarang'}
+          </button>
+        </div>
       </div>
 
       <MapView plots={plots} onPickLocation={handlePickLocation} pickedPosition={picked} />
@@ -154,11 +205,14 @@ export default function Home() {
                   {plot.komoditas} @ {plot.lat.toFixed(5)}, {plot.lng.toFixed(5)}
                   {plot.gpsAccuracyM ? ` · akurasi ${Math.round(plot.gpsAccuracyM)}m` : ''}
                 </span>
-                {isDemoPlot(plot.id) && (
-                  <span className="shrink-0 text-[10px] font-semibold bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded">
-                    DATA DEMO
-                  </span>
-                )}
+                <span className="flex items-center gap-1 shrink-0">
+                  {isDemoPlot(plot.id) && (
+                    <span className="text-[10px] font-semibold bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded">
+                      DATA DEMO
+                    </span>
+                  )}
+                  <SyncBadge status={plot.syncStatus} attempts={queueAttempts.get(plot.id) ?? 0} />
+                </span>
               </Link>
             </li>
           ))}

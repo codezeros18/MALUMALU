@@ -3,18 +3,21 @@ import { useParams } from 'react-router-dom';
 import KartuCard from '../components/KartuCard';
 import HashChainViewer from '../components/HashChainViewer';
 import ConsentPanel from '../components/ConsentPanel';
-import { getPlot, getPetani, getKartuByPlot } from '../lib/db';
+import { getPlot, getPetani, getKartuByPlot, listSyncQueue } from '../lib/db';
 import { commitKartu } from '../lib/hashchain';
 import { generateKartu } from '../lib/ruleEngine';
 import { cekDeforestasi } from '../lib/geospatial';
 import { isDemoPlot } from '../data/dummyData';
+import { useAppContext } from '../context/AppContext';
 import type { Plot, Petani, Kartu } from '../types';
 
 export default function PlotDetail() {
   const { id } = useParams();
+  const { syncVersion, triggerSync } = useAppContext();
   const [plot, setPlot] = useState<Plot | null>(null);
   const [petani, setPetani] = useState<Petani | null>(null);
   const [kartu, setKartu] = useState<Kartu | null>(null);
+  const [kartuSyncFailed, setKartuSyncFailed] = useState(false);
   const [punyaSTDB, setPunyaSTDB] = useState(false);
   const [klaimKepemilikan, setKlaimKepemilikan] = useState(true);
   const [creating, setCreating] = useState(false);
@@ -32,6 +35,14 @@ export default function PlotDetail() {
         ]);
         setPetani(pet ?? null);
         setKartu(existingKartu ?? null);
+
+        if (existingKartu) {
+          const queue = await listSyncQueue();
+          const failed = queue.some(
+            (item) => item.entityId === existingKartu.id && item.attempts > 0,
+          );
+          setKartuSyncFailed(failed);
+        }
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Gagal memuat data plot.');
@@ -40,7 +51,7 @@ export default function PlotDetail() {
 
   useEffect(() => {
     load();
-  }, [load]);
+  }, [load, syncVersion]);
 
   const handleBuatKartu = async () => {
     if (!plot || !petani) return;
@@ -111,7 +122,14 @@ export default function PlotDetail() {
         </div>
       )}
 
-      {kartu && <KartuCard kartu={kartu} onKartuUpdated={setKartu} />}
+      {kartu && (
+        <KartuCard
+          kartu={kartu}
+          onKartuUpdated={setKartu}
+          syncFailed={kartuSyncFailed}
+          onRetrySync={triggerSync}
+        />
+      )}
       {kartu && <HashChainViewer refreshSignal={kartu.hashChainRef} />}
       {kartu && <ConsentPanel kartuId={kartu.id} />}
 

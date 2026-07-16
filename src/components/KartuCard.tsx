@@ -5,6 +5,30 @@ import type { Kartu, Tier, StdbStatus } from '../types';
 interface KartuCardProps {
   kartu: Kartu;
   onKartuUpdated?: (kartu: Kartu) => void;
+  syncFailed?: boolean; // true kalau ada item syncQueue untuk kartu ini yang gagal (attempts > 0)
+  onRetrySync?: () => void;
+}
+
+function SyncBadge({ status, failed }: { status?: Kartu['syncStatus']; failed?: boolean }) {
+  if (failed) {
+    return (
+      <span className="text-[10px] font-semibold bg-red-100 text-red-800 px-1.5 py-0.5 rounded">
+        Gagal sinkron
+      </span>
+    );
+  }
+  if (status === 'synced') {
+    return (
+      <span className="text-[10px] font-semibold bg-green-100 text-green-800 px-1.5 py-0.5 rounded">
+        Tersinkron
+      </span>
+    );
+  }
+  return (
+    <span className="text-[10px] font-semibold bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded">
+      Tersimpan lokal
+    </span>
+  );
 }
 
 const TIER_LABEL: Record<Tier, string> = {
@@ -20,7 +44,7 @@ const STDB_LABEL: Record<StdbStatus, string> = {
 const TIER_OPTIONS: Tier[] = ['lokal', 'export-ready'];
 const STDB_OPTIONS: StdbStatus[] = ['stdb-ready', 'belum-lengkap'];
 
-export default function KartuCard({ kartu, onKartuUpdated }: KartuCardProps) {
+export default function KartuCard({ kartu, onKartuUpdated, syncFailed, onRetrySync }: KartuCardProps) {
   const [showOverride, setShowOverride] = useState(false);
   const [overrideTier, setOverrideTier] = useState<Tier>(kartu.tier);
   const [overrideStdb, setOverrideStdb] = useState<StdbStatus>(kartu.stdbStatus);
@@ -73,6 +97,15 @@ export default function KartuCard({ kartu, onKartuUpdated }: KartuCardProps) {
           {TIER_LABEL[kartu.tier]}
         </span>
         <span className="text-xs text-slate-500">{STDB_LABEL[kartu.stdbStatus]}</span>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <SyncBadge status={kartu.syncStatus} failed={syncFailed} />
+        {syncFailed && onRetrySync && (
+          <button type="button" onClick={onRetrySync} className="text-[10px] text-brand-800 underline">
+            Coba lagi
+          </button>
+        )}
       </div>
 
       <p className="text-sm text-slate-600">

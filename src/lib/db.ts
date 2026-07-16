@@ -9,6 +9,28 @@ import type {
   AccessLog,
   NotifItem,
 } from '../types';
+import { getItem, setItem } from './storage';
+
+// ===== SYNC QUEUE (fase full-production, lihat docs/04_FULL_PRODUCTION_BLUEPRINT.md §1) =====
+
+export type SyncEntityType =
+  | 'petani'
+  | 'plot'
+  | 'kartu'
+  | 'hashchain'
+  | 'consent'
+  | 'accessLog'
+  | 'notif';
+
+export interface SyncQueueItem {
+  id: string;
+  entityType: SyncEntityType;
+  entityId: string;
+  operation: 'create' | 'update';
+  payload: unknown;
+  createdAt: number;
+  attempts: number;
+}
 
 interface PasporPetaniDB extends DBSchema {
   petani: {
@@ -44,36 +66,45 @@ interface PasporPetaniDB extends DBSchema {
     key: string;
     value: NotifItem;
   };
+  syncQueue: {
+    key: string;
+    value: SyncQueueItem;
+  };
 }
 
 const DB_NAME = 'paspor-petani';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 let dbPromise: Promise<IDBPDatabase<PasporPetaniDB>> | null = null;
 
 export function getDB(): Promise<IDBPDatabase<PasporPetaniDB>> {
   if (!dbPromise) {
     dbPromise = openDB<PasporPetaniDB>(DB_NAME, DB_VERSION, {
-      upgrade(db) {
-        db.createObjectStore('petani', { keyPath: 'id' });
+      upgrade(db, oldVersion) {
+        if (oldVersion < 1) {
+          db.createObjectStore('petani', { keyPath: 'id' });
 
-        const plotStore = db.createObjectStore('plot', { keyPath: 'id' });
-        plotStore.createIndex('by-petani', 'petaniId');
+          const plotStore = db.createObjectStore('plot', { keyPath: 'id' });
+          plotStore.createIndex('by-petani', 'petaniId');
 
-        const kartuStore = db.createObjectStore('kartu', { keyPath: 'id' });
-        kartuStore.createIndex('by-plot', 'plotId');
-        kartuStore.createIndex('by-petani', 'petaniId');
+          const kartuStore = db.createObjectStore('kartu', { keyPath: 'id' });
+          kartuStore.createIndex('by-plot', 'plotId');
+          kartuStore.createIndex('by-petani', 'petaniId');
 
-        const hashchainStore = db.createObjectStore('hashchain', { keyPath: 'id' });
-        hashchainStore.createIndex('by-index', 'index');
+          const hashchainStore = db.createObjectStore('hashchain', { keyPath: 'id' });
+          hashchainStore.createIndex('by-index', 'index');
 
-        const consentStore = db.createObjectStore('consent', { keyPath: 'id' });
-        consentStore.createIndex('by-kartu', 'kartuId');
+          const consentStore = db.createObjectStore('consent', { keyPath: 'id' });
+          consentStore.createIndex('by-kartu', 'kartuId');
 
-        const accessLogStore = db.createObjectStore('accessLog', { keyPath: 'id' });
-        accessLogStore.createIndex('by-kartu', 'kartuId');
+          const accessLogStore = db.createObjectStore('accessLog', { keyPath: 'id' });
+          accessLogStore.createIndex('by-kartu', 'kartuId');
 
-        db.createObjectStore('notif', { keyPath: 'id' });
+          db.createObjectStore('notif', { keyPath: 'id' });
+        }
+        if (oldVersion < 2) {
+          db.createObjectStore('syncQueue', { keyPath: 'id' });
+        }
       },
     });
   }
@@ -85,13 +116,122 @@ function dbError(op: string, err: unknown): Error {
   return new Error(`Operasi database gagal: ${op}`);
 }
 
+const DEVICE_AGENT_ID_KEY = 'device-agent-id';
+
+// Identitas device/agen sementara (demo-auth) — dipakai sampai Sprint 11 memasang role
+// sungguhan. Konsisten per-browser (persist di localStorage), supaya dashboard Eksportir
+// (Sprint 13) bisa membedakan data antar device walau belum ada login sungguhan.
+export function getDeviceAgentId(): string {
+  let id = getItem<string>(DEVICE_AGENT_ID_KEY);
+  if (!id) {
+    id = nanoid();
+    setItem(DEVICE_AGENT_ID_KEY, id);
+  }
+  return id;
+}
+
+// Tambahkan entri ke syncQueue. Sengaja SOFT-FAIL (tidak melempar error) — kegagalan
+// antre sinkron tidak boleh menggagalkan penyimpanan lokal yang jadi prioritas utama.
+export async function enqueueSync(
+  entityType: SyncEntityType,
+  entityId: string,
+  operation: SyncQueueItem['operation'],
+  payload: unknown,
+): Promise<void> {
+  try {
+    const db = await getDB();
+    const item: SyncQueueItem = {
+      id: nanoid(),
+      entityType,
+      entityId,
+      operation,
+      payload,
+      createdAt: Date.now(),
+      attempts: 0,
+    };
+    await db.put('syncQueue', item);
+  } catch (err) {
+    console.error('[db] enqueueSync failed (non-fatal, data lokal tetap tersimpan)', err);
+  }
+}
+
+export async function listSyncQueue(): Promise<SyncQueueItem[]> {
+  try {
+    const db = await getDB();
+    const all = await db.getAll('syncQueue');
+    // Urutkan by createdAt (BUKAN urutan key/nanoid, yang acak) — penting supaya entity
+    // "induk" (mis. plot) selalu tersinkron sebelum entity "anak" yang mereferensikannya
+    // (mis. kartu), sesuai foreign key constraint di skema Supabase.
+    return all.sort((a, b) => a.createdAt - b.createdAt);
+  } catch (err) {
+    throw dbError('listSyncQueue', err);
+  }
+}
+
+export async function removeSyncQueueItem(id: string): Promise<void> {
+  try {
+    const db = await getDB();
+    await db.delete('syncQueue', id);
+  } catch (err) {
+    throw dbError('removeSyncQueueItem', err);
+  }
+}
+
+export async function incrementSyncAttempt(id: string): Promise<void> {
+  try {
+    const db = await getDB();
+    const item = await db.get('syncQueue', id);
+    if (!item) return;
+    await db.put('syncQueue', { ...item, attempts: item.attempts + 1 });
+  } catch (err) {
+    throw dbError('incrementSyncAttempt', err);
+  }
+}
+
+const SYNC_STORE_BY_ENTITY_TYPE = {
+  petani: 'petani',
+  plot: 'plot',
+  kartu: 'kartu',
+  hashchain: 'hashchain',
+  consent: 'consent',
+  accessLog: 'accessLog',
+  notif: 'notif',
+} as const;
+
+// Tandai entity lokal sebagai 'synced' setelah backend.upsert() sukses (dipanggil dari
+// lib/sync.ts). Soft-fail — kegagalan menandai status tidak boleh menggagalkan proses sync.
+export async function markSynced(
+  entityType: SyncEntityType,
+  entityId: string,
+  remoteId: string,
+): Promise<void> {
+  try {
+    const db = await getDB();
+    const storeName = SYNC_STORE_BY_ENTITY_TYPE[entityType];
+    const record = await db.get(storeName, entityId);
+    if (!record) return; // entity sudah tidak ada secara lokal, abaikan
+    await db.put(storeName, { ...record, syncStatus: 'synced', remoteId, updatedAt: Date.now() });
+  } catch (err) {
+    console.error('[db] markSynced failed (non-fatal)', err);
+  }
+}
+
 // ===== PETANI =====
 
 export async function addPetani(input: Omit<Petani, 'id' | 'createdAt'>): Promise<Petani> {
   try {
     const db = await getDB();
-    const petani: Petani = { ...input, id: nanoid(), createdAt: Date.now() };
+    const now = Date.now();
+    const petani: Petani = {
+      ...input,
+      id: nanoid(),
+      createdAt: now,
+      updatedAt: now,
+      agentId: input.agentId ?? getDeviceAgentId(),
+      syncStatus: 'local',
+    };
     await db.put('petani', petani);
+    await enqueueSync('petani', petani.id, 'create', petani);
     return petani;
   } catch (err) {
     throw dbError('addPetani', err);
@@ -137,8 +277,15 @@ export async function updatePetani(
 export async function addPlot(input: Omit<Plot, 'id'>): Promise<Plot> {
   try {
     const db = await getDB();
-    const plot: Plot = { ...input, id: nanoid() };
+    const plot: Plot = {
+      ...input,
+      id: nanoid(),
+      updatedAt: Date.now(),
+      agentId: input.agentId ?? getDeviceAgentId(),
+      syncStatus: 'local',
+    };
     await db.put('plot', plot);
+    await enqueueSync('plot', plot.id, 'create', plot);
     return plot;
   } catch (err) {
     throw dbError('addPlot', err);
@@ -177,8 +324,17 @@ export async function listAllPlot(): Promise<Plot[]> {
 export async function addKartu(input: Omit<Kartu, 'id' | 'createdAt'>): Promise<Kartu> {
   try {
     const db = await getDB();
-    const kartu: Kartu = { ...input, id: nanoid(), createdAt: Date.now() };
+    const now = Date.now();
+    const kartu: Kartu = {
+      ...input,
+      id: nanoid(),
+      createdAt: now,
+      updatedAt: now,
+      agentId: input.agentId ?? getDeviceAgentId(),
+      syncStatus: 'local',
+    };
     await db.put('kartu', kartu);
+    await enqueueSync('kartu', kartu.id, 'create', kartu);
     return kartu;
   } catch (err) {
     throw dbError('addKartu', err);
@@ -217,8 +373,15 @@ export async function listKartu(): Promise<Kartu[]> {
 export async function putKartu(kartu: Kartu): Promise<Kartu> {
   try {
     const db = await getDB();
-    await db.put('kartu', kartu);
-    return kartu;
+    const final: Kartu = {
+      ...kartu,
+      updatedAt: Date.now(),
+      agentId: kartu.agentId ?? getDeviceAgentId(),
+      syncStatus: 'local', // data baru saja ditulis + di-enqueue -> selalu pending, walau versi sebelumnya sudah 'synced'
+    };
+    await db.put('kartu', final);
+    await enqueueSync('kartu', final.id, 'update', final);
+    return final;
   } catch (err) {
     throw dbError('putKartu', err);
   }
@@ -278,8 +441,14 @@ export async function addConsent(
 ): Promise<ConsentRecord> {
   try {
     const db = await getDB();
-    const consent: ConsentRecord = { ...input, id: nanoid(), grantedAt: Date.now() };
+    const consent: ConsentRecord = {
+      ...input,
+      id: nanoid(),
+      grantedAt: Date.now(),
+      syncStatus: 'local',
+    };
     await db.put('consent', consent);
+    await enqueueSync('consent', consent.id, 'create', consent);
     return consent;
   } catch (err) {
     throw dbError('addConsent', err);
@@ -300,8 +469,9 @@ export async function revokeConsent(id: string): Promise<ConsentRecord> {
     const db = await getDB();
     const existing = await db.get('consent', id);
     if (!existing) throw new Error(`ConsentRecord ${id} tidak ditemukan`);
-    const updated: ConsentRecord = { ...existing, revokedAt: Date.now() };
+    const updated: ConsentRecord = { ...existing, revokedAt: Date.now(), syncStatus: 'local' };
     await db.put('consent', updated);
+    await enqueueSync('consent', updated.id, 'update', updated);
     return updated;
   } catch (err) {
     throw dbError('revokeConsent', err);
@@ -315,8 +485,9 @@ export async function addAccessLog(
 ): Promise<AccessLog> {
   try {
     const db = await getDB();
-    const log: AccessLog = { ...input, id: nanoid(), timestamp: Date.now() };
+    const log: AccessLog = { ...input, id: nanoid(), timestamp: Date.now(), syncStatus: 'local' };
     await db.put('accessLog', log);
+    await enqueueSync('accessLog', log.id, 'create', log);
     return log;
   } catch (err) {
     throw dbError('addAccessLog', err);
@@ -339,8 +510,15 @@ export async function addNotif(
 ): Promise<NotifItem> {
   try {
     const db = await getDB();
-    const notif: NotifItem = { ...input, id: nanoid(), createdAt: Date.now(), read: false };
+    const notif: NotifItem = {
+      ...input,
+      id: nanoid(),
+      createdAt: Date.now(),
+      read: false,
+      syncStatus: 'local',
+    };
     await db.put('notif', notif);
+    await enqueueSync('notif', notif.id, 'create', notif);
     return notif;
   } catch (err) {
     throw dbError('addNotif', err);

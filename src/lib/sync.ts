@@ -1,0 +1,151 @@
+import { nanoid } from 'nanoid';
+import { getSupabaseClient } from './supabaseClient';
+import {
+  listSyncQueue,
+  removeSyncQueueItem,
+  incrementSyncAttempt,
+  markSynced,
+  type SyncEntityType,
+} from './db';
+
+export interface SyncBackend {
+  upsert(entityType: SyncEntityType, payload: unknown): Promise<{ remoteId: string }>;
+  fetchAll(entityType: SyncEntityType): Promise<unknown[]>;
+}
+
+const TABLE_NAME: Record<SyncEntityType, string> = {
+  petani: 'petani',
+  plot: 'plot',
+  kartu: 'kartu',
+  hashchain: 'hashchain',
+  consent: 'consent',
+  accessLog: 'access_log',
+  notif: 'notif',
+};
+
+// Kolom yang benar-benar ada di tabel Supabase masing-masing (lihat
+// docs/04_FULL_PRODUCTION_BLUEPRINT.md §2). Dipakai untuk menyaring payload sebelum
+// upsert — field bookkeeping lokal (syncStatus/remoteId) dan field yang tidak relevan
+// untuk tabel tertentu (mis. updated_at/agent_id di consent/access_log/notif) SENGAJA
+// dibuang di sini supaya tidak menyebabkan error "column does not exist".
+const ALLOWED_COLUMNS: Record<SyncEntityType, string[]> = {
+  petani: [
+    'id',
+    'nama',
+    'nik_hash',
+    'telepon',
+    'desa',
+    'email',
+    'registered_by_agent_id',
+    'created_at',
+    'updated_at',
+    'agent_id',
+  ],
+  plot: [
+    'id',
+    'petani_id',
+    'lat',
+    'lng',
+    'komoditas',
+    'luas_estimasi_ha',
+    'gps_accuracy_m',
+    'captured_at',
+    'updated_at',
+    'agent_id',
+  ],
+  kartu: [
+    'id',
+    'plot_id',
+    'petani_id',
+    'tier',
+    'stdb_status',
+    'alasan',
+    'deforestasi',
+    'hash_chain_ref',
+    'created_at',
+    'updated_at',
+    'agent_id',
+  ],
+  hashchain: ['id', 'index', 'timestamp', 'payload', 'data_hash', 'previous_hash', 'hash', 'agent_id'],
+  consent: ['id', 'kartu_id', 'granted_to', 'scope', 'granted_at', 'revoked_at'],
+  accessLog: ['id', 'kartu_id', 'accessed_by', 'authorized', 'timestamp', 'triggered_notif'],
+  notif: ['id', 'message', 'kartu_id', 'severity', 'created_at', 'read'],
+};
+
+function toSnakeCase(key: string): string {
+  return key.replace(/[A-Z]/g, (m) => `_${m.toLowerCase()}`);
+}
+
+function toSupabaseRow(entityType: SyncEntityType, payload: unknown): Record<string, unknown> {
+  if (typeof payload !== 'object' || payload === null) return {};
+  const obj = payload as Record<string, unknown>;
+  const allowed = new Set(ALLOWED_COLUMNS[entityType]);
+  const row: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(obj)) {
+    const snakeKey = toSnakeCase(key);
+    if (allowed.has(snakeKey) && value !== undefined) {
+      row[snakeKey] = value;
+    }
+  }
+  return row;
+}
+
+export const supabaseBackend: SyncBackend = {
+  async upsert(entityType, payload) {
+    const client = getSupabaseClient();
+    const table = TABLE_NAME[entityType];
+    const row = toSupabaseRow(entityType, payload);
+    const { data, error } = await client.from(table).upsert(row).select('id').single();
+    if (error) {
+      throw new Error(`Gagal sinkron ke Supabase (${table}): ${error.message}`);
+    }
+    return { remoteId: String((data as { id: unknown }).id) };
+  },
+  async fetchAll(entityType) {
+    const client = getSupabaseClient();
+    const table = TABLE_NAME[entityType];
+    const { data, error } = await client.from(table).select('*');
+    if (error) {
+      throw new Error(`Gagal mengambil data dari Supabase (${table}): ${error.message}`);
+    }
+    return data ?? [];
+  },
+};
+
+// Fallback tanpa network — dipakai kalau Supabase belum siap/bermasalah (lihat
+// docs/04_FULL_PRODUCTION_BLUEPRINT.md §"Feasibility check"). Sengaja tidak menyimpan
+// apa pun secara nyata; hanya membuat pushPendingSync() tidak macet menunggu Supabase.
+export const mockLocalBackend: SyncBackend = {
+  async upsert() {
+    return { remoteId: `mock-${nanoid()}` };
+  },
+  async fetchAll() {
+    return [];
+  },
+};
+
+export interface PushResult {
+  success: number;
+  failed: number;
+}
+
+export async function pushPendingSync(backend: SyncBackend): Promise<PushResult> {
+  const queue = await listSyncQueue();
+  let success = 0;
+  let failed = 0;
+
+  for (const item of queue) {
+    try {
+      const { remoteId } = await backend.upsert(item.entityType, item.payload);
+      await markSynced(item.entityType, item.entityId, remoteId);
+      await removeSyncQueueItem(item.id);
+      success++;
+    } catch (err) {
+      console.error('[sync] gagal sinkron item', item.id, item.entityType, err);
+      await incrementSyncAttempt(item.id);
+      failed++;
+    }
+  }
+
+  return { success, failed };
+}
