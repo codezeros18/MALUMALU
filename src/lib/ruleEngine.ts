@@ -1,5 +1,15 @@
 import { nanoid } from 'nanoid';
-import type { Petani, Plot, DeforestasiCheck, DeforestasiStatus, Tier, StdbStatus, Kartu } from '../types';
+import type {
+  Petani,
+  Plot,
+  DeforestasiCheck,
+  DeforestasiStatus,
+  Tier,
+  StdbStatus,
+  Kartu,
+  DocumentType,
+  PetaniDocument,
+} from '../types';
 
 export interface RuleEngineInput {
   nama: string;
@@ -111,4 +121,27 @@ export function generateKartu(params: GenerateKartuParams): Kartu {
     hashChainRef: '',
     createdAt: Date.now(),
   };
+}
+
+// ===== KELENGKAPAN DOKUMEN (fitur "Berkas Lengkap", lihat
+// docs/04_FULL_PRODUCTION_BLUEPRINT.md, bagian "Dokumen Petani Terverifikasi") =====
+// Fungsi PURE terpisah dari tentukanTier/tentukanStdbStatus di atas — TIDAK mengubah
+// logika tier/STDB yang sudah ada, hanya sinyal kelengkapan berkas tambahan yang
+// ditampilkan berdampingan (dipakai panel "Petani Terverifikasi Terdekat" Eksportir).
+
+// Dokumen minimum wajib untuk status "Berkas Lengkap" — dasar legalitas STDB:
+// identitas (KTP), bukti kepemilikan lahan, dan STDB itu sendiri. Dokumen lain
+// (KK, PBB, surat tetangga, foto plot, riwayat panen/transaksi, sertifikat pelatihan)
+// tercatat sebagai nilai tambah, bukan syarat wajib kelengkapan.
+export const REQUIRED_DOCUMENT_TYPES: DocumentType[] = ['ktp', 'bukti-kepemilikan-lahan', 'stdb'];
+
+export interface DocumentCompleteness {
+  complete: boolean;
+  missing: DocumentType[];
+}
+
+export function getDocumentCompleteness(documents: PetaniDocument[]): DocumentCompleteness {
+  const presentTypes = new Set(documents.map((d) => d.type));
+  const missing = REQUIRED_DOCUMENT_TYPES.filter((type) => !presentTypes.has(type));
+  return { complete: missing.length === 0, missing };
 }

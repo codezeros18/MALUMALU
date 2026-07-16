@@ -27,6 +27,7 @@ const TABLE_NAME: Record<SyncEntityType, string> = {
   consent: 'consent',
   accessLog: 'access_log',
   notif: 'notif',
+  petaniDocument: 'petani_document',
 };
 
 // Kolom yang benar-benar ada di tabel Supabase masing-masing (lihat
@@ -76,6 +77,18 @@ const ALLOWED_COLUMNS: Record<SyncEntityType, string[]> = {
   consent: ['id', 'kartu_id', 'granted_to', 'scope', 'granted_at', 'revoked_at'],
   accessLog: ['id', 'kartu_id', 'accessed_by', 'authorized', 'timestamp', 'triggered_notif'],
   notif: ['id', 'message', 'kartu_id', 'severity', 'created_at', 'read'],
+  petaniDocument: [
+    'id',
+    'petani_id',
+    'type',
+    'file_name',
+    'file_hash',
+    'file_size_bytes',
+    'uploaded_at',
+    'verified',
+    'notes',
+    'agent_id',
+  ],
 };
 
 function toSnakeCase(key: string): string {

@@ -101,3 +101,33 @@ export interface NotifItem extends Syncable {
   createdAt: number;
   read: boolean;
 }
+
+// ===== DOKUMEN PETANI (kelengkapan berkas — lihat docs/04_FULL_PRODUCTION_BLUEPRINT.md,
+// bagian "Dokumen Petani Terverifikasi") =====
+// Hanya metadata + hash file yang disimpan/disinkron — file aslinya TIDAK diunggah ke
+// server pada fase ini (keputusan sadar untuk menghindari kompleksitas & sensitivitas
+// penyimpanan dokumen identitas sungguhan seperti KTP/KK).
+
+export type DocumentType =
+  | 'ktp'
+  | 'kk'
+  | 'bukti-kepemilikan-lahan'
+  | 'bukti-pbb'
+  | 'surat-persetujuan-tetangga'
+  | 'stdb'
+  | 'foto-plot'
+  | 'riwayat-panen'
+  | 'riwayat-transaksi'
+  | 'sertifikat-pelatihan';
+
+export interface PetaniDocument extends Syncable {
+  id: string;
+  petaniId: string;
+  type: DocumentType;
+  fileName: string;
+  fileHash: string; // SHA-256 isi file — dicatat ke hash-chain sebagai bukti belum-diubah
+  fileSizeBytes: number;
+  uploadedAt: number;
+  verified: boolean; // dikonfirmasi petugas/koperasi secara manual, bukan otomatis
+  notes?: string;
+}

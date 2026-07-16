@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import KartuCard from '../components/KartuCard';
 import HashChainViewer from '../components/HashChainViewer';
 import ConsentPanel from '../components/ConsentPanel';
+import DocumentUpload from '../components/DocumentUpload';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Checkbox from '../components/ui/Checkbox';
@@ -129,6 +130,7 @@ export default function PlotDetail() {
       )}
       {kartu && <HashChainViewer refreshSignal={kartu.hashChainRef} />}
       {kartu && <ConsentPanel kartuId={kartu.id} />}
+      {petani && <DocumentUpload petaniId={petani.id} />}
 
       {error && <p className="text-xs text-red-600">{error}</p>}
     </div>

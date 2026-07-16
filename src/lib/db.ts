@@ -8,6 +8,7 @@ import type {
   ConsentRecord,
   AccessLog,
   NotifItem,
+  PetaniDocument,
 } from '../types';
 import { getItem, setItem } from './storage';
 
@@ -20,7 +21,8 @@ export type SyncEntityType =
   | 'hashchain'
   | 'consent'
   | 'accessLog'
-  | 'notif';
+  | 'notif'
+  | 'petaniDocument';
 
 export interface SyncQueueItem {
   id: string;
@@ -70,10 +72,15 @@ interface PasporPetaniDB extends DBSchema {
     key: string;
     value: SyncQueueItem;
   };
+  petaniDocument: {
+    key: string;
+    value: PetaniDocument;
+    indexes: { 'by-petani': string };
+  };
 }
 
 const DB_NAME = 'paspor-petani';
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 
 let dbPromise: Promise<IDBPDatabase<PasporPetaniDB>> | null = null;
 
@@ -104,6 +111,10 @@ export function getDB(): Promise<IDBPDatabase<PasporPetaniDB>> {
         }
         if (oldVersion < 2) {
           db.createObjectStore('syncQueue', { keyPath: 'id' });
+        }
+        if (oldVersion < 3) {
+          const documentStore = db.createObjectStore('petaniDocument', { keyPath: 'id' });
+          documentStore.createIndex('by-petani', 'petaniId');
         }
       },
     });
@@ -196,6 +207,7 @@ const SYNC_STORE_BY_ENTITY_TYPE = {
   consent: 'consent',
   accessLog: 'accessLog',
   notif: 'notif',
+  petaniDocument: 'petaniDocument',
 } as const;
 
 // Tandai entity lokal sebagai 'synced' setelah backend.upsert() sukses (dipanggil dari
@@ -578,6 +590,52 @@ export async function markNotifRead(id: string): Promise<NotifItem> {
     return updated;
   } catch (err) {
     throw dbError('markNotifRead', err);
+  }
+}
+
+// ===== DOKUMEN PETANI =====
+
+export async function addDocument(
+  input: Omit<PetaniDocument, 'id' | 'uploadedAt' | 'verified'>,
+): Promise<PetaniDocument> {
+  try {
+    const db = await getDB();
+    const doc: PetaniDocument = {
+      ...input,
+      id: nanoid(),
+      uploadedAt: Date.now(),
+      verified: false,
+      agentId: input.agentId ?? getDeviceAgentId(),
+      syncStatus: 'local',
+    };
+    await db.put('petaniDocument', doc);
+    await enqueueSync('petaniDocument', doc.id, 'create', doc);
+    return doc;
+  } catch (err) {
+    throw dbError('addDocument', err);
+  }
+}
+
+export async function listDocumentsByPetani(petaniId: string): Promise<PetaniDocument[]> {
+  try {
+    const db = await getDB();
+    return await db.getAllFromIndex('petaniDocument', 'by-petani', petaniId);
+  } catch (err) {
+    throw dbError('listDocumentsByPetani', err);
+  }
+}
+
+export async function markDocumentVerified(id: string): Promise<PetaniDocument> {
+  try {
+    const db = await getDB();
+    const existing = await db.get('petaniDocument', id);
+    if (!existing) throw new Error(`PetaniDocument ${id} tidak ditemukan`);
+    const updated: PetaniDocument = { ...existing, verified: true, syncStatus: 'local' };
+    await db.put('petaniDocument', updated);
+    await enqueueSync('petaniDocument', updated.id, 'update', updated);
+    return updated;
+  } catch (err) {
+    throw dbError('markDocumentVerified', err);
   }
 }
 

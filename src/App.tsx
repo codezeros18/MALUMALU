@@ -5,6 +5,7 @@ import PlotDetail from './pages/PlotDetail';
 import Login from './pages/Login';
 import TentangKami from './pages/TentangKami';
 import EksportirDashboard from './pages/EksportirDashboard';
+import PetaniTerdekat from './pages/PetaniTerdekat';
 import PetaniPortal from './pages/PetaniPortal';
 import RequireRole from './components/RequireRole';
 import NotifBanner from './components/NotifBanner';
@@ -68,6 +69,14 @@ function AppShell() {
         element={
           <RequireRole role="eksportir">
             <EksportirDashboard />
+          </RequireRole>
+        }
+      />
+      <Route
+        path="/eksportir/terdekat"
+        element={
+          <RequireRole role="eksportir">
+            <PetaniTerdekat />
           </RequireRole>
         }
       />

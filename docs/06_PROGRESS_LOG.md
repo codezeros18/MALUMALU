@@ -1,12 +1,18 @@
-# 📖 PROGRESS LOG — Paspor Petani v2 (Sprint 0–8, Fase MVP)
+# 📖 PROGRESS LOG — Paspor Petani v2 (Sprint 0–17)
 
-> Dokumentasi naratif dari semua yang sudah dikerjakan sampai akhir fase MVP. Tujuannya:
-> supaya sesi Claude Code manapun (baru, reset, atau dilanjutkan orang lain) bisa paham
-> state repo saat ini **tanpa perlu re-derive dari nol**. Baca ini sebelum mulai
-> `docs/05_FULL_PRODUCTION_PROMPTS.md` Sprint 9.
+> Dokumentasi naratif dari semua yang sudah dikerjakan. Tujuannya: supaya sesi Claude
+> Code manapun (baru, reset, atau dilanjutkan orang lain) bisa paham state repo saat ini
+> **tanpa perlu re-derive dari nol**.
 >
 > Gaya penulisan: apa yang dibangun → keputusan/deviasi penting + alasannya → hasil
 > verifikasi nyata (bukan cuma "tsc bersih") → state akhir.
+>
+> **Bagian Sprint 0–8** di bawah ini adalah log asli akhir fase MVP (sebelum Supabase
+> ada). Sprint 9–15 (full production: sync, 3 role, komponen reusable) dan Sprint 16–17
+> (dokumen verifikasi + panel Eksportir) ditambahkan di bagian bawah — lihat
+> `docs/04_FULL_PRODUCTION_BLUEPRINT.md`/`docs/05_FULL_PRODUCTION_PROMPTS.md` dan
+> `docs/07_DOKUMEN_VERIFIKASI_BLUEPRINT.md`/`docs/08_DOKUMEN_VERIFIKASI_PROMPTS.md`
+> untuk detail teknis lengkap masing-masing fase.
 
 ---
 
@@ -212,7 +218,7 @@ data demo berlabel). `vercel.json` (rewrite SPA fallback ke `index.html`).
 
 ---
 
-## State Akhir Repo (baseline untuk Sprint 9 — full-production)
+## State Akhir Repo — Akhir Fase MVP (baseline untuk Sprint 9)
 
 ### Struktur `src/` saat ini
 ```
@@ -261,3 +267,170 @@ JSON grid custom, bukan GeoTIFF asli), `idb`, `leaflet`, `nanoid`, `react`, `rea
 - Repo git: history sudah ada sebelum kickoff (bukan blank-first-commit), berjalan
   dengan commit-commit manual oleh user sepanjang sesi (`bb4ac25`...dst, pesan generik
   "done") — commit/push/pull selalu dilakukan manual oleh user, bukan oleh AI.
+
+---
+
+## Sprint 9–15 — Full Production (ringkasan)
+
+Fase ini membalik keputusan MVP "DI-CUT TOTAL: backend server" secara sadar (dinyatakan
+terbuka di `docs/04_FULL_PRODUCTION_BLUEPRINT.md` §0) untuk menambah Supabase (Postgres)
+sebagai backend terpusat di atas fondasi offline-first yang sudah ada, tanpa mengganti
+alur inti Agen yang sudah terverifikasi MVP.
+
+**Dibangun** (ringkas — detail teknis penuh + prompt tiap sprint ada di `docs/04` dan
+`docs/05`): Sprint 9 setup Supabase + schema + `lib/supabaseClient.ts` + field sync
+opsional di `types/index.ts`. Sprint 10 sync engine outbox-pattern (`lib/sync.ts`,
+`syncQueue` di `db.ts`, badge status per-record). Sprint 11 demo role-selector auth
+(`AppContext.currentRole`, `RequireRole`, routing `/agen` `/petani` `/eksportir`).
+Sprint 12 sistem komponen reusable (`components/ui/*`: Button, Card, Badge, Input,
+Select, Textarea, Checkbox, EmptyState) + migrasi komponen existing ke primitif ini.
+Sprint 13 `EksportirDashboard.tsx` (baca langsung Supabase, online-only, filter
+tier/STDB/pencarian, drill-in `KartuCard`+`HashChainViewer` read-only). Sprint 14
+`PetaniPortal.tsx` (lookup by email, lihat kartu sendiri, cabut consent sendiri, ekspor
+PDF via `@media print`). Sprint 15 polish + hardening + full regression rehearsal.
+
+**Deviasi/temuan penting**:
+- **Sync-ordering bug** (Sprint 10): `listSyncQueue()` awalnya urut by-key (acak),
+  bukan by-`createdAt` — menyebabkan `kartu` sinkron sebelum `plot` induknya ada di
+  Supabase (FK violation). Fix: sort by `createdAt` ascending.
+- **Hash-chain verification scope** (Sprint 13): sempat mau verifikasi hash-chain
+  ter-filter per-`kartuId` — SALAH secara arsitektur (subset per-kartu tidak akan match
+  GENESIS kalau ada entity lain dibuat lebih dulu di device yang sama). Fix: group &
+  verifikasi per-`agentId`, didokumentasikan sebagai catatan integritas permanen di
+  `docs/04` §1.
+- **Sync retry storm** (pasca-Sprint-15, bug nyata dari user): item sync yang gagal
+  permanen (orphan/rusak) retry setiap ~30 detik selamanya, membanjiri console dengan
+  FK-violation error yang sama. Fix: `MAX_AUTO_RETRY_ATTEMPTS = 5` di `lib/sync.ts`,
+  `markSyncConflict()` di `db.ts` (berhenti + tandai `syncStatus:'conflict'`), tombol
+  manual "Coba lagi" via `requeueForSync()`.
+- **Routing UX** (koreksi user pasca-Sprint-15): `/` awalnya langsung ke Login — user
+  minta Beranda tampil sebagai landing page (`TentangKami.tsx`, company profile
+  bergaya Tera/`brako-web.vercel.app`), Login dipindah ke `/masuk`, tombol "Mulai"
+  dihapus (hanya "Masuk").
+
+**Verifikasi nyata**: setiap sprint diverifikasi Playwright + Chrome headless (bukan
+cuma `tsc`/`build`), termasuk regresi lintas-sprint (mis. Sprint 15 = satu alur offline
+utuh Agen dari MVP + 3 role + sync, dijalankan ulang penuh untuk pastikan nol regresi).
+State akhir setelah Sprint 15: 3 role penuh berfungsi, sync outbox-pattern stabil dengan
+retry-cutoff, komponen UI reusable dipakai konsisten di 3 dashboard.
+
+---
+
+## Sprint 16 — Dokumen Petani Terverifikasi
+
+**Kenapa**: user mengajukan fitur ini lewat sesi Plan Mode eksplisit — meminta dinilai
+dulu apakah melenceng dari tesis proyek sebelum dibangun. Verdict: **tidak melenceng**,
+karena proposal asli sudah menjanjikan "peluang premium harga dari pembeli" untuk tier
+Export-Ready — daftar dokumen EUDR (identitas/legalitas lahan/data teknis kebun/dokumen
+pendukung) yang user riset memetakan langsung ke syarat itu. Detail penuh verdict +
+keputusan desain ada di `docs/07_DOKUMEN_VERIFIKASI_BLUEPRINT.md` §0.
+
+**Dibangun**: `DocumentType`+`PetaniDocument` di `types/index.ts` (10 tipe dokumen,
+field `fileHash` bukan file). Store `petaniDocument` di `db.ts` (`DB_VERSION` 2→3,
+migration guard) + CRUD. `petaniDocument` diwire ke `lib/sync.ts` (map ke tabel
+Supabase `petani_document`, hanya kolom metadata+hash, TANPA kolom file/blob).
+`src/lib/documents.ts` (BARU): `hashFile()` pakai Web Crypto API
+(`crypto.subtle.digest`, bukan `crypto-js` yang sudah dipakai hash-chain — dipilih
+karena lebih cocok untuk file besar), `registerDocument()` reuse penuh
+`appendEntry()` dari `lib/hashchain.ts` Sprint 6 (setiap dokumen = 1 entri hash-chain
+baru, TIDAK ada fungsi hash-chain paralel). `getDocumentCompleteness()` +
+`REQUIRED_DOCUMENT_TYPES` (`ktp`, `bukti-kepemilikan-lahan`, `stdb`) ditambah ke
+`lib/ruleEngine.ts` sebagai fungsi PURE terpisah — `tentukanTier()`/
+`tentukanStdbStatus()` (Sprint 5) **tidak disentuh sama sekali**.
+`src/components/DocumentUpload.tsx` (BARU): 10 tipe dokumen dikelompokkan 4 kategori
+(Identitas/Legalitas Lahan/Data Teknis Kebun/Dokumen Pendukung), badge status per baris
+(Belum ada/Tersimpan lokal/Tersinkron/Terverifikasi), upload native
+`<input type="file" capture="environment">` (offline, zero dependency kamera baru),
+badge ringkasan "Berkas Lengkap"/"Berkas Belum Lengkap" di header. Diwire ke
+`PlotDetail.tsx` di bawah `ConsentPanel`. Tabel Supabase `petani_document` + RLS
+permisif (`demo_allow_all`, pola identik tabel lain sejak Sprint 9) dijalankan manual
+oleh user di SQL Editor.
+
+**Verifikasi nyata (Playwright, build+preview bukan dev)**: `ruleEngine.test-cases.ts`
+di-re-run setelah `getDocumentCompleteness` ditambah — **semua skenario existing tetap
+PASS** (regresi nol ke logika tier/STDB). Offline: buat plot+kartu → unggah KTP+bukti
+kepemilikan lahan+STDB (dummy file) → badge **"Berkas Belum Lengkap" → "Berkas
+Lengkap"** → hash-chain bertambah **tepat 3 entri** → **"Verifikasi Rantai" tetap
+"Rantai utuh"** (regresi hash-chain nol). Online: sinkron → dikonfirmasi LANGSUNG lewat
+Supabase REST API (bukan cuma percaya IndexedDB) — **3 baris muncul, hanya
+metadata+hash, tidak ada kolom file/blob**. Nol console error.
+
+---
+
+## Sprint 17 — Panel "Petani Terverifikasi Terdekat" (Eksportir)
+
+**Kenapa**: pemenuhan langsung janji "Rantai Nilai" proposal asli — Eksportir butuh
+"ketertelusuran rantai pasok otomatis" dan "basis pemasok yang tercatat rapi". Dikerjakan
+SETELAH Sprint 16 terverifikasi penuh (keputusan bertahap, dikonfirmasi user di sesi
+Plan Mode yang sama dengan Sprint 16).
+
+**Dibangun**: `src/components/NearbyMap.tsx` (BARU, terpisah dari `MapView.tsx`) — klik
+titik referensi di peta (pin biru default) + marker hasil petani terdekat (dot hijau
+`L.divIcon`, dibedakan visual dari titik referensi). `src/pages/PetaniTerdekat.tsx`
+(BARU, route `/eksportir/terdekat`): fetch `kartu`/`petani`/`plot`/`petaniDocument`
+langsung dari Supabase (pola identik `EksportirDashboard.tsx`, online-only), hitung
+`getDocumentCompleteness()` per-petani, filter HANYA yang `complete===true`, hitung
+jarak dari titik klik ke plot pakai **`@turf/turf`'s `distance()`** (dependency yang
+sudah terpasang sejak awal proyek tapi baru benar-benar dipakai di sprint ini), urutkan
+ascending, render list (nama, desa, jarak km, badge tier + "Berkas Lengkap") + marker.
+Tombol "Hubungi" memanggil **`attemptAccess()`** dari `lib/consent.ts` (Sprint 7) —
+BUKAN jalur akses baru, akses tetap tercatat `AccessLog` dan tunduk consent yang sudah
+diberikan petani. Nav item baru "Petani Terdekat" di `DashboardShell.tsx` (grup
+Monitoring, ikon `Navigation` dari `lucide-react`).
+
+**Catatan kejujuran arsitektur** (dicatat eksplisit di `docs/07` §2.2, bukan
+disembunyikan): `attemptAccess()`/`isAuthorized()` mengecek consent dari IndexedDB
+LOKAL, bukan Supabase. Di demo ini (satu browser, IndexedDB dipakai bersama lintas
+ganti-role) ini bekerja benar. Untuk deployment sungguhan lintas-device (Eksportir di
+device fisik terpisah dari Agen), pengecekan ini perlu diarahkan ke tabel `consent` di
+Supabase — ini keterbatasan yang sudah melekat pada `lib/consent.ts` sejak Sprint 7,
+bukan bug baru dari fitur ini. Dicatat sebagai stretch goal, bukan blocker.
+
+**Verifikasi nyata (Playwright, satu alur penuh)**: Agen buat petani+plot+kartu → beri
+consent ke "Eksportir" via `ConsentPanel` → unggah 3 dokumen wajib → sinkron manual
+sampai queue kosong → ganti role ke Eksportir → **regresi**: `/eksportir` dashboard
+existing dicek masih memuat baris (15 rows, termasuk data dari sprint-sprint
+sebelumnya) → buka **Petani Terdekat** → klik titik peta → petani yang baru dibuat
+**muncul di daftar** dengan jarak (0.0 km, karena titik referensi & plot sengaja
+diklik di koordinat yang sama untuk uji distance-calc), badge tier "Lokal", badge
+"Berkas Lengkap" → klik **"Hubungi"** → **"Akses diizinkan"** (cocok dengan consent yang
+diberikan sebelumnya, membuktikan wiring `attemptAccess` benar-benar berfungsi, bukan
+cuma dipanggil tanpa efek). Screenshot dicek visual: dua petani hasil sebelumnya (dari
+sprint 16 dan sprint 17) sama-sama tampil dengan badge benar. Nol console error.
+
+---
+
+## State Akhir Repo Saat Ini (setelah Sprint 17)
+
+### Tambahan struktur `src/` sejak baseline MVP di atas
+```
+src/
+├── lib/
+│   ├── sync.ts                   (outbox pattern, SyncBackend, supabaseBackend/mockLocalBackend)
+│   ├── supabaseClient.ts         (singleton client)
+│   ├── documents.ts              (hashFile via Web Crypto, registerDocument)
+│   ├── waha.ts                   (integrasi WhatsApp notif, fail-soft)
+│   └── ruleEngine.ts             (+ getDocumentCompleteness, REQUIRED_DOCUMENT_TYPES — tentukanTier/tentukanStdbStatus tetap sama)
+├── context/AppContext.tsx        (+ currentRole/setRole, syncVersion/triggerSync)
+├── components/
+│   ├── ui/                       (Button, Card, Badge, Input, Select, Textarea, Checkbox, EmptyState)
+│   ├── DashboardShell.tsx        (sidebar layout per-role, nav, ProfileMenu, Ctrl+K search)
+│   ├── DocumentUpload.tsx        (Sprint 16)
+│   ├── NearbyMap.tsx             (Sprint 17)
+│   ├── RequireRole.tsx, Navbar.tsx, Footer.tsx, RoleSelect.tsx
+├── pages/
+│   ├── Login.tsx (route /masuk), TentangKami.tsx (route / dan /tentang)
+│   ├── EksportirDashboard.tsx, PetaniTerdekat.tsx (Sprint 17), PetaniPortal.tsx
+```
+
+### Tabel Supabase (kumulatif sejak Sprint 9)
+`profiles`, `petani`, `plot`, `kartu`, `hashchain`, `consent`, `access_log`, `notif`,
+**`petani_document`** (Sprint 16) — semua RLS aktif + policy `demo_allow_all` permisif
+("PERKETAT SEBELUM PRODUKSI SUNGGUHAN", dicatat sejak Sprint 9).
+
+### Belum dibuat / stretch goal tercatat (jangan diasumsikan ada)
+- Upload file dokumen SUNGGUHAN ke Supabase Storage — hanya hash+metadata yang ada.
+- Verifikasi dokumen otomatis/OCR — `PetaniDocument.verified` murni manual.
+- Consent check lintas-device via Supabase (lihat catatan arsitektur Sprint 17 di atas)
+  — saat ini masih baca IndexedDB lokal.
+- Real Supabase Auth (magic-link) — masih demo role-selector (localStorage).

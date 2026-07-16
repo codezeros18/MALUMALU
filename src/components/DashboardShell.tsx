@@ -9,6 +9,7 @@ import {
   IdCard,
   LogOut,
   MapPin,
+  Navigation,
   Search,
   Users,
 } from 'lucide-react';
@@ -51,7 +52,10 @@ const NAV_BY_ROLE: Record<Role, NavGroup[]> = {
   eksportir: [
     {
       heading: 'Monitoring',
-      items: [{ label: 'Dashboard', to: '/eksportir', icon: BarChart3 }],
+      items: [
+        { label: 'Dashboard', to: '/eksportir', icon: BarChart3 },
+        { label: 'Petani Terdekat', to: '/eksportir/terdekat', icon: Navigation },
+      ],
     },
   ],
 };
