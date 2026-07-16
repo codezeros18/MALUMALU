@@ -5,7 +5,6 @@ import {
   BarChart3,
   ChevronDown,
   ChevronRight,
-  Home,
   IdCard,
   LayoutDashboard,
   LogOut,
@@ -160,7 +159,7 @@ export default function DashboardShell({ currentRole, onGantiRole, children }: D
     <div className="font-dashboard min-h-screen flex flex-col bg-white text-slate-900">
       <div className="h-14 flex border-b border-slate-200 shrink-0">
         <div className="w-60 shrink-0 flex items-center gap-2 px-5 border-r border-slate-200">
-          <Link to="/" className="flex items-center gap-2 min-w-0">
+          <div className="flex items-center gap-2 min-w-0">
             <span className="w-7 h-7 shrink-0 rounded-md bg-brand-800 text-white grid place-items-center text-xs font-bold">
               P
             </span>
@@ -172,7 +171,7 @@ export default function DashboardShell({ currentRole, onGantiRole, children }: D
                 {ROLE_LABEL[currentRole]}
               </span>
             </span>
-          </Link>
+          </div>
         </div>
 
         <div className="flex-1 min-w-0 flex items-center justify-between px-8">
@@ -207,14 +206,6 @@ export default function DashboardShell({ currentRole, onGantiRole, children }: D
           </div>
 
           <nav className="flex-1 px-3 pb-4 space-y-4">
-            <Link
-              to="/"
-              className="flex items-center gap-2.5 px-2.5 py-2 rounded-md text-[13px] text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors"
-            >
-              <Home size={16} />
-              Beranda
-            </Link>
-
             {groups.map((group) => {
               const collapsed = collapsedGroups[group.heading];
               return (
