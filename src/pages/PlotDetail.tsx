@@ -7,7 +7,7 @@ import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Checkbox from '../components/ui/Checkbox';
 import Badge from '../components/ui/Badge';
-import { getPlot, getPetani, getKartuByPlot, listSyncQueue } from '../lib/db';
+import { getPlot, getPetani, getKartuByPlot, listSyncQueue, requeueForSync } from '../lib/db';
 import { commitKartu } from '../lib/hashchain';
 import { generateKartu } from '../lib/ruleEngine';
 import { cekDeforestasi } from '../lib/geospatial';
@@ -42,10 +42,10 @@ export default function PlotDetail() {
 
         if (existingKartu) {
           const queue = await listSyncQueue();
-          const failed = queue.some(
+          const pendingFailure = queue.some(
             (item) => item.entityId === existingKartu.id && item.attempts > 0,
           );
-          setKartuSyncFailed(failed);
+          setKartuSyncFailed(pendingFailure || existingKartu.syncStatus === 'conflict');
         }
       }
     } catch (err) {
@@ -56,6 +56,13 @@ export default function PlotDetail() {
   useEffect(() => {
     load();
   }, [load, syncVersion]);
+
+  const handleRetrySync = async () => {
+    if (kartu) {
+      await requeueForSync('kartu', kartu.id);
+    }
+    await triggerSync();
+  };
 
   const handleBuatKartu = async () => {
     if (!plot || !petani) return;
@@ -117,7 +124,7 @@ export default function PlotDetail() {
           kartu={kartu}
           onKartuUpdated={setKartu}
           syncFailed={kartuSyncFailed}
-          onRetrySync={triggerSync}
+          onRetrySync={handleRetrySync}
         />
       )}
       {kartu && <HashChainViewer refreshSignal={kartu.hashChainRef} />}

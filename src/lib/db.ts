@@ -216,6 +216,39 @@ export async function markSynced(
   }
 }
 
+// Tandai entity lokal sebagai 'conflict' — dipakai lib/sync.ts saat sebuah item sudah
+// gagal sinkron berkali-kali berturut-turut (lihat MAX_AUTO_RETRY_ATTEMPTS) dan
+// dianggap menyerah otomatis, supaya badge UI menunjukkan "Gagal sinkron" secara
+// persisten alih-alih retry tanpa henti setiap interval.
+export async function markSyncConflict(entityType: SyncEntityType, entityId: string): Promise<void> {
+  try {
+    const db = await getDB();
+    const storeName = SYNC_STORE_BY_ENTITY_TYPE[entityType];
+    const record = await db.get(storeName, entityId);
+    if (!record) return;
+    await db.put(storeName, { ...record, syncStatus: 'conflict', updatedAt: Date.now() });
+  } catch (err) {
+    console.error('[db] markSyncConflict failed (non-fatal)', err);
+  }
+}
+
+// Antre ulang entity yang sudah "menyerah" (syncStatus 'conflict') supaya tombol
+// "Coba lagi" di UI benar-benar memicu percobaan baru — item yang sudah give-up
+// dibuang dari syncQueue (lihat markSyncConflict di lib/sync.ts), jadi tanpa ini
+// tombol retry tidak akan melakukan apa pun untuknya.
+export async function requeueForSync(entityType: SyncEntityType, entityId: string): Promise<void> {
+  try {
+    const db = await getDB();
+    const storeName = SYNC_STORE_BY_ENTITY_TYPE[entityType];
+    const record = await db.get(storeName, entityId);
+    if (!record) return;
+    await db.put(storeName, { ...record, syncStatus: 'local' });
+    await enqueueSync(entityType, entityId, 'update', { ...record, syncStatus: 'local' });
+  } catch (err) {
+    console.error('[db] requeueForSync failed (non-fatal)', err);
+  }
+}
+
 // ===== PETANI =====
 
 export async function addPetani(input: Omit<Petani, 'id' | 'createdAt'>): Promise<Petani> {

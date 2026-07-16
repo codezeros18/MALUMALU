@@ -5,8 +5,14 @@ import {
   removeSyncQueueItem,
   incrementSyncAttempt,
   markSynced,
+  markSyncConflict,
   type SyncEntityType,
 } from './db';
+
+// Batas retry otomatis sebelum menyerah. Tanpa ini, item yang gagal permanen (mis.
+// entity induk yang direferensikan tidak pernah berhasil sinkron) akan di-retry setiap
+// interval SELAMANYA dan membanjiri console dengan error yang sama berulang-ulang.
+const MAX_AUTO_RETRY_ATTEMPTS = 5;
 
 export interface SyncBackend {
   upsert(entityType: SyncEntityType, payload: unknown): Promise<{ remoteId: string }>;
@@ -144,12 +150,14 @@ export const mockLocalBackend: SyncBackend = {
 export interface PushResult {
   success: number;
   failed: number;
+  gaveUp: number;
 }
 
 export async function pushPendingSync(backend: SyncBackend): Promise<PushResult> {
   const queue = await listSyncQueue();
   let success = 0;
   let failed = 0;
+  let gaveUp = 0;
 
   for (const item of queue) {
     try {
@@ -158,11 +166,26 @@ export async function pushPendingSync(backend: SyncBackend): Promise<PushResult>
       await removeSyncQueueItem(item.id);
       success++;
     } catch (err) {
-      console.error('[sync] gagal sinkron item', item.id, item.entityType, err);
-      await incrementSyncAttempt(item.id);
-      failed++;
+      if (item.attempts + 1 >= MAX_AUTO_RETRY_ATTEMPTS) {
+        // Menyerah: kemungkinan besar dependency-nya (mis. plot/petani/kartu induk)
+        // tidak akan pernah berhasil sinkron (data orphan/rusak) — daripada retry
+        // selamanya dan membanjiri console, hentikan di sini dan tandai jelas di UI.
+        console.error(
+          `[sync] menyerah setelah ${MAX_AUTO_RETRY_ATTEMPTS} percobaan untuk item`,
+          item.id,
+          item.entityType,
+          err,
+        );
+        await markSyncConflict(item.entityType, item.entityId);
+        await removeSyncQueueItem(item.id);
+        gaveUp++;
+      } else {
+        console.error('[sync] gagal sinkron item', item.id, item.entityType, err);
+        await incrementSyncAttempt(item.id);
+        failed++;
+      }
     }
   }
 
-  return { success, failed };
+  return { success, failed, gaveUp };
 }

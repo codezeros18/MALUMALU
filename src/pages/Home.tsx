@@ -13,7 +13,7 @@ import { useAppContext } from '../context/AppContext';
 import type { Plot } from '../types';
 
 function SyncBadge({ status, attempts }: { status?: Plot['syncStatus']; attempts: number }) {
-  if (attempts > 0) return <Badge tone="alert">Gagal sinkron</Badge>;
+  if (attempts > 0 || status === 'conflict') return <Badge tone="alert">Gagal sinkron</Badge>;
   if (status === 'synced') return <Badge tone="synced">Tersinkron</Badge>;
   return <Badge tone="pending">Tersimpan lokal</Badge>;
 }
