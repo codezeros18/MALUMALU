@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import { grantConsent, revokeConsent, listActiveConsents, attemptAccess } from '../lib/consent';
 import { useAppContext } from '../context/AppContext';
+import Card from './ui/Card';
+import Button from './ui/Button';
+import Input from './ui/Input';
+import Checkbox from './ui/Checkbox';
 import type { ConsentRecord } from '../types';
 
 const PRESET_PARTIES = ['Bank', 'Eksportir', 'Koperasi'];
@@ -88,7 +92,7 @@ export default function ConsentPanel({ kartuId }: ConsentPanelProps) {
   };
 
   return (
-    <div className="bg-white rounded-lg border border-slate-200 p-4 space-y-4">
+    <Card className="space-y-4">
       <h2 className="text-sm font-semibold text-slate-700">Consent & Akses</h2>
 
       <div className="space-y-2">
@@ -112,28 +116,23 @@ export default function ConsentPanel({ kartuId }: ConsentPanelProps) {
             </button>
           ))}
         </div>
-        <input
+        <Input
           value={customParty}
           onChange={(e) => setCustomParty(e.target.value)}
           placeholder="Atau ketik nama pihak lain"
-          className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className="w-full text-sm"
         />
         <div className="flex flex-wrap gap-3">
           {SCOPE_OPTIONS.map((s) => (
             <label key={s} className="flex items-center gap-1 text-xs text-slate-600">
-              <input type="checkbox" checked={scope.includes(s)} onChange={() => toggleScope(s)} />
+              <Checkbox checked={scope.includes(s)} onChange={() => toggleScope(s)} />
               {s}
             </label>
           ))}
         </div>
-        <button
-          type="button"
-          onClick={handleGrant}
-          disabled={busy || scope.length === 0}
-          className="w-full py-2 rounded-md bg-brand-400 text-white text-sm font-medium disabled:opacity-50"
-        >
+        <Button onClick={handleGrant} disabled={busy || scope.length === 0} fullWidth size="md">
           Beri Izin ke {partyName}
-        </button>
+        </Button>
       </div>
 
       <div>
@@ -159,25 +158,20 @@ export default function ConsentPanel({ kartuId }: ConsentPanelProps) {
       <div className="border-t border-slate-100 pt-3 space-y-2">
         <p className="text-xs font-medium text-slate-600">Demo: Simulasikan akses pihak lain</p>
         <div className="flex gap-2">
-          <input
+          <Input
             value={accessWho}
             onChange={(e) => setAccessWho(e.target.value)}
             placeholder="Nama pihak, mis. Orang Asing"
-            className="flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm"
+            className="flex-1 text-sm"
           />
-          <button
-            type="button"
-            onClick={handleAttemptAccess}
-            disabled={busy || !accessWho.trim()}
-            className="px-3 py-2 rounded-md bg-slate-700 text-white text-sm font-medium disabled:opacity-50"
-          >
+          <Button variant="secondary" onClick={handleAttemptAccess} disabled={busy || !accessWho.trim()}>
             Coba akses
-          </button>
+          </Button>
         </div>
         {accessResult && <p className="text-xs text-slate-600">{accessResult}</p>}
       </div>
 
       {error && <p className="text-xs text-red-600">{error}</p>}
-    </div>
+    </Card>
   );
 }

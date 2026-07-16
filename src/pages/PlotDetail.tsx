@@ -3,6 +3,10 @@ import { useParams } from 'react-router-dom';
 import KartuCard from '../components/KartuCard';
 import HashChainViewer from '../components/HashChainViewer';
 import ConsentPanel from '../components/ConsentPanel';
+import Card from '../components/ui/Card';
+import Button from '../components/ui/Button';
+import Checkbox from '../components/ui/Checkbox';
+import Badge from '../components/ui/Badge';
 import { getPlot, getPetani, getKartuByPlot, listSyncQueue } from '../lib/db';
 import { commitKartu } from '../lib/hashchain';
 import { generateKartu } from '../lib/ruleEngine';
@@ -75,11 +79,7 @@ export default function PlotDetail() {
     <div className="p-4 space-y-4 max-w-lg mx-auto">
       <div className="flex items-center gap-2">
         <h1 className="text-xl font-semibold text-brand-800">Detail Plot</h1>
-        {plot && isDemoPlot(plot.id) && (
-          <span className="text-[10px] font-semibold bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded">
-            DATA DEMO
-          </span>
-        )}
+        {plot && isDemoPlot(plot.id) && <Badge tone="demo">DATA DEMO</Badge>}
       </div>
 
       {!plot && <p className="text-sm text-slate-500">Plot tidak ditemukan.</p>}
@@ -94,32 +94,22 @@ export default function PlotDetail() {
       )}
 
       {plot && petani && !kartu && (
-        <div className="bg-white rounded-lg border border-slate-200 p-4 space-y-3">
+        <Card className="space-y-3">
           <label className="flex items-center gap-2 text-sm text-slate-700">
-            <input
-              type="checkbox"
-              checked={punyaSTDB}
-              onChange={(e) => setPunyaSTDB(e.target.checked)}
-            />
+            <Checkbox checked={punyaSTDB} onChange={(e) => setPunyaSTDB(e.target.checked)} />
             Sudah punya STDB
           </label>
           <label className="flex items-center gap-2 text-sm text-slate-700">
-            <input
-              type="checkbox"
+            <Checkbox
               checked={klaimKepemilikan}
               onChange={(e) => setKlaimKepemilikan(e.target.checked)}
             />
             Klaim kepemilikan dikonfirmasi
           </label>
-          <button
-            type="button"
-            onClick={handleBuatKartu}
-            disabled={creating}
-            className="w-full py-2 rounded-md bg-brand-800 text-white font-semibold disabled:opacity-50"
-          >
+          <Button onClick={handleBuatKartu} disabled={creating} fullWidth className="font-semibold">
             {creating ? 'Membuat kartu…' : 'Buat & Commit Kartu'}
-          </button>
-        </div>
+          </Button>
+        </Card>
       )}
 
       {kartu && (

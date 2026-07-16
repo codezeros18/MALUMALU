@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { verifyChain, simulateTamper, restoreEntry, type VerifyChainResult } from '../lib/hashchain';
 import { listHashEntries } from '../lib/db';
+import Card from './ui/Card';
+import Button from './ui/Button';
+import Badge from './ui/Badge';
 import type { HashChainEntry } from '../types';
 
 interface HashChainViewerProps {
@@ -77,7 +80,7 @@ export default function HashChainViewer({ refreshSignal }: HashChainViewerProps)
   };
 
   return (
-    <div className="bg-white rounded-lg border border-slate-200 p-4 space-y-3">
+    <Card className="space-y-3">
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold text-slate-700">Rantai Verifikasi (Hash-Chain)</h2>
         <span className="text-xs text-slate-400">{entries.length} entri</span>
@@ -98,41 +101,27 @@ export default function HashChainViewer({ refreshSignal }: HashChainViewerProps)
       </ul>
 
       <div className="flex flex-wrap gap-2">
-        <button
-          type="button"
-          onClick={handleVerify}
-          disabled={busy}
-          className="px-3 py-2 rounded-md bg-brand-800 text-white text-sm font-medium disabled:opacity-50"
-        >
+        <Button onClick={handleVerify} disabled={busy}>
           Verifikasi Rantai
-        </button>
-        <button
-          type="button"
-          onClick={handleTamper}
-          disabled={busy || entries.length === 0}
-          className="px-3 py-2 rounded-md bg-red-600 text-white text-sm font-medium disabled:opacity-50"
-        >
+        </Button>
+        <Button variant="danger" onClick={handleTamper} disabled={busy || entries.length === 0}>
           Simulasi ubah data (demo)
-        </button>
-        <button
-          type="button"
-          onClick={handleResetDemo}
-          disabled={busy || !tamperedBackup}
-          className="px-3 py-2 rounded-md bg-slate-200 text-slate-700 text-sm font-medium disabled:opacity-50"
-        >
+        </Button>
+        <Button variant="secondary" onClick={handleResetDemo} disabled={busy || !tamperedBackup}>
           Reset demo
-        </button>
+        </Button>
       </div>
 
       {result && (
         <div
-          className={`rounded-md px-3 py-2 text-sm font-medium ${
-            result.valid
-              ? 'bg-green-50 text-green-700 border border-green-300'
-              : 'bg-red-50 text-red-700 border border-red-300'
+          className={`rounded-md px-3 py-2 flex items-center gap-2 border ${
+            result.valid ? 'bg-green-50 border-green-300' : 'bg-red-50 border-red-300'
           }`}
         >
-          {result.valid ? '✔ Rantai utuh' : `✖ Rantai rusak di entri #${result.brokenAtIndex}`}
+          <Badge tone={result.valid ? 'aman' : 'berisiko'}>{result.valid ? 'Valid' : 'Rusak'}</Badge>
+          <span className={`text-sm font-medium ${result.valid ? 'text-green-700' : 'text-red-700'}`}>
+            {result.valid ? 'Rantai utuh' : `Rantai rusak di entri #${result.brokenAtIndex}`}
+          </span>
         </div>
       )}
 
@@ -142,6 +131,6 @@ export default function HashChainViewer({ refreshSignal }: HashChainViewerProps)
         Rantai kriptografis deterministik (SHA-256, append-only) — bukan blockchain, tidak ada
         konsensus terdistribusi.
       </p>
-    </div>
+    </Card>
   );
 }

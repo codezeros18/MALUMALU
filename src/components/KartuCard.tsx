@@ -1,5 +1,10 @@
 import { useState } from 'react';
 import { commitKartu } from '../lib/hashchain';
+import Card from './ui/Card';
+import Button from './ui/Button';
+import Select from './ui/Select';
+import Textarea from './ui/Textarea';
+import Badge from './ui/Badge';
 import type { Kartu, Tier, StdbStatus } from '../types';
 
 interface KartuCardProps {
@@ -9,36 +14,24 @@ interface KartuCardProps {
   onRetrySync?: () => void;
 }
 
-function SyncBadge({ status, failed }: { status?: Kartu['syncStatus']; failed?: boolean }) {
-  if (failed) {
-    return (
-      <span className="text-[10px] font-semibold bg-red-100 text-red-800 px-1.5 py-0.5 rounded">
-        Gagal sinkron
-      </span>
-    );
-  }
-  if (status === 'synced') {
-    return (
-      <span className="text-[10px] font-semibold bg-green-100 text-green-800 px-1.5 py-0.5 rounded">
-        Tersinkron
-      </span>
-    );
-  }
-  return (
-    <span className="text-[10px] font-semibold bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded">
-      Tersimpan lokal
-    </span>
-  );
-}
-
 const TIER_LABEL: Record<Tier, string> = {
   lokal: 'Lokal / Program',
   'export-ready': 'Export-Ready',
 };
 
+const TIER_TONE: Record<Tier, 'aman' | 'neutral'> = {
+  lokal: 'neutral',
+  'export-ready': 'aman',
+};
+
 const STDB_LABEL: Record<StdbStatus, string> = {
   'stdb-ready': 'STDB Ready',
   'belum-lengkap': 'Belum Lengkap',
+};
+
+const STDB_TONE: Record<StdbStatus, 'synced' | 'perlu-audit'> = {
+  'stdb-ready': 'synced',
+  'belum-lengkap': 'perlu-audit',
 };
 
 const TIER_OPTIONS: Tier[] = ['lokal', 'export-ready'];
@@ -85,22 +78,16 @@ export default function KartuCard({ kartu, onKartuUpdated, syncFailed, onRetrySy
   };
 
   return (
-    <div className="bg-white rounded-lg border border-slate-200 p-4 space-y-2">
+    <Card className="space-y-2">
       <div className="flex items-center justify-between">
-        <span
-          className={`text-xs font-semibold px-2 py-1 rounded-full ${
-            kartu.tier === 'export-ready'
-              ? 'bg-brand-100 text-brand-800'
-              : 'bg-slate-100 text-slate-700'
-          }`}
-        >
-          {TIER_LABEL[kartu.tier]}
-        </span>
-        <span className="text-xs text-slate-500">{STDB_LABEL[kartu.stdbStatus]}</span>
+        <Badge tone={TIER_TONE[kartu.tier]}>{TIER_LABEL[kartu.tier]}</Badge>
+        <Badge tone={STDB_TONE[kartu.stdbStatus]}>{STDB_LABEL[kartu.stdbStatus]}</Badge>
       </div>
 
       <div className="flex items-center gap-2">
-        <SyncBadge status={kartu.syncStatus} failed={syncFailed} />
+        <Badge tone={syncFailed ? 'alert' : kartu.syncStatus === 'synced' ? 'synced' : 'pending'}>
+          {syncFailed ? 'Gagal sinkron' : kartu.syncStatus === 'synced' ? 'Tersinkron' : 'Tersimpan lokal'}
+        </Badge>
         {syncFailed && onRetrySync && (
           <button type="button" onClick={onRetrySync} className="text-[10px] text-brand-800 underline">
             Coba lagi
@@ -124,11 +111,7 @@ export default function KartuCard({ kartu, onKartuUpdated, syncFailed, onRetrySy
       </p>
 
       {!showOverride && (
-        <button
-          type="button"
-          onClick={openOverride}
-          className="text-xs text-brand-800 underline"
-        >
+        <button type="button" onClick={openOverride} className="text-xs text-brand-800 underline">
           Koreksi manual
         </button>
       )}
@@ -137,57 +120,52 @@ export default function KartuCard({ kartu, onKartuUpdated, syncFailed, onRetrySy
         <div className="border-t border-slate-100 pt-3 space-y-2">
           <p className="text-xs font-medium text-slate-600">Koreksi manual (keputusan akhir petugas)</p>
           <div className="flex gap-2">
-            <select
+            <Select
               value={overrideTier}
               onChange={(e) => setOverrideTier(e.target.value as Tier)}
-              className="flex-1 rounded-md border border-slate-300 px-2 py-1 text-xs"
+              className="flex-1 text-xs"
             >
               {TIER_OPTIONS.map((t) => (
                 <option key={t} value={t}>
                   {TIER_LABEL[t]}
                 </option>
               ))}
-            </select>
-            <select
+            </Select>
+            <Select
               value={overrideStdb}
               onChange={(e) => setOverrideStdb(e.target.value as StdbStatus)}
-              className="flex-1 rounded-md border border-slate-300 px-2 py-1 text-xs"
+              className="flex-1 text-xs"
             >
               {STDB_OPTIONS.map((s) => (
                 <option key={s} value={s}>
                   {STDB_LABEL[s]}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
-          <textarea
+          <Textarea
             value={alasanKoreksi}
             onChange={(e) => setAlasanKoreksi(e.target.value)}
             placeholder="Alasan koreksi (wajib, untuk jejak audit)"
-            className="w-full rounded-md border border-slate-300 px-2 py-1 text-xs"
+            className="w-full text-xs"
             rows={2}
           />
           {error && <p className="text-xs text-red-600">{error}</p>}
           <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={handleSaveOverride}
-              disabled={saving}
-              className="flex-1 py-2 rounded-md bg-brand-800 text-white text-xs font-medium disabled:opacity-50"
-            >
+            <Button onClick={handleSaveOverride} disabled={saving} fullWidth size="sm" className="flex-1">
               {saving ? 'Menyimpan…' : 'Simpan Koreksi'}
-            </button>
-            <button
-              type="button"
+            </Button>
+            <Button
+              variant="secondary"
               onClick={() => setShowOverride(false)}
               disabled={saving}
-              className="px-3 py-2 rounded-md bg-slate-100 text-slate-600 text-xs font-medium"
+              size="sm"
             >
               Batal
-            </button>
+            </Button>
           </div>
         </div>
       )}
-    </div>
+    </Card>
   );
 }

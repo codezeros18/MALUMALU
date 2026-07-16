@@ -1,4 +1,7 @@
 import { useState, type FormEvent } from 'react';
+import Card from './ui/Card';
+import Button from './ui/Button';
+import Input from './ui/Input';
 
 export interface PlotFormValues {
   nama: string;
@@ -46,10 +49,7 @@ export default function PlotForm({
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="space-y-3 bg-white rounded-lg border border-slate-200 p-4"
-    >
+    <Card as="form" onSubmit={handleSubmit} className="space-y-3">
       <div>
         <p className="text-sm font-medium text-slate-700">Koordinat plot</p>
         {position ? (
@@ -66,64 +66,61 @@ export default function PlotForm({
             3–11m.
           </p>
         )}
-        <button
+        <Button
           type="button"
           onClick={onUseGps}
           disabled={gpsLoading}
-          className="mt-2 w-full py-2 rounded-md bg-brand-400 text-white font-medium disabled:opacity-50"
+          fullWidth
+          className="mt-2"
         >
           {gpsLoading ? 'Mengambil lokasi…' : 'Pakai GPS'}
-        </button>
+        </Button>
         {gpsError && <p className="text-xs text-red-600 mt-1">{gpsError}</p>}
       </div>
 
       <div>
         <label className="block text-sm font-medium text-slate-700">Nama petani *</label>
-        <input
+        <Input
           value={nama}
           onChange={(e) => setNama(e.target.value)}
           required
-          className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-base"
+          className="mt-1 w-full text-base"
           placeholder="Nama lengkap"
         />
       </div>
 
       <div>
         <label className="block text-sm font-medium text-slate-700">Desa</label>
-        <input
+        <Input
           value={desa}
           onChange={(e) => setDesa(e.target.value)}
-          className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-base"
+          className="mt-1 w-full text-base"
           placeholder="Opsional"
         />
       </div>
 
       <div>
         <label className="block text-sm font-medium text-slate-700">Komoditas</label>
-        <input
+        <Input
           value={komoditas}
           onChange={(e) => setKomoditas(e.target.value)}
-          className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-base"
+          className="mt-1 w-full text-base"
         />
       </div>
 
       <div>
         <label className="block text-sm font-medium text-slate-700">Telepon</label>
-        <input
+        <Input
           value={telepon}
           onChange={(e) => setTelepon(e.target.value)}
-          className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-base"
+          className="mt-1 w-full text-base"
           placeholder="Opsional"
         />
       </div>
 
-      <button
-        type="submit"
-        disabled={!canSubmit}
-        className="w-full py-3 rounded-md bg-brand-800 text-white font-semibold text-base disabled:opacity-40"
-      >
+      <Button type="submit" disabled={!canSubmit} fullWidth size="md" className="py-3 text-base font-semibold">
         {submitting ? 'Menyimpan…' : 'Simpan Plot'}
-      </button>
-    </form>
+      </Button>
+    </Card>
   );
 }
