@@ -4,7 +4,15 @@ import {
   revokeConsent as dbRevokeConsent,
   addAccessLog,
   addNotif,
+  getKartu,
+  getPetani,
 } from './db';
+import {
+  isWahaEnabled,
+  sendWhatsAppText,
+  buildUnauthorizedAccessMessage,
+  normalizePhone,
+} from './waha';
 import type { ConsentRecord, NotifItem } from '../types';
 
 export async function grantConsent(
@@ -30,6 +38,29 @@ export async function isAuthorized(kartuId: string, who: string): Promise<boolea
   return active.some((consent) => consent.grantedTo.trim().toLowerCase() === target);
 }
 
+// Kirim notif WA ke petani pemilik kartu (fail-soft). Dipanggil dari attemptAccess.
+async function notifyPetaniViaWaha(kartuId: string, accessedBy: string): Promise<void> {
+  if (!isWahaEnabled()) return;
+
+  try {
+    const kartu = await getKartu(kartuId);
+    if (!kartu) return;
+    const petani = await getPetani(kartu.petaniId);
+    if (!petani) return;
+
+    const phone = normalizePhone(petani.telepon);
+    if (!phone) return;
+
+    const message = buildUnauthorizedAccessMessage(petani.nama, accessedBy);
+    const result = await sendWhatsAppText(phone, message);
+    if (!result.sent) {
+      console.info('[WAHA] notif tidak terkirim:', result.reason, '(app tetap jalan)');
+    }
+  } catch (err) {
+    console.warn('[WAHA] notify gagal (fail-soft)', err);
+  }
+}
+
 export async function attemptAccess(
   kartuId: string,
   who: string,
@@ -49,6 +80,11 @@ export async function attemptAccess(
       severity: 'alert',
       kartuId,
     });
+
+    // Notif WhatsApp ke petani (prototipe, fail-soft) — jalan paralel,
+    // tidak memblokir return notif in-app.
+    void notifyPetaniViaWaha(kartuId, who);
+
     return { authorized: false, notif };
   }
 
