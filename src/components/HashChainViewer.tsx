@@ -4,6 +4,7 @@ import { listHashEntries } from '../lib/db';
 import Card from './ui/Card';
 import Button from './ui/Button';
 import Badge from './ui/Badge';
+import EmptyState from './ui/EmptyState';
 import type { HashChainEntry } from '../types';
 
 interface HashChainViewerProps {
@@ -99,19 +100,24 @@ export default function HashChainViewer({
         <span className="text-xs text-slate-400">{entries.length} entri</span>
       </div>
 
-      <ul className="space-y-1 text-xs font-mono">
-        {entries.map((entry) => (
-          <li
-            key={entry.id}
-            className="flex justify-between gap-2 border border-slate-100 rounded px-2 py-1"
-          >
-            <span>#{entry.index}</span>
-            <span className="text-slate-500">{new Date(entry.timestamp).toLocaleString('id-ID')}</span>
-            <span>{entry.hash.slice(0, 8)}…</span>
-          </li>
-        ))}
-        {entries.length === 0 && <li className="text-slate-400">Belum ada entri.</li>}
-      </ul>
+      {entries.length === 0 ? (
+        <EmptyState message="Belum ada entri." />
+      ) : (
+        <ul className="space-y-1 text-xs font-mono">
+          {entries.map((entry) => (
+            <li
+              key={entry.id}
+              className="flex justify-between gap-2 border border-slate-100 rounded px-2 py-1"
+            >
+              <span>#{entry.index}</span>
+              <span className="text-slate-500">
+                {new Date(entry.timestamp).toLocaleString('id-ID')}
+              </span>
+              <span>{entry.hash.slice(0, 8)}…</span>
+            </li>
+          ))}
+        </ul>
+      )}
 
       <div className="flex flex-wrap gap-2">
         <Button onClick={handleVerify} disabled={busy}>

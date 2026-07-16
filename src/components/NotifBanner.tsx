@@ -38,7 +38,7 @@ export default function NotifBanner() {
   if (notifs.length === 0) return null;
 
   return (
-    <div className="fixed top-0 inset-x-0 z-[2000] flex flex-col gap-2 p-2 pointer-events-none">
+    <div className="no-print fixed top-0 inset-x-0 z-[2000] flex flex-col gap-2 p-2 pointer-events-none">
       {notifs.map((n) => (
         <div
           key={n.id}

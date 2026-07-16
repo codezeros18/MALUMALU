@@ -10,3 +10,11 @@ body {
   margin: 0;
   font-family: 'Segoe UI', system-ui, Roboto, sans-serif;
 }
+
+/* Print stylesheet (Sprint 14 — Petani Portal "Unduh sebagai PDF"): sembunyikan
+   chrome UI (header, nav, banner, tombol), sisakan konten kartu/hash-chain/consent. */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}

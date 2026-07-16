@@ -8,6 +8,7 @@ export interface PlotFormValues {
   desa: string;
   telepon: string;
   komoditas: string;
+  email: string;
 }
 
 interface PlotFormProps {
@@ -35,17 +36,25 @@ export default function PlotForm({
   const [desa, setDesa] = useState('');
   const [telepon, setTelepon] = useState('');
   const [komoditas, setKomoditas] = useState('kopi');
+  const [email, setEmail] = useState('');
 
   const canSubmit = Boolean(position) && nama.trim().length > 0 && !submitting;
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!canSubmit) return;
-    await onSubmit({ nama: nama.trim(), desa: desa.trim(), telepon: telepon.trim(), komoditas });
+    await onSubmit({
+      nama: nama.trim(),
+      desa: desa.trim(),
+      telepon: telepon.trim(),
+      komoditas,
+      email: email.trim(),
+    });
     setNama('');
     setDesa('');
     setTelepon('');
     setKomoditas('kopi');
+    setEmail('');
   };
 
   return (
@@ -115,6 +124,19 @@ export default function PlotForm({
           onChange={(e) => setTelepon(e.target.value)}
           className="mt-1 w-full text-base"
           placeholder="Opsional"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-slate-700">
+          Email petani (opsional, untuk akses portal)
+        </label>
+        <Input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="mt-1 w-full text-base"
+          placeholder="Opsional — dipakai petani untuk lihat data sendiri di Portal Petani"
         />
       </div>
 

@@ -140,7 +140,11 @@ export default function EksportirDashboard() {
     selectedRow?.kartu.agentId ? (hashEntriesByAgent.get(selectedRow.kartu.agentId) ?? []) : [];
 
   if (loading) {
-    return <div className="p-4 text-sm text-slate-500">Memuat data dari Supabase…</div>;
+    return (
+      <div className="p-4 max-w-lg mx-auto">
+        <Card className="text-center text-sm text-slate-500">Memuat data dari Supabase…</Card>
+      </div>
+    );
   }
 
   if (error) {
@@ -244,7 +248,9 @@ export default function EksportirDashboard() {
                         {kartu.stdbStatus === 'stdb-ready' ? 'Ready' : 'Belum Lengkap'}
                       </Badge>
                     </td>
-                    <td className="py-2 pr-2">{kartu.deforestasi}</td>
+                    <td className="py-2 pr-2">
+                      <Badge tone={kartu.deforestasi}>{kartu.deforestasi}</Badge>
+                    </td>
                     <td className="py-2 pr-2">
                       {/* Record ini terbaca dari Supabase, artinya SUDAH tersinkron by
                           definisi — kolom sync_status tidak disimpan server-side (lihat

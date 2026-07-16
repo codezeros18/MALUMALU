@@ -358,13 +358,13 @@ Sprint 12, sambil re-verifikasi tiap komponen masih berfungsi sama seperti sebel
 
 | # | Sprint | Role | Status |
 |---|---|---|---|
-| 9 | Supabase Setup & Schema | 🟦 FS | ⬜ |
-| 10 | Sync Engine (Outbox Pattern) | 🟦 FS | ⬜ |
-| 11 | Demo Auth & Role Routing | 🟦 FS | ⬜ |
-| 12 | Reusable UI Component Library | 🟦 FS (+🟩 assist) | ⬜ |
-| 13 | Eksportir Dashboard | 🟦 FS +🟩 | ⬜ |
-| 14 | Petani Portal + PDF Export | 🟦 FS | ⬜ |
-| 15 | Polish, Hardening, Rehearsal | 🟦 FS +🟩 | ⬜ |
+| 9 | Supabase Setup & Schema | 🟦 FS | ✅ |
+| 10 | Sync Engine (Outbox Pattern) | 🟦 FS | ✅ |
+| 11 | Demo Auth & Role Routing | 🟦 FS | ✅ |
+| 12 | Reusable UI Component Library | 🟦 FS (+🟩 assist) | ✅ |
+| 13 | Eksportir Dashboard | 🟦 FS +🟩 | ✅ |
+| 14 | Petani Portal + PDF Export | 🟦 FS | ✅ |
+| 15 | Polish, Hardening, Rehearsal | 🟦 FS +🟩 | ✅ |
 
 Centang manual di sini (`[ ]` → `[x]`) setelah tiap sprint lolos verifikasi — sama
 seperti kebiasaan `TRACKER.md` di fase MVP. Detail prompt tiap sprint ada di
@@ -374,15 +374,22 @@ seperti kebiasaan `TRACKER.md` di fase MVP. Detail prompt tiap sprint ada di
 
 ## 8. Definition of Done — Full Production
 
-- [ ] Data yang dibuat Agen offline otomatis masuk `syncQueue`, dan tersinkron ke
-      Supabase begitu online (bisa didemokan: matikan wifi → input data → nyalakan
-      wifi → badge berubah jadi "Tersinkron").
-- [ ] Alur inti Agen (tap peta → kartu → hash-chain → consent/notif) tetap 100% jalan
-      offline TANPA Supabase menyala — regresi nol dari MVP.
-- [ ] 3 role bisa login-demo dan masing-masing hanya melihat dashboard sesuai perannya.
-- [ ] Eksportir bisa melihat data dari LEBIH DARI SATU agen/device (bukti nyata bahwa
-      data benar-benar terpusat, bukan cuma device sendiri).
-- [ ] Petani bisa lookup via email, lihat kartunya, cabut consent sendiri, dan unduh PDF.
-- [ ] Komponen UI (Button/Card/Badge/dst) dipakai konsisten di ketiga dashboard.
-- [ ] UI men-disclose keterbatasan Phase A (auth demo, portal petani belum diverifikasi
-      identitas) — bukan diklaim sebagai auth produksi sungguhan.
+- [x] Data yang dibuat Agen offline otomatis masuk `syncQueue`, dan tersinkron ke
+      Supabase begitu online (didemokan nyata: matikan wifi → input data → nyalakan
+      wifi → badge berubah jadi "Tersinkron"). Verifikasi Sprint 10 & 15.
+- [x] Alur inti Agen (tap peta → kartu → hash-chain tamper/reset → consent/notif) tetap
+      100% jalan offline TANPA Supabase menyala — regresi nol dari MVP. Verifikasi
+      penuh Sprint 15 (satu alur offline utuh, browser test nyata).
+- [x] 3 role bisa login-demo dan masing-masing hanya melihat dashboard sesuai perannya
+      (role guard redirect dikonfirmasi). Verifikasi Sprint 11 & 15.
+- [x] Eksportir bisa melihat data dari LEBIH DARI SATU agen/device (dikonfirmasi nyata
+      dengan 2 browser context terpisah = 2 identitas agen berbeda). Verifikasi
+      Sprint 13 & 15.
+- [x] Petani bisa lookup via email, lihat kartunya, cabut consent sendiri, dan unduh PDF
+      (print stylesheet dikonfirmasi via emulateMedia). Verifikasi Sprint 14 & 15.
+- [x] Komponen UI (Button/Card/Badge/dst) dipakai konsisten di ketiga dashboard —
+      audit Sprint 15 menemukan & memperbaiki 1 inkonsistensi (status deforestasi
+      tampil teks polos, bukan Badge, di KartuCard & EksportirDashboard).
+- [x] UI men-disclose keterbatasan Phase A (auth demo, portal petani belum diverifikasi
+      identitas) — bukan diklaim sebagai auth produksi sungguhan. Banner permanen di
+      `/petani` (Sprint 14).

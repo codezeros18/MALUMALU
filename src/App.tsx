@@ -4,6 +4,7 @@ import PetaniList from './pages/PetaniList';
 import PlotDetail from './pages/PlotDetail';
 import Login from './pages/Login';
 import EksportirDashboard from './pages/EksportirDashboard';
+import PetaniPortal from './pages/PetaniPortal';
 import RequireRole from './components/RequireRole';
 import NotifBanner from './components/NotifBanner';
 import OfflineIndicator from './components/OfflineIndicator';
@@ -21,7 +22,7 @@ function AppShell() {
   return (
     <div className="min-h-screen flex flex-col bg-slate-50">
       <NotifBanner />
-      <header className="bg-brand-800 text-white px-6 py-4 shadow">
+      <header className="no-print bg-brand-800 text-white px-6 py-4 shadow">
         <div className="flex items-center justify-between max-w-4xl mx-auto">
           <Link to="/" className="text-lg font-semibold tracking-tight">
             Paspor Petani
@@ -74,9 +75,7 @@ function AppShell() {
             path="/petani"
             element={
               <RequireRole role="petani">
-                <div className="p-4 text-sm text-slate-600">
-                  Portal Petani — segera hadir (Sprint 14).
-                </div>
+                <PetaniPortal />
               </RequireRole>
             }
           />

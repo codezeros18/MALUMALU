@@ -102,8 +102,8 @@ export default function KartuCard({
         )}
       </div>
 
-      <p className="text-sm text-slate-600">
-        Status deforestasi: <strong>{kartu.deforestasi}</strong>
+      <p className="text-sm text-slate-600 flex items-center gap-2">
+        Status deforestasi: <Badge tone={kartu.deforestasi}>{kartu.deforestasi}</Badge>
       </p>
 
       <ul className="text-xs text-slate-500 list-disc list-inside space-y-0.5">

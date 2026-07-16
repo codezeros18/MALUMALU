@@ -4,6 +4,7 @@ import MapView from '../components/MapView';
 import PlotForm, { type PlotFormValues } from '../components/PlotForm';
 import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
+import EmptyState from '../components/ui/EmptyState';
 import { useGeolocation } from '../hooks/useGeolocation';
 import { addPetani, addPlot, listAllPlot, listSyncQueue } from '../lib/db';
 import { setItem } from '../lib/storage';
@@ -85,6 +86,7 @@ export default function Home() {
         nama: values.nama,
         desa: values.desa || undefined,
         telepon: values.telepon || undefined,
+        email: values.email || undefined,
       });
       const plot = await addPlot({
         petaniId: petani.id,
@@ -170,25 +172,29 @@ export default function Home() {
         <h2 className="text-sm font-semibold text-slate-700 mb-2">
           Plot tersimpan ({plots.length})
         </h2>
-        <ul className="space-y-1">
-          {plots.map((plot) => (
-            <li key={plot.id}>
-              <Link
-                to={`/agen/plot/${plot.id}`}
-                className="flex items-center justify-between gap-2 text-xs text-slate-500 border border-slate-200 rounded px-2 py-1 hover:border-brand-400 hover:text-brand-800"
-              >
-                <span>
-                  {plot.komoditas} @ {plot.lat.toFixed(5)}, {plot.lng.toFixed(5)}
-                  {plot.gpsAccuracyM ? ` · akurasi ${Math.round(plot.gpsAccuracyM)}m` : ''}
-                </span>
-                <span className="flex items-center gap-1 shrink-0">
-                  {isDemoPlot(plot.id) && <Badge tone="demo">DATA DEMO</Badge>}
-                  <SyncBadge status={plot.syncStatus} attempts={queueAttempts.get(plot.id) ?? 0} />
-                </span>
-              </Link>
-            </li>
-          ))}
-        </ul>
+        {plots.length === 0 ? (
+          <EmptyState message="Belum ada plot tersimpan — tap peta atau muat data demo untuk mulai." />
+        ) : (
+          <ul className="space-y-1">
+            {plots.map((plot) => (
+              <li key={plot.id}>
+                <Link
+                  to={`/agen/plot/${plot.id}`}
+                  className="flex items-center justify-between gap-2 text-xs text-slate-500 border border-slate-200 rounded px-2 py-1 hover:border-brand-400 hover:text-brand-800"
+                >
+                  <span>
+                    {plot.komoditas} @ {plot.lat.toFixed(5)}, {plot.lng.toFixed(5)}
+                    {plot.gpsAccuracyM ? ` · akurasi ${Math.round(plot.gpsAccuracyM)}m` : ''}
+                  </span>
+                  <span className="flex items-center gap-1 shrink-0">
+                    {isDemoPlot(plot.id) && <Badge tone="demo">DATA DEMO</Badge>}
+                    <SyncBadge status={plot.syncStatus} attempts={queueAttempts.get(plot.id) ?? 0} />
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
       <details className="text-xs text-slate-500 bg-white rounded-lg border border-slate-200 p-3">
