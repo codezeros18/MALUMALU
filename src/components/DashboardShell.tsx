@@ -7,8 +7,8 @@ import {
   ChevronRight,
   Home,
   IdCard,
+  LayoutDashboard,
   LogOut,
-  MapPin,
   Navigation,
   Search,
   Users,
@@ -33,12 +33,20 @@ const ROLE_LABEL: Record<Role, string> = {
   eksportir: 'Eksportir',
 };
 
+// Rute anak yang belum tentu punya item sidebar sendiri (mis. halaman "create"/"detail"
+// yang diakses lewat tombol, bukan link sidebar) — breadcrumb tetap perlu label yang
+// tepat, bukan cuma nama grup sidebar terdekat.
+const EXTRA_CRUMBS: { test: RegExp; label: string }[] = [
+  { test: /^\/agen\/tambah$/, label: 'Tambah Plot' },
+  { test: /^\/agen\/plot\//, label: 'Detail Plot' },
+];
+
 const NAV_BY_ROLE: Record<Role, NavGroup[]> = {
   agen: [
     {
       heading: 'Lapangan',
       items: [
-        { label: 'Peta & Plot', to: '/agen', icon: MapPin },
+        { label: 'Ringkasan', to: '/agen', icon: LayoutDashboard },
         { label: 'Data Petani', to: '/agen/petani', icon: Users },
       ],
     },
@@ -138,9 +146,12 @@ export default function DashboardShell({ currentRole, onGantiRole, children }: D
     return () => document.removeEventListener('keydown', handler);
   }, []);
 
-  const activeLabel =
-    groups.flatMap((g) => g.items).find((item) => item.to === location.pathname)?.label ??
-    ROLE_LABEL[currentRole];
+  const allItems = groups.flatMap((g) => g.items);
+  const matchedItem = allItems
+    .filter((item) => location.pathname === item.to || location.pathname.startsWith(`${item.to}/`))
+    .sort((a, b) => b.to.length - a.to.length)[0];
+  const extraCrumb = EXTRA_CRUMBS.find((c) => c.test.test(location.pathname));
+  const activeLabel = extraCrumb?.label ?? matchedItem?.label ?? ROLE_LABEL[currentRole];
 
   const toggleGroup = (heading: string) =>
     setCollapsedGroups((prev) => ({ ...prev, [heading]: !prev[heading] }));
@@ -219,7 +230,7 @@ export default function DashboardShell({ currentRole, onGantiRole, children }: D
                   {!collapsed && (
                     <div className="space-y-0.5">
                       {group.items.map((item) => {
-                        const active = location.pathname === item.to;
+                        const active = item.to === matchedItem?.to;
                         const Icon = item.icon;
                         return (
                           <Link

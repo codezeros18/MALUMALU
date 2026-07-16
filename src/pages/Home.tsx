@@ -1,13 +1,17 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import MapView from '../components/MapView';
-import PlotForm, { type PlotFormValues } from '../components/PlotForm';
+import {
+  AlertTriangle,
+  ArrowRight,
+  CheckCircle2,
+  FlaskConical,
+  MapPin,
+  Plus,
+} from 'lucide-react';
 import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
 import EmptyState from '../components/ui/EmptyState';
-import { useGeolocation } from '../hooks/useGeolocation';
-import { addPetani, addPlot, listAllPlot, listSyncQueue } from '../lib/db';
-import { setItem } from '../lib/storage';
+import { listAllPlot, listSyncQueue } from '../lib/db';
 import { seedDummyData, isDemoPlot } from '../data/dummyData';
 import { useAppContext } from '../context/AppContext';
 import type { Plot } from '../types';
@@ -18,24 +22,42 @@ function SyncBadge({ status, attempts }: { status?: Plot['syncStatus']; attempts
   return <Badge tone="pending">Tersimpan lokal</Badge>;
 }
 
+interface KpiCardProps {
+  icon: typeof MapPin;
+  label: string;
+  value: number;
+  tone?: 'default' | 'green' | 'red';
+}
+
+const KPI_TONE_CLASSES: Record<NonNullable<KpiCardProps['tone']>, string> = {
+  default: 'bg-slate-100 text-slate-600',
+  green: 'bg-green-50 text-green-700',
+  red: 'bg-red-50 text-red-600',
+};
+
+function KpiCard({ icon: Icon, label, value, tone = 'default' }: KpiCardProps) {
+  return (
+    <div className="bg-white border border-slate-200 rounded-xl p-4 flex items-center gap-3">
+      <span className={`w-10 h-10 shrink-0 rounded-lg grid place-items-center ${KPI_TONE_CLASSES[tone]}`}>
+        <Icon size={18} />
+      </span>
+      <div>
+        <p className="text-xl font-semibold text-slate-900 leading-tight">{value}</p>
+        <p className="text-xs text-slate-500">{label}</p>
+      </div>
+    </div>
+  );
+}
+
 export default function Home() {
-  const {
-    position: gpsPosition,
-    loading: gpsLoading,
-    error: gpsError,
-    request: requestGps,
-  } = useGeolocation();
   const { syncVersion, triggerSync } = useAppContext();
 
-  const [picked, setPicked] = useState<{ lat: number; lng: number } | null>(null);
-  const [accuracyM, setAccuracyM] = useState<number | null>(null);
   const [plots, setPlots] = useState<Plot[]>([]);
   const [queueAttempts, setQueueAttempts] = useState<Map<string, number>>(new Map());
-  const [saving, setSaving] = useState(false);
-  const [savedMessage, setSavedMessage] = useState<string | null>(null);
-  const [saveError, setSaveError] = useState<string | null>(null);
   const [seeding, setSeeding] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+  const [messageIsError, setMessageIsError] = useState(false);
 
   const refreshPlots = useCallback(async () => {
     try {
@@ -64,107 +86,96 @@ export default function Home() {
     }
   };
 
-  useEffect(() => {
-    if (gpsPosition) {
-      setPicked({ lat: gpsPosition.lat, lng: gpsPosition.lng });
-      setAccuracyM(gpsPosition.accuracyM);
-    }
-  }, [gpsPosition]);
-
-  const handlePickLocation = (lat: number, lng: number) => {
-    setPicked({ lat, lng });
-    setAccuracyM(null); // tap manual -> akurasi GPS tidak berlaku
-  };
-
-  const handleSubmit = async (values: PlotFormValues) => {
-    if (!picked) return;
-    setSaving(true);
-    setSaveError(null);
-    setSavedMessage(null);
-    try {
-      const petani = await addPetani({
-        nama: values.nama,
-        desa: values.desa || undefined,
-        telepon: values.telepon || undefined,
-        email: values.email || undefined,
-      });
-      const plot = await addPlot({
-        petaniId: petani.id,
-        lat: picked.lat,
-        lng: picked.lng,
-        komoditas: values.komoditas,
-        gpsAccuracyM: accuracyM ?? undefined,
-        capturedAt: Date.now(),
-      });
-      setItem('active-petani-id', petani.id);
-      setItem('active-plot-id', plot.id);
-      setSavedMessage(`Plot tersimpan untuk ${petani.nama}.`);
-      setPicked(null);
-      setAccuracyM(null);
-      await refreshPlots();
-    } catch (err) {
-      setSaveError(err instanceof Error ? err.message : 'Gagal menyimpan plot.');
-    } finally {
-      setSaving(false);
-    }
-  };
-
   const handleSeedDemo = async () => {
     setSeeding(true);
-    setSaveError(null);
-    setSavedMessage(null);
+    setMessage(null);
     try {
       const result = await seedDummyData();
+      setMessageIsError(false);
       if (result.seeded) {
-        setSavedMessage(`${result.plots.length} data demo dimuat (Pangalengan, komoditas kopi).`);
+        setMessage(`${result.plots.length} data demo dimuat (Pangalengan, komoditas kopi).`);
         await refreshPlots();
       } else {
-        setSavedMessage('DB sudah berisi data — data demo tidak dimuat ulang.');
+        setMessage('DB sudah berisi data — data demo tidak dimuat ulang.');
       }
     } catch (err) {
-      setSaveError(err instanceof Error ? err.message : 'Gagal memuat data demo.');
+      setMessageIsError(true);
+      setMessage(err instanceof Error ? err.message : 'Gagal memuat data demo.');
     } finally {
       setSeeding(false);
     }
   };
 
+  const stats = useMemo(() => {
+    let synced = 0;
+    let failed = 0;
+    let demo = 0;
+    for (const plot of plots) {
+      const attempts = queueAttempts.get(plot.id) ?? 0;
+      if (attempts > 0 || plot.syncStatus === 'conflict') failed += 1;
+      else if (plot.syncStatus === 'synced') synced += 1;
+      if (isDemoPlot(plot.id)) demo += 1;
+    }
+    return { synced, failed, demo };
+  }, [plots, queueAttempts]);
+
   return (
-    <div className="p-4 space-y-4 max-w-lg mx-auto">
+    <div className="space-y-6 max-w-5xl">
       <div>
-        <h1 className="text-xl font-bold text-brand-800">Paspor Petani</h1>
-        <p className="text-sm text-slate-600">
-          Tap peta atau pakai GPS untuk menandai lokasi kebun, lalu isi data petani singkat.
+        <h1 className="text-lg font-semibold text-slate-900">Ringkasan Agen</h1>
+        <p className="text-sm text-slate-500 mt-0.5">
+          Pantau plot yang sudah terdaftar, lalu tandai kebun baru saat turun ke lapangan.
         </p>
-        <div className="mt-2 flex flex-wrap gap-2">
-          <Button variant="secondary" size="sm" onClick={handleSeedDemo} disabled={seeding}>
-            {seeding ? 'Memuat…' : 'Muat data demo (3 petani contoh Pangalengan)'}
-          </Button>
-          <Button variant="secondary" size="sm" onClick={handleSyncNow} disabled={syncing}>
-            {syncing ? 'Menyinkron…' : 'Sinkron sekarang'}
-          </Button>
-        </div>
       </div>
 
-      <MapView plots={plots} onPickLocation={handlePickLocation} pickedPosition={picked} />
+      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <KpiCard icon={MapPin} label="Total Plot" value={plots.length} />
+        <KpiCard icon={CheckCircle2} label="Tersinkron" value={stats.synced} tone="green" />
+        <KpiCard
+          icon={AlertTriangle}
+          label="Perlu Perhatian"
+          value={stats.failed}
+          tone={stats.failed > 0 ? 'red' : 'default'}
+        />
+        <KpiCard icon={FlaskConical} label="Data Demo" value={stats.demo} />
+      </div>
 
-      <PlotForm
-        position={picked}
-        gpsLoading={gpsLoading}
-        gpsError={gpsError}
-        accuracyM={accuracyM}
-        onUseGps={requestGps}
-        onSubmit={handleSubmit}
-        submitting={saving}
-      />
-
-      {savedMessage && (
-        <div className="rounded-md bg-brand-50 border border-brand-400 text-brand-800 px-3 py-2 text-sm">
-          {savedMessage}
+      <Link
+        to="/agen/tambah"
+        className="group flex items-center justify-between gap-4 rounded-xl border-2 border-dashed border-brand-100 bg-brand-50/50 hover:border-brand-400 hover:bg-brand-50 transition-colors px-6 py-5"
+      >
+        <div className="flex items-center gap-4 min-w-0">
+          <span className="w-12 h-12 shrink-0 rounded-full bg-brand-800 text-white grid place-items-center group-hover:scale-105 transition-transform">
+            <Plus size={22} />
+          </span>
+          <div className="min-w-0">
+            <p className="text-base font-semibold text-slate-900">Tandai Plot Baru</p>
+            <p className="text-sm text-slate-500">
+              Tap peta 3D atau pakai GPS untuk mendaftarkan kebun & petani baru.
+            </p>
+          </div>
         </div>
-      )}
-      {saveError && (
-        <div className="rounded-md bg-red-50 border border-red-300 text-red-700 px-3 py-2 text-sm">
-          {saveError}
+        <ArrowRight size={20} className="text-brand-800 shrink-0 group-hover:translate-x-1 transition-transform" />
+      </Link>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <Button variant="secondary" size="sm" onClick={handleSeedDemo} disabled={seeding}>
+          {seeding ? 'Memuat…' : 'Muat data demo (3 petani contoh Pangalengan)'}
+        </Button>
+        <Button variant="secondary" size="sm" onClick={handleSyncNow} disabled={syncing}>
+          {syncing ? 'Menyinkron…' : 'Sinkron sekarang'}
+        </Button>
+      </div>
+
+      {message && (
+        <div
+          className={`rounded-md border px-3 py-2 text-sm ${
+            messageIsError
+              ? 'bg-red-50 border-red-300 text-red-700'
+              : 'bg-brand-50 border-brand-400 text-brand-800'
+          }`}
+        >
+          {message}
         </div>
       )}
 
@@ -173,14 +184,14 @@ export default function Home() {
           Plot tersimpan ({plots.length})
         </h2>
         {plots.length === 0 ? (
-          <EmptyState message="Belum ada plot tersimpan — tap peta atau muat data demo untuk mulai." />
+          <EmptyState message="Belum ada plot tersimpan — tandai plot baru atau muat data demo untuk mulai." />
         ) : (
           <ul className="space-y-1">
             {plots.map((plot) => (
               <li key={plot.id}>
                 <Link
                   to={`/agen/plot/${plot.id}`}
-                  className="flex items-center justify-between gap-2 text-xs text-slate-500 border border-slate-200 rounded px-2 py-1 hover:border-brand-400 hover:text-brand-800"
+                  className="flex items-center justify-between gap-2 text-xs text-slate-500 border border-slate-200 rounded px-2 py-1.5 hover:border-brand-400 hover:text-brand-800 bg-white"
                 >
                   <span>
                     {plot.komoditas} @ {plot.lat.toFixed(5)}, {plot.lng.toFixed(5)}
@@ -196,16 +207,6 @@ export default function Home() {
           </ul>
         )}
       </div>
-
-      <details className="text-xs text-slate-500 bg-white rounded-lg border border-slate-200 p-3">
-        <summary className="font-medium text-slate-600 cursor-pointer">Tentang akurasi</summary>
-        <p className="mt-2 leading-relaxed">
-          Peta risiko: JRC GFC2020, akurasi ~91%, commission error ~18% (kebun kopi bernaung bisa
-          terbaca hutan). Titik lokasi (point-primary) karena GPS di bawah kanopi meleset 3–11 m.
-          Rantai verifikasi = hash-chain (bukan blockchain). Data demo berlabel jelas dan bukan
-          data pemasok nyata.
-        </p>
-      </details>
     </div>
   );
 }

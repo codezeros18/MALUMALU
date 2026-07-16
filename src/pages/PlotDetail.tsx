@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { FileText } from 'lucide-react';
 import KartuCard from '../components/KartuCard';
 import HashChainViewer from '../components/HashChainViewer';
 import ConsentPanel from '../components/ConsentPanel';
@@ -8,6 +9,8 @@ import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Checkbox from '../components/ui/Checkbox';
 import Badge from '../components/ui/Badge';
+import PageHeader from '../components/ui/PageHeader';
+import SectionCard from '../components/ui/SectionCard';
 import { getPlot, getPetani, getKartuByPlot, listSyncQueue, requeueForSync } from '../lib/db';
 import { commitKartu } from '../lib/hashchain';
 import { generateKartu } from '../lib/ruleEngine';
@@ -93,21 +96,26 @@ export default function PlotDetail() {
   if (!id) return null;
 
   return (
-    <div className="p-4 space-y-4 max-w-lg mx-auto">
-      <div className="flex items-center gap-2">
-        <h1 className="text-xl font-semibold text-brand-800">Detail Plot</h1>
-        {plot && isDemoPlot(plot.id) && <Badge tone="demo">DATA DEMO</Badge>}
-      </div>
+    <div className="max-w-3xl space-y-4">
+      <PageHeader
+        backTo="/agen"
+        backLabel="Kembali ke Ringkasan"
+        icon={FileText}
+        title="Detail Plot"
+        description={petani ? `Petani: ${petani.nama}` : undefined}
+        actions={plot && isDemoPlot(plot.id) ? <Badge tone="demo">DATA DEMO</Badge> : undefined}
+      />
 
       {!plot && <p className="text-sm text-slate-500">Plot tidak ditemukan.</p>}
 
       {plot && petani && (
-        <div className="text-sm text-slate-600">
-          <p>Petani: {petani.nama}</p>
-          <p>
+        <SectionCard title="Informasi Plot">
+          <p className="text-sm text-slate-600">
             Koordinat: {plot.lat.toFixed(5)}, {plot.lng.toFixed(5)}
+            {plot.gpsAccuracyM ? ` · akurasi ${Math.round(plot.gpsAccuracyM)}m` : ''}
           </p>
-        </div>
+          <p className="text-sm text-slate-600 mt-1">Komoditas: {plot.komoditas}</p>
+        </SectionCard>
       )}
 
       {/* Dokumen ditampilkan SEBELUM form Buat Kartu — isi bukti dulu (KTP, lahan, STDB),

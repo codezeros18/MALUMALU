@@ -19,6 +19,8 @@ interface PlotFormProps {
   onUseGps: () => void;
   onSubmit: (values: PlotFormValues) => void | Promise<void>;
   submitting: boolean;
+  /** Render tanpa Card pembungkus — dipakai saat parent (mis. SectionCard) sudah menyediakan card-nya sendiri. */
+  bare?: boolean;
 }
 
 const LOW_ACCURACY_THRESHOLD_M = 20;
@@ -31,6 +33,7 @@ export default function PlotForm({
   onUseGps,
   onSubmit,
   submitting,
+  bare = false,
 }: PlotFormProps) {
   const [nama, setNama] = useState('');
   const [desa, setDesa] = useState('');
@@ -57,8 +60,8 @@ export default function PlotForm({
     setEmail('');
   };
 
-  return (
-    <Card as="form" onSubmit={handleSubmit} className="space-y-3">
+  const fields = (
+    <>
       <div>
         <p className="text-sm font-medium text-slate-700">Koordinat plot</p>
         {position ? (
@@ -143,6 +146,20 @@ export default function PlotForm({
       <Button type="submit" disabled={!canSubmit} fullWidth size="md" className="py-3 text-base font-semibold">
         {submitting ? 'Menyimpan…' : 'Simpan Plot'}
       </Button>
+    </>
+  );
+
+  if (bare) {
+    return (
+      <form onSubmit={handleSubmit} className="space-y-3">
+        {fields}
+      </form>
+    );
+  }
+
+  return (
+    <Card as="form" onSubmit={handleSubmit} className="space-y-3">
+      {fields}
     </Card>
   );
 }

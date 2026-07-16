@@ -4,6 +4,7 @@ import Badge from '../components/ui/Badge';
 import Select from '../components/ui/Select';
 import Input from '../components/ui/Input';
 import EmptyState from '../components/ui/EmptyState';
+import Modal from '../components/ui/Modal';
 import KartuCard from '../components/KartuCard';
 import HashChainViewer from '../components/HashChainViewer';
 import type {
@@ -281,12 +282,18 @@ export default function EksportirDashboard() {
         )}
       </div>
 
-      {selectedRow && (
-        <div className="space-y-4">
-          <KartuCard kartu={selectedRow.kartu} readOnly />
-          <HashChainViewer entries={selectedAgentEntries} readOnly />
-        </div>
-      )}
+      <Modal
+        open={Boolean(selectedRow)}
+        onClose={() => setSelectedKartuId(null)}
+        title={selectedRow?.petani?.nama ?? 'Detail Kartu'}
+      >
+        {selectedRow && (
+          <>
+            <KartuCard kartu={selectedRow.kartu} readOnly />
+            <HashChainViewer entries={selectedAgentEntries} readOnly />
+          </>
+        )}
+      </Modal>
     </div>
   );
 }

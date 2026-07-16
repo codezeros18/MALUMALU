@@ -1,28 +1,43 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { ArrowLeft, LogOut } from 'lucide-react';
 import { listPetani, listPlotByPetani, getKartuByPlot } from '../lib/db';
 import { supabaseBackend, fromSupabaseRow } from '../lib/sync';
+import { useAppContext } from '../context/AppContext';
 import KartuCard from '../components/KartuCard';
 import HashChainViewer from '../components/HashChainViewer';
 import ConsentPanel from '../components/ConsentPanel';
-import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import EmptyState from '../components/ui/EmptyState';
 import type { Petani, Kartu } from '../types';
 
 export default function PetaniPortal() {
+  const navigate = useNavigate();
+  const { setRole } = useAppContext();
+
   const [email, setEmail] = useState('');
   const [searching, setSearching] = useState(false);
-  const [searched, setSearched] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [petani, setPetani] = useState<Petani | null>(null);
   const [kartuList, setKartuList] = useState<Kartu[]>([]);
+
+  const handleKeluar = () => {
+    setRole(null);
+    navigate('/masuk');
+  };
+
+  const handleReset = () => {
+    setEmail('');
+    setError(null);
+    setPetani(null);
+    setKartuList([]);
+  };
 
   const handleSearch = async () => {
     const query = email.trim().toLowerCase();
     if (!query) return;
     setSearching(true);
-    setSearched(true);
     setError(null);
     setPetani(null);
     setKartuList([]);
@@ -65,44 +80,34 @@ export default function PetaniPortal() {
     }
   };
 
-  return (
-    <div className="p-4 space-y-4 max-w-lg mx-auto">
-      <div className="no-print rounded-md bg-amber-50 border border-amber-300 text-amber-800 px-3 py-2 text-xs">
-        Mode demo — akses berdasarkan email tanpa verifikasi identitas sungguhan. Bukan
-        portal produksi aman.
-      </div>
-
-      <div className="no-print">
-        <h1 className="text-xl font-bold text-brand-800">Portal Petani</h1>
-        <p className="text-sm text-slate-600">
-          Masukkan email yang terdaftar (oleh Agen saat registrasi) untuk melihat paspor
-          data Anda.
-        </p>
-      </div>
-
-      <Card className="no-print space-y-2">
-        <div className="flex gap-2">
-          <Input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="email@contoh.com"
-            className="flex-1 text-sm"
-          />
-          <Button onClick={handleSearch} disabled={searching || !email.trim()}>
-            {searching ? 'Mencari…' : 'Cari data saya'}
-          </Button>
+  if (petani) {
+    return (
+      <div className="min-h-screen bg-slate-50">
+        <div className="no-print max-w-lg mx-auto px-4 pt-6 pb-2 flex items-center justify-between">
+          <button
+            type="button"
+            onClick={handleReset}
+            className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 transition-colors"
+          >
+            <ArrowLeft size={15} />
+            Cari data lain
+          </button>
+          <button
+            type="button"
+            onClick={handleKeluar}
+            className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-700 transition-colors"
+          >
+            <LogOut size={13} />
+            Keluar
+          </button>
         </div>
-        {error && <p className="text-xs text-red-600">{error}</p>}
-      </Card>
 
-      {searched && !error && petani && (
-        <div className="space-y-4">
-          <Card>
+        <div className="max-w-lg mx-auto px-4 pb-8 space-y-4">
+          <div className="bg-white rounded-lg border border-slate-200 p-4">
             <p className="text-sm text-slate-600">Petani</p>
             <p className="text-lg font-semibold text-brand-800">{petani.nama}</p>
             {petani.desa && <p className="text-xs text-slate-500">{petani.desa}</p>}
-          </Card>
+          </div>
 
           <div className="no-print flex justify-end">
             <Button variant="secondary" size="sm" onClick={() => window.print()}>
@@ -122,7 +127,66 @@ export default function PetaniPortal() {
             ))
           )}
         </div>
-      )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative min-h-screen flex flex-col bg-white">
+      <button
+        type="button"
+        onClick={handleKeluar}
+        className="absolute top-5 right-6 inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-700 transition-colors"
+      >
+        <LogOut size={13} />
+        Keluar
+      </button>
+
+      <div className="flex-1 flex items-center justify-center px-6 py-16">
+        <div className="w-full max-w-md text-center">
+          <h1 className="text-4xl sm:text-5xl font-extrabold text-slate-900 tracking-tight">
+            Paspor Data Anda
+          </h1>
+          <p className="text-slate-500 mt-3 mb-10">
+            Masukkan email yang terdaftar oleh Agen saat registrasi — data kebun dan riwayat
+            akses Anda akan tampil, sepenuhnya milik Anda.
+          </p>
+
+          <div className="space-y-3 text-left">
+            <div>
+              <label htmlFor="email" className="block text-xs font-semibold text-slate-500 mb-1.5">
+                Email terdaftar
+              </label>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                placeholder="email@contoh.com"
+                className="w-full bg-slate-50 px-4 py-3 text-sm"
+              />
+            </div>
+
+            <button
+              type="button"
+              onClick={handleSearch}
+              disabled={searching || !email.trim()}
+              className="w-full flex items-center justify-between gap-2 px-5 py-3.5 rounded-lg text-sm font-bold text-white bg-gradient-to-r from-brand-400 to-brand-800 hover:opacity-90 disabled:opacity-50 transition-opacity"
+            >
+              {searching ? 'Mencari…' : 'Cari Data Saya'}
+              <span
+                aria-hidden
+                className="w-7 h-7 rounded-full bg-white/20 grid place-items-center shrink-0"
+              >
+                →
+              </span>
+            </button>
+
+            {error && <p className="text-xs text-red-600 text-center">{error}</p>}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
