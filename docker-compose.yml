@@ -1,0 +1,33 @@
+# WAHA (WhatsApp HTTP API) — self-host, prototipe notifikasi Paspor Petani.
+#
+# PENTING (jujur, buat pitch/juri):
+# - WAHA nyambung lewat protokol WhatsApp Web (bukan WhatsApp Business API resmi).
+#   Risiko ban kalau dipakai scale-up. Produksi = ganti ke WA Business API resmi.
+# - Butuh 1 nomor WA khusus + scan QR saat pertama jalan.
+# - Kirim WA = butuh internet. Core app tetap offline; notif ke petani lewat WA butuh sinyal.
+#
+# Cara jalanin (macOS, dev):
+#   docker compose up -d
+#   # buka http://localhost:3000 untuk cek status / scan QR via endpoint session
+#   # atau pakai CLI: curl http://localhost:3000/api/sessions
+# Lihat src/lib/waha.ts untuk cara trigger kirim pesan.
+
+services:
+  waha:
+    image: devlikeapro/waha:noweb
+    platform: linux/amd64
+    container_name: paspor-petani-waha
+    ports:
+      - "3000:3000"
+    environment:
+      # Engine NOWEB lebih ringan & stabil di macOS (tanpa headless Chrome / browser disconnect).
+      WHATSAPP_API_PORT: "3000"
+      WAHA_SESSION: "default"
+      WAHA_API_KEY: "${WAHA_API_KEY:-paspor-petani-demo}"
+    volumes:
+      # Tanpa ini, sesi WA hilang tiap container restart -> scan QR ulang terus.
+      - waha-data:/app/.sessions
+    restart: unless-stopped
+
+volumes:
+  waha-data:
