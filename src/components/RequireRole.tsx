@@ -10,7 +10,7 @@ interface RequireRoleProps {
 export default function RequireRole({ role, children }: RequireRoleProps) {
   const { currentRole } = useAppContext();
   if (currentRole !== role) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/masuk" replace />;
   }
   return <>{children}</>;
 }

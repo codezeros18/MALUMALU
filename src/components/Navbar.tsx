@@ -34,19 +34,12 @@ export default function Navbar() {
         </nav>
 
         <div className="flex items-center gap-3 shrink-0">
-          <button
-            type="button"
-            className="hidden sm:inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold text-white bg-brand-800 hover:bg-brand-800/90 transition-colors"
+          <Link
+            to="/masuk"
+            className="inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold text-white bg-brand-800 hover:bg-brand-800/90 transition-colors"
           >
             Masuk
-          </button>
-          <button
-            type="button"
-            className="inline-flex items-center gap-1 px-4 py-2 rounded-full text-sm font-semibold text-white bg-gradient-to-r from-brand-400 to-brand-800 hover:opacity-90 transition-opacity"
-          >
-            Mulai
-            <span aria-hidden>↗</span>
-          </button>
+          </Link>
         </div>
       </div>
     </header>

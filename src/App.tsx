@@ -18,14 +18,14 @@ function AppShell() {
 
   const handleGantiRole = () => {
     setRole(null);
-    navigate('/');
+    navigate('/masuk');
   };
 
-  if (location.pathname === '/') {
+  if (location.pathname === '/masuk') {
     return <Login />;
   }
 
-  if (location.pathname === '/tentang') {
+  if (location.pathname === '/' || location.pathname === '/tentang') {
     return <TentangKami />;
   }
 

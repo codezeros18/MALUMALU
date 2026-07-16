@@ -132,7 +132,7 @@ export default function TentangKami() {
 
             <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link
-                to="/"
+                to="/masuk"
                 className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full text-sm font-bold text-white bg-gradient-to-r from-brand-400 to-brand-800 hover:opacity-90 transition-opacity"
               >
                 Coba Demo
@@ -365,7 +365,7 @@ export default function TentangKami() {
             </h2>
             <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link
-                to="/"
+                to="/masuk"
                 className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full text-sm font-bold text-white bg-gradient-to-r from-brand-400 to-brand-800 hover:opacity-90 transition-opacity"
               >
                 Mulai Demo Sekarang
