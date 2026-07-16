@@ -1,7 +1,8 @@
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { FlatList, StyleSheet, Text, View } from 'react-native';
+import { Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { KartuCard } from '../../components/KartuCard';
+import { overrideKartu } from '../../lib/consent';
 import { getKartus, getPetani, getPlots } from '../../lib/db';
 import { colors, fonts, spacing } from '../../theme/tokens';
 import type { Kartu, Petani, Plot } from '../../types';
@@ -27,6 +28,19 @@ export default function KartuScreen() {
 
   useFocusEffect(load);
 
+  const onOverride = async (kartu: Kartu) => {
+    try {
+      const after = await overrideKartu(kartu);
+      load();
+      Alert.alert(
+        'Override tercatat',
+        `Tier sekarang ${after.tier === 'export_ready' ? 'EXPORT-READY' : 'LOKAL'}. Entri baru ditambahkan ke rantai.`,
+      );
+    } catch (e) {
+      Alert.alert('Gagal', e instanceof Error ? e.message : 'Terjadi kesalahan.');
+    }
+  };
+
   return (
     <View style={styles.container}>
       <FlatList
@@ -38,6 +52,14 @@ export default function KartuScreen() {
             kartu={item}
             petani={petani.find(p => p.id === item.petaniId)}
             plot={plots.find(p => p.id === item.plotId)}
+            footer={
+              <Pressable
+                style={({ pressed }) => [styles.overrideBtn, pressed && { opacity: 0.7 }]}
+                onPress={() => onOverride(item)}
+              >
+                <Text style={styles.overrideBtnText}>Override Manual (petugas)</Text>
+              </Pressable>
+            }
           />
         )}
         ListEmptyComponent={
@@ -61,4 +83,14 @@ const styles = StyleSheet.create({
     marginTop: spacing.xl * 2,
     lineHeight: 22,
   },
+  overrideBtn: {
+    borderWidth: 1,
+    borderColor: colors.warn,
+    borderRadius: 10,
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: spacing.sm,
+  },
+  overrideBtnText: { fontFamily: fonts.uiBold, fontSize: 13, color: colors.warn },
 });

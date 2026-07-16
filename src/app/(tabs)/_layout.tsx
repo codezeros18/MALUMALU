@@ -1,10 +1,14 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Tabs } from 'expo-router';
+import { View } from 'react-native';
+import { NotifBanner } from '../../components/NotifBanner';
 import { colors, fonts } from '../../theme/tokens';
 
 export default function TabLayout() {
   return (
-    <Tabs
+    <View style={{ flex: 1 }}>
+      <NotifBanner />
+      <Tabs
       screenOptions={{
         headerShown: true,
         headerTitle: 'Paspor Petani',
@@ -46,6 +50,7 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <Ionicons size={24} name="shield-checkmark" color={color} />,
         }}
       />
-    </Tabs>
+      </Tabs>
+    </View>
   );
 }
