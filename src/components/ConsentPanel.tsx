@@ -21,8 +21,10 @@ interface ConsentPanelProps {
 export default function ConsentPanel({ kartuId, mode = 'agen' }: ConsentPanelProps) {
   const { refreshNotif } = useAppContext();
   const [consents, setConsents] = useState<ConsentRecord[]>([]);
-  const [selectedParty, setSelectedParty] = useState(PRESET_PARTIES[0]);
-  const [customParty, setCustomParty] = useState('');
+  // Satu sumber kebenaran untuk nama pihak — preset cuma isi cepat ke field yang sama,
+  // BUKAN state terpisah yang bisa saling menimpa diam-diam (dulu: mengetik di kotak
+  // custom diam-diam mengalahkan preset yang masih terlihat ter-highlight, membingungkan).
+  const [partyName, setPartyName] = useState(PRESET_PARTIES[0]);
   const [scope, setScope] = useState<string[]>(['lokasi', 'status']);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -42,8 +44,6 @@ export default function ConsentPanel({ kartuId, mode = 'agen' }: ConsentPanelPro
     refresh();
   }, [refresh]);
 
-  const partyName = customParty.trim() || selectedParty;
-
   const toggleScope = (s: string) => {
     setScope((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]));
   };
@@ -52,8 +52,8 @@ export default function ConsentPanel({ kartuId, mode = 'agen' }: ConsentPanelPro
     setBusy(true);
     setError(null);
     try {
-      await grantConsent(kartuId, partyName, scope);
-      setCustomParty('');
+      await grantConsent(kartuId, partyName.trim(), scope);
+      setPartyName(PRESET_PARTIES[0]);
       await refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Gagal memberi izin.');
@@ -107,12 +107,9 @@ export default function ConsentPanel({ kartuId, mode = 'agen' }: ConsentPanelPro
               <button
                 key={p}
                 type="button"
-                onClick={() => {
-                  setSelectedParty(p);
-                  setCustomParty('');
-                }}
+                onClick={() => setPartyName(p)}
                 className={`text-xs px-2 py-1 rounded-full border ${
-                  selectedParty === p && !customParty
+                  partyName === p
                     ? 'bg-brand-800 text-white border-brand-800'
                     : 'border-slate-300 text-slate-600'
                 }`}
@@ -122,8 +119,8 @@ export default function ConsentPanel({ kartuId, mode = 'agen' }: ConsentPanelPro
             ))}
           </div>
           <Input
-            value={customParty}
-            onChange={(e) => setCustomParty(e.target.value)}
+            value={partyName}
+            onChange={(e) => setPartyName(e.target.value)}
             placeholder="Atau ketik nama pihak lain"
             className="w-full text-sm"
           />
@@ -135,8 +132,13 @@ export default function ConsentPanel({ kartuId, mode = 'agen' }: ConsentPanelPro
               </label>
             ))}
           </div>
-          <Button onClick={handleGrant} disabled={busy || scope.length === 0} fullWidth size="md">
-            Beri Izin ke {partyName}
+          <Button
+            onClick={handleGrant}
+            disabled={busy || scope.length === 0 || !partyName.trim()}
+            fullWidth
+            size="md"
+          >
+            Beri Izin ke {partyName.trim() || '…'}
           </Button>
         </div>
       )}

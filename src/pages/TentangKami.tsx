@@ -75,7 +75,7 @@ const VALUE_CHAIN = [
 
 const TECH_STACK = [
   { label: 'React + Vite + TypeScript', desc: 'Aplikasi web cepat, PWA installable' },
-  { label: 'Leaflet + Turf.js', desc: 'Peta & operasi geospasial point-in-raster' },
+  { label: 'MapLibre GL + Turf.js', desc: 'Peta 3D bertekstur medan & operasi geospasial point-in-raster' },
   { label: 'IndexedDB', desc: 'Penyimpanan lokal — inti aplikasi jalan tanpa internet' },
   { label: 'crypto-js (SHA-256)', desc: 'Rantai verifikasi tamper-evident, bukan blockchain' },
   { label: 'Supabase', desc: 'Sinkronisasi terpusat lintas-agen saat online' },

@@ -14,7 +14,7 @@ import { generateKartu } from '../lib/ruleEngine';
 import { cekDeforestasi } from '../lib/geospatial';
 import { isDemoPlot } from '../data/dummyData';
 import { useAppContext } from '../context/AppContext';
-import type { Plot, Petani, Kartu } from '../types';
+import type { Plot, Petani, Kartu, PetaniDocument } from '../types';
 
 export default function PlotDetail() {
   const { id } = useParams();
@@ -24,6 +24,7 @@ export default function PlotDetail() {
   const [kartu, setKartu] = useState<Kartu | null>(null);
   const [kartuSyncFailed, setKartuSyncFailed] = useState(false);
   const [punyaSTDB, setPunyaSTDB] = useState(false);
+  const [stdbDocUploaded, setStdbDocUploaded] = useState(false);
   const [klaimKepemilikan, setKlaimKepemilikan] = useState(true);
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -57,6 +58,14 @@ export default function PlotDetail() {
   useEffect(() => {
     load();
   }, [load, syncVersion]);
+
+  // "Sudah punya STDB" harus mengikuti bukti nyata (dokumen STDB terunggah), bukan
+  // klaim manual tanpa bukti — begitu dokumen ada, centang otomatis benar & terkunci.
+  const handleDocumentsChange = useCallback((documents: PetaniDocument[]) => {
+    const hasStdbDoc = documents.some((d) => d.type === 'stdb');
+    setStdbDocUploaded(hasStdbDoc);
+    if (hasStdbDoc) setPunyaSTDB(true);
+  }, []);
 
   const handleRetrySync = async () => {
     if (kartu) {
@@ -101,12 +110,30 @@ export default function PlotDetail() {
         </div>
       )}
 
+      {/* Dokumen ditampilkan SEBELUM form Buat Kartu — isi bukti dulu (KTP, lahan, STDB),
+          baru tier/STDB kartu dihitung, supaya "Sudah punya STDB" bisa mengacu ke bukti
+          nyata alih-alih klaim kosong. */}
+      {petani && <DocumentUpload petaniId={petani.id} onDocumentsChange={handleDocumentsChange} />}
+
       {plot && petani && !kartu && (
         <Card className="space-y-3">
-          <label className="flex items-center gap-2 text-sm text-slate-700">
-            <Checkbox checked={punyaSTDB} onChange={(e) => setPunyaSTDB(e.target.checked)} />
-            Sudah punya STDB
-          </label>
+          <div>
+            <label
+              className={`flex items-center gap-2 text-sm ${stdbDocUploaded ? 'text-slate-400' : 'text-slate-700'}`}
+            >
+              <Checkbox
+                checked={punyaSTDB}
+                disabled={stdbDocUploaded}
+                onChange={(e) => setPunyaSTDB(e.target.checked)}
+              />
+              Sudah punya STDB
+            </label>
+            <p className="text-xs text-slate-400 mt-0.5 ml-6">
+              {stdbDocUploaded
+                ? 'Terverifikasi otomatis — dokumen STDB sudah diunggah di atas.'
+                : 'Belum ada dokumen STDB terunggah — ini masih klaim manual tanpa bukti. Sebaiknya unggah dokumen STDB di atas dulu.'}
+            </p>
+          </div>
           <label className="flex items-center gap-2 text-sm text-slate-700">
             <Checkbox
               checked={klaimKepemilikan}
@@ -130,7 +157,6 @@ export default function PlotDetail() {
       )}
       {kartu && <HashChainViewer refreshSignal={kartu.hashChainRef} />}
       {kartu && <ConsentPanel kartuId={kartu.id} />}
-      {petani && <DocumentUpload petaniId={petani.id} />}
 
       {error && <p className="text-xs text-red-600">{error}</p>}
     </div>

@@ -117,6 +117,32 @@ export function getDB(): Promise<IDBPDatabase<PasporPetaniDB>> {
           documentStore.createIndex('by-petani', 'petaniId');
         }
       },
+      // Tab lain (mis. sesi lama sebelum penambahan store petaniDocument di sprint ini)
+      // masih memegang koneksi versi lama -> upgrade di tab ini akan macet menunggu.
+      // Tutup koneksi lama itu sendiri supaya upgrade bisa lanjut tanpa perlu user
+      // manual menutup tab lain.
+      blocking() {
+        void (async () => {
+          const stale = await dbPromise;
+          stale?.close();
+        })();
+      },
+      blocked(currentVersion, blockedVersion) {
+        console.warn(
+          `[db] upgrade ke versi ${blockedVersion} diblokir oleh koneksi versi ${currentVersion} yang masih terbuka di tab lain.`,
+        );
+      },
+      terminated() {
+        // Browser mematikan paksa koneksi (mis. tab lain crash) -> reset cache supaya
+        // panggilan berikutnya membuka koneksi baru, bukan menggantung selamanya.
+        dbPromise = null;
+      },
+    }).catch((err) => {
+      // JANGAN cache promise yang gagal — kalau di-cache, SEMUA pemanggilan getDB()
+      // berikutnya (lintas fitur: consent, petani, dst) akan gagal identik sampai
+      // reload penuh, walau penyebab aslinya cuma satu upgrade yang sempat gagal.
+      dbPromise = null;
+      throw err;
     });
   }
   return dbPromise;
@@ -124,7 +150,8 @@ export function getDB(): Promise<IDBPDatabase<PasporPetaniDB>> {
 
 function dbError(op: string, err: unknown): Error {
   console.error(`[db] ${op} failed`, err);
-  return new Error(`Operasi database gagal: ${op}`);
+  const detail = err instanceof Error ? err.message : String(err);
+  return new Error(`Operasi database gagal: ${op} (${detail})`);
 }
 
 const DEVICE_AGENT_ID_KEY = 'device-agent-id';

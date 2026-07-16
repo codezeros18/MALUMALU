@@ -36,6 +36,16 @@ const LABELS: Record<DocumentType, string> = {
 
 interface DocumentUploadProps {
   petaniId: string;
+  // Dipanggil setiap daftar dokumen berubah — dipakai PlotDetail.tsx untuk mengunci
+  // checklist "Sudah punya STDB" ke bukti dokumen STDB yang sungguh-sungguh diunggah,
+  // bukan klaim manual tanpa bukti.
+  onDocumentsChange?: (documents: PetaniDocument[]) => void;
+}
+
+function sortRequiredFirst(types: DocumentType[]): DocumentType[] {
+  return [...types].sort(
+    (a, b) => Number(REQUIRED_DOCUMENT_TYPES.includes(b)) - Number(REQUIRED_DOCUMENT_TYPES.includes(a)),
+  );
 }
 
 function statusFor(doc: PetaniDocument | undefined): { label: string; tone: BadgeTone } {
@@ -45,18 +55,20 @@ function statusFor(doc: PetaniDocument | undefined): { label: string; tone: Badg
   return { label: 'Tersimpan lokal', tone: 'pending' };
 }
 
-export default function DocumentUpload({ petaniId }: DocumentUploadProps) {
+export default function DocumentUpload({ petaniId, onDocumentsChange }: DocumentUploadProps) {
   const [documents, setDocuments] = useState<PetaniDocument[]>([]);
   const [busyType, setBusyType] = useState<DocumentType | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     try {
-      setDocuments(await listDocumentsByPetani(petaniId));
+      const docs = await listDocumentsByPetani(petaniId);
+      setDocuments(docs);
+      onDocumentsChange?.(docs);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Gagal memuat dokumen.');
     }
-  }, [petaniId]);
+  }, [petaniId, onDocumentsChange]);
 
   useEffect(() => {
     refresh();
@@ -91,12 +103,17 @@ export default function DocumentUpload({ petaniId }: DocumentUploadProps) {
         Hanya hash & metadata file yang disimpan/disinkron — file asli tidak diunggah ke server.
         Hash dicatat ke hash-chain sebagai bukti belum-diubah.
       </p>
+      <p className="text-xs text-slate-500">
+        <span className="text-red-500 font-medium">*</span> = wajib untuk status "Berkas
+        Lengkap" (KTP, Bukti Kepemilikan Lahan, STDB) — dasar legalitas tier Export-Ready.
+        Sisanya nilai tambah opsional, ditampilkan setelah yang wajib di tiap kategori.
+      </p>
 
       {CATEGORIES.map((cat) => (
         <div key={cat.title} className="space-y-1.5">
           <p className="text-xs font-medium text-slate-600">{cat.title}</p>
           <ul className="space-y-1.5">
-            {cat.types.map((type) => {
+            {sortRequiredFirst(cat.types).map((type) => {
               const doc = docByType.get(type);
               const status = statusFor(doc);
               const required = REQUIRED_DOCUMENT_TYPES.includes(type);

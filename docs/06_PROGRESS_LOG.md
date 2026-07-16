@@ -400,6 +400,79 @@ sprint 16 dan sprint 17) sama-sama tampil dengan badge benar. Nol console error.
 
 ---
 
+## Perbaikan Pasca-Sprint-17 — `getDB()` Cascading Failure
+
+**Kenapa**: user melaporkan dua error nyata saat memakai app (bukan lewat Playwright):
+`"Operasi database gagal: listConsentByKartu"` saat klik "Hubungi" di Petani Terdekat,
+lalu `"Operasi database gagal: listPetani"` saat lookup email di Petani Portal — dua
+fungsi yang sama sekali tidak berhubungan (satu soal consent, satu soal petani dasar
+yang sudah ada sejak Sprint 2). Kejanggalan itu sendiri adalah petunjuk: kalau dua
+operasi tak berkaitan gagal dengan pesan identik, penyebabnya satu titik bersama, bukan
+bug di masing-masing fungsi.
+
+**Root cause**: `getDB()` di `lib/db.ts` meng-cache `dbPromise` secara permanen,
+termasuk kalau `openDB()`-nya REJECT. `DB_VERSION` baru saja naik 2→3 di Sprint 16 (store
+`petaniDocument` baru) — begitu browser user membuka app dengan skema lama masih
+ter-cache di tab lain, upgrade transaction bisa terblokir (event `blocked`, tidak
+ditangani sebelumnya) dan promise yang gagal itu tersimpan selamanya di `dbPromise`.
+Efeknya: SEKALI upgrade gagal, SEMUA panggilan `getDB()` berikutnya di sesi itu — lintas
+fitur, bukan cuma yang memicunya — ikut gagal identik sampai reload penuh.
+
+**Fix** (`src/lib/db.ts`):
+- `openDB()` sekarang punya `blocking()` (tutup koneksi lama milik tab ini sendiri kalau
+  ia menghalangi versi baru di tab lain, supaya upgrade lanjut tanpa perlu user manual
+  menutup tab), `blocked()` (log jelas kalau masih terblokir tab lain), dan
+  `terminated()` (reset cache kalau browser mematikan paksa koneksi).
+- `.catch()` pada `openDB()` mereset `dbPromise = null` sebelum re-throw — promise yang
+  gagal TIDAK BOLEH di-cache, supaya panggilan berikutnya retry dari nol alih-alih ikut
+  gagal selamanya.
+- `dbError()` sekarang menyisipkan `err.message` asli ke pesan yang tampil di UI (bukan
+  cuma nama operasi) — supaya laporan bug berikutnya (kalau ada) langsung bisa
+  didiagnosis dari screenshot user, tanpa perlu buka DevTools console.
+
+**Verifikasi nyata**: regresi penuh (seed data demo, `PetaniList`, Petani Portal lookup
+by email dengan petani BARU yang sengaja dibuat saat itu juga, alur dokumen Sprint 16,
+alur "Hubungi" Sprint 17) — nol `"Operasi database gagal"` muncul di UI manapun, nol
+console error selain noise offline-network yang sudah diketahui.
+
+---
+
+## Perbaikan Pasca-Sprint-17 — Konsistensi UX (STDB & Form Consent)
+
+**Kenapa**: user menemukan dua inkonsistensi nyata sambil memakai app: (1) checklist
+"Sudah punya STDB" di form Buat Kartu adalah klaim manual TANPA bukti, padahal ada
+dokumen STDB yang bisa diunggah terpisah di panel Dokumen Petani — dua sinyal yang sama
+tapi tidak terhubung; (2) di `ConsentPanel`, mengetik nama pihak custom (mis.
+"Eksportir", "Koperasi") lalu klik tombol preset lain membuat teks yang diketik hilang
+diam-diam — dua state (`selectedParty`/`customParty`) yang bisa saling menimpa tanpa
+umpan balik visual yang jelas.
+
+**Fix**:
+- `src/pages/PlotDetail.tsx`: panel `DocumentUpload` dipindah ke ATAS form Buat Kartu
+  (isi bukti dulu, baru hitung tier). Checkbox "Sudah punya STDB" sekarang otomatis
+  tercentang + terkunci (`disabled`) begitu dokumen ber-`type: 'stdb'` terunggah —
+  kalau belum ada, checkbox tetap bisa diedit manual (fleksibilitas lapangan
+  dipertahankan) tapi diberi keterangan eksplisit "klaim manual tanpa bukti dokumen".
+  `tentukanTier`/`tentukanStdbStatus` (Sprint 5) tidak disentuh — hanya SUMBER boolean
+  `punyaSTDB` yang diperbaiki, bukan logikanya.
+- `src/components/DocumentUpload.tsx`: terima `onDocumentsChange` callback baru (dipakai
+  `PlotDetail.tsx` di atas). Dalam tiap kategori, dokumen wajib (`*`) diurutkan tampil
+  duluan sebelum yang opsional. Ditambah kalimat eksplisit menjelaskan wajib vs opsional.
+- `src/components/ConsentPanel.tsx`: `selectedParty`+`customParty` (dua state terpisah)
+  digabung jadi satu `partyName` — preset cuma mengisi field yang sama, bukan state
+  tersembunyi lain. Highlight preset sekarang selalu akurat (menyala HANYA kalau nilainya
+  persis sama), dan form reset ke default "Bank" setelah submit berhasil.
+
+**Verifikasi nyata (Playwright)**: urutan Dokumen-sebelum-Buat-Kartu dikonfirmasi lewat
+posisi Y elemen. Checkbox STDB dikonfirmasi bisa diedit manual SEBELUM dokumen ada, lalu
+otomatis checked+disabled SETELAH dokumen STDB diunggah, kartu berhasil dibuat dengan
+tier yang menghormati status itu. Form consent: klik preset mengisi input persis,
+mengetik custom text membatalkan highlight preset (bukan lagi silent override), tombol
+submit selalu mengikuti teks yang benar-benar akan dikirim, form reset setelah submit.
+Nol console error.
+
+---
+
 ## State Akhir Repo Saat Ini (setelah Sprint 17)
 
 ### Tambahan struktur `src/` sejak baseline MVP di atas
