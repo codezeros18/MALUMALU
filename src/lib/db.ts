@@ -212,6 +212,18 @@ export async function listKartu(): Promise<Kartu[]> {
   }
 }
 
+// Simpan Kartu utuh (id sudah ada, mis. dari generateKartu) — dipakai commitKartu (Sprint 6)
+// setelah hashChainRef diisi, berbeda dari addKartu yang selalu men-generate id baru.
+export async function putKartu(kartu: Kartu): Promise<Kartu> {
+  try {
+    const db = await getDB();
+    await db.put('kartu', kartu);
+    return kartu;
+  } catch (err) {
+    throw dbError('putKartu', err);
+  }
+}
+
 // ===== HASH-CHAIN =====
 
 export async function addHashEntry(input: Omit<HashChainEntry, 'id'>): Promise<HashChainEntry> {
@@ -244,6 +256,18 @@ export async function getLastHashEntry(): Promise<HashChainEntry | undefined> {
     return cursor?.value;
   } catch (err) {
     throw dbError('getLastHashEntry', err);
+  }
+}
+
+// Overwrite entri hash-chain APA ADANYA (id dipertahankan) — dipakai hashchain.ts untuk
+// simulateTamper/restoreEntry (demo tamper-evidence). Tidak menghitung ulang hash apa pun.
+export async function putHashEntryRaw(entry: HashChainEntry): Promise<HashChainEntry> {
+  try {
+    const db = await getDB();
+    await db.put('hashchain', entry);
+    return entry;
+  } catch (err) {
+    throw dbError('putHashEntryRaw', err);
   }
 }
 

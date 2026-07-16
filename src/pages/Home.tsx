@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import MapView from '../components/MapView';
 import PlotForm, { type PlotFormValues } from '../components/PlotForm';
 import { useGeolocation } from '../hooks/useGeolocation';
@@ -115,12 +116,14 @@ export default function Home() {
         </h2>
         <ul className="space-y-1">
           {plots.map((plot) => (
-            <li
-              key={plot.id}
-              className="text-xs text-slate-500 border border-slate-200 rounded px-2 py-1"
-            >
-              {plot.komoditas} @ {plot.lat.toFixed(5)}, {plot.lng.toFixed(5)}
-              {plot.gpsAccuracyM ? ` · akurasi ${Math.round(plot.gpsAccuracyM)}m` : ''}
+            <li key={plot.id}>
+              <Link
+                to={`/plot/${plot.id}`}
+                className="block text-xs text-slate-500 border border-slate-200 rounded px-2 py-1 hover:border-brand-400 hover:text-brand-800"
+              >
+                {plot.komoditas} @ {plot.lat.toFixed(5)}, {plot.lng.toFixed(5)}
+                {plot.gpsAccuracyM ? ` · akurasi ${Math.round(plot.gpsAccuracyM)}m` : ''}
+              </Link>
             </li>
           ))}
         </ul>
