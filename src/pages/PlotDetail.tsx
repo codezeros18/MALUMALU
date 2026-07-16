@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import KartuCard from '../components/KartuCard';
 import HashChainViewer from '../components/HashChainViewer';
+import ConsentPanel from '../components/ConsentPanel';
 import { getPlot, getPetani, getKartuByPlot } from '../lib/db';
 import { commitKartu } from '../lib/hashchain';
 import { generateKartu } from '../lib/ruleEngine';
@@ -102,8 +103,9 @@ export default function PlotDetail() {
         </div>
       )}
 
-      {kartu && <KartuCard kartu={kartu} />}
-      {kartu && <HashChainViewer />}
+      {kartu && <KartuCard kartu={kartu} onKartuUpdated={setKartu} />}
+      {kartu && <HashChainViewer refreshSignal={kartu.hashChainRef} />}
+      {kartu && <ConsentPanel kartuId={kartu.id} />}
 
       {error && <p className="text-xs text-red-600">{error}</p>}
     </div>

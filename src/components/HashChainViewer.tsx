@@ -3,7 +3,11 @@ import { verifyChain, simulateTamper, restoreEntry, type VerifyChainResult } fro
 import { listHashEntries } from '../lib/db';
 import type { HashChainEntry } from '../types';
 
-export default function HashChainViewer() {
+interface HashChainViewerProps {
+  refreshSignal?: unknown;
+}
+
+export default function HashChainViewer({ refreshSignal }: HashChainViewerProps) {
   const [entries, setEntries] = useState<HashChainEntry[]>([]);
   const [result, setResult] = useState<VerifyChainResult | null>(null);
   const [tamperedBackup, setTamperedBackup] = useState<HashChainEntry | null>(null);
@@ -20,7 +24,7 @@ export default function HashChainViewer() {
 
   useEffect(() => {
     refresh();
-  }, [refresh]);
+  }, [refresh, refreshSignal]);
 
   const handleVerify = useCallback(async () => {
     setBusy(true);
