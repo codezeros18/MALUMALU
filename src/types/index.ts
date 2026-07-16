@@ -1,17 +1,31 @@
 // Kontrak tipe antar-modul (FS <-> AI). Lihat docs/02_TECH_ARCHITECTURE.md — jarang berubah.
 
+// ===== SYNC (fase full-production, lihat docs/04_FULL_PRODUCTION_BLUEPRINT.md §1) =====
+// Field sync di bawah ini opsional (`?`) supaya data lama di IndexedDB dari fase MVP
+// tetap valid tanpa migrasi paksa.
+
+export type SyncStatus = 'local' | 'synced' | 'conflict';
+
+interface Syncable {
+  syncStatus?: SyncStatus;
+  remoteId?: string;
+  updatedAt?: number;
+  agentId?: string; // device/agen mana yang input — dipakai atribusi dashboard Eksportir
+}
+
 // ===== ENTITAS INTI =====
 
-export interface Petani {
+export interface Petani extends Syncable {
   id: string;
   nama: string;
   nikHash?: string; // NIK di-hash (jangan simpan plaintext)
   telepon?: string;
   desa?: string;
+  email?: string; // untuk akses Petani Portal (Sprint 14)
   createdAt: number;
 }
 
-export interface Plot {
+export interface Plot extends Syncable {
   id: string;
   petaniId: string;
   lat: number;
@@ -35,7 +49,7 @@ export interface DeforestasiCheck {
 export type Tier = 'lokal' | 'export-ready';
 export type StdbStatus = 'stdb-ready' | 'belum-lengkap';
 
-export interface Kartu {
+export interface Kartu extends Syncable {
   id: string;
   plotId: string;
   petaniId: string;
@@ -49,7 +63,7 @@ export interface Kartu {
 
 // ===== HASH-CHAIN =====
 
-export interface HashChainEntry {
+export interface HashChainEntry extends Syncable {
   id: string;
   index: number; // urutan dalam rantai
   timestamp: number;
@@ -61,7 +75,7 @@ export interface HashChainEntry {
 
 // ===== CONSENT & NOTIF =====
 
-export interface ConsentRecord {
+export interface ConsentRecord extends Syncable {
   id: string;
   kartuId: string;
   grantedTo: string; // "bank" | "eksportir" | "koperasi" | nama
@@ -70,7 +84,7 @@ export interface ConsentRecord {
   revokedAt?: number;
 }
 
-export interface AccessLog {
+export interface AccessLog extends Syncable {
   id: string;
   kartuId: string;
   accessedBy: string;
@@ -79,7 +93,7 @@ export interface AccessLog {
   triggeredNotif: boolean;
 }
 
-export interface NotifItem {
+export interface NotifItem extends Syncable {
   id: string;
   message: string;
   kartuId: string;
