@@ -198,7 +198,7 @@ export default function Home() {
           {plots.map((plot) => (
             <li key={plot.id}>
               <Link
-                to={`/plot/${plot.id}`}
+                to={`/agen/plot/${plot.id}`}
                 className="flex items-center justify-between gap-2 text-xs text-slate-500 border border-slate-200 rounded px-2 py-1 hover:border-brand-400 hover:text-brand-800"
               >
                 <span>

@@ -11,8 +11,16 @@ import {
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
 import { pushPendingSync, supabaseBackend } from '../lib/sync';
 import { listSyncQueue } from '../lib/db';
+import { getItem, setItem, removeItem } from '../lib/storage';
 
 const SYNC_INTERVAL_MS = 30000;
+const CURRENT_ROLE_KEY = 'current-role';
+
+export type Role = 'petani' | 'agen' | 'eksportir';
+
+function isRole(value: unknown): value is Role {
+  return value === 'petani' || value === 'agen' || value === 'eksportir';
+}
 
 interface AppContextValue {
   notifVersion: number;
@@ -20,11 +28,26 @@ interface AppContextValue {
   syncVersion: number;
   bumpSyncVersion: () => void;
   triggerSync: () => Promise<void>;
+  currentRole: Role | null;
+  setRole: (role: Role | null) => void;
 }
 
 const AppContext = createContext<AppContextValue | null>(null);
 
 export function AppProvider({ children }: { children: ReactNode }) {
+  const [currentRole, setCurrentRole] = useState<Role | null>(() => {
+    const stored = getItem<string>(CURRENT_ROLE_KEY);
+    return isRole(stored) ? stored : null;
+  });
+  const setRole = useCallback((role: Role | null) => {
+    setCurrentRole(role);
+    if (role) {
+      setItem(CURRENT_ROLE_KEY, role);
+    } else {
+      removeItem(CURRENT_ROLE_KEY);
+    }
+  }, []);
+
   const [notifVersion, setNotifVersion] = useState(0);
   const refreshNotif = useCallback(() => setNotifVersion((v) => v + 1), []);
 
@@ -71,8 +94,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [isOnline, triggerSync]);
 
   const value = useMemo(
-    () => ({ notifVersion, refreshNotif, syncVersion, bumpSyncVersion, triggerSync }),
-    [notifVersion, refreshNotif, syncVersion, bumpSyncVersion, triggerSync],
+    () => ({
+      notifVersion,
+      refreshNotif,
+      syncVersion,
+      bumpSyncVersion,
+      triggerSync,
+      currentRole,
+      setRole,
+    }),
+    [notifVersion, refreshNotif, syncVersion, bumpSyncVersion, triggerSync, currentRole, setRole],
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
