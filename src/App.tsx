@@ -1,8 +1,9 @@
-import { Routes, Route, Link, useNavigate } from 'react-router-dom';
+import { Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
 import Home from './pages/Home';
 import PetaniList from './pages/PetaniList';
 import PlotDetail from './pages/PlotDetail';
 import Login from './pages/Login';
+import TentangKami from './pages/TentangKami';
 import EksportirDashboard from './pages/EksportirDashboard';
 import PetaniPortal from './pages/PetaniPortal';
 import RequireRole from './components/RequireRole';
@@ -13,11 +14,20 @@ import { AppProvider, useAppContext } from './context/AppContext';
 function AppShell() {
   const { currentRole, setRole } = useAppContext();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleGantiRole = () => {
     setRole(null);
     navigate('/');
   };
+
+  if (location.pathname === '/') {
+    return <Login />;
+  }
+
+  if (location.pathname === '/tentang') {
+    return <TentangKami />;
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50">
@@ -46,7 +56,6 @@ function AppShell() {
 
       <main className="flex-1 max-w-4xl w-full mx-auto">
         <Routes>
-          <Route path="/" element={<Login />} />
           <Route
             path="/agen"
             element={

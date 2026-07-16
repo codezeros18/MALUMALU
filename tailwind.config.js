@@ -12,7 +12,7 @@ export default {
         },
       },
       fontFamily: {
-        sans: ['"Segoe UI"', 'system-ui', 'Roboto', 'sans-serif'],
+        sans: ['"Plus Jakarta Sans"', '"Segoe UI"', 'system-ui', 'Roboto', 'sans-serif'],
       },
     },
   },
