@@ -22,11 +22,22 @@ export default defineConfig({
             sizes: 'any',
             type: 'image/svg+xml',
           },
+          {
+            src: '/icon-192.png',
+            sizes: '192x192',
+            type: 'image/png',
+          },
+          {
+            src: '/icon-512.png',
+            sizes: '512x512',
+            type: 'image/png',
+          },
         ],
       },
-      // Caching detail (precache raster, offline strategy) dikerjakan di Sprint 8.
       workbox: {
-        globPatterns: ['**/*.{js,css,html,svg,png,json}'],
+        // Precache seluruh aset build + data/raster (termasuk pangalengan.json) supaya
+        // point-in-raster & alur inti tetap jalan tanpa internet.
+        globPatterns: ['**/*.{js,css,html,ico,svg,png,json}'],
       },
     }),
   ],

@@ -3,6 +3,7 @@ import Home from './pages/Home';
 import PetaniList from './pages/PetaniList';
 import PlotDetail from './pages/PlotDetail';
 import NotifBanner from './components/NotifBanner';
+import OfflineIndicator from './components/OfflineIndicator';
 import { AppProvider } from './context/AppContext';
 
 function App() {
@@ -15,9 +16,10 @@ function App() {
             <Link to="/" className="text-lg font-semibold tracking-tight">
               Paspor Petani
             </Link>
-            <nav className="flex gap-4 text-sm text-brand-100">
+            <nav className="flex items-center gap-4 text-sm text-brand-100">
               <Link to="/">Home</Link>
               <Link to="/petani">Petani</Link>
+              <OfflineIndicator />
             </nav>
           </div>
         </header>

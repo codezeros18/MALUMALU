@@ -7,6 +7,7 @@ import { getPlot, getPetani, getKartuByPlot } from '../lib/db';
 import { commitKartu } from '../lib/hashchain';
 import { generateKartu } from '../lib/ruleEngine';
 import { cekDeforestasi } from '../lib/geospatial';
+import { isDemoPlot } from '../data/dummyData';
 import type { Plot, Petani, Kartu } from '../types';
 
 export default function PlotDetail() {
@@ -61,7 +62,14 @@ export default function PlotDetail() {
 
   return (
     <div className="p-4 space-y-4 max-w-lg mx-auto">
-      <h1 className="text-xl font-semibold text-brand-800">Detail Plot</h1>
+      <div className="flex items-center gap-2">
+        <h1 className="text-xl font-semibold text-brand-800">Detail Plot</h1>
+        {plot && isDemoPlot(plot.id) && (
+          <span className="text-[10px] font-semibold bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded">
+            DATA DEMO
+          </span>
+        )}
+      </div>
 
       {!plot && <p className="text-sm text-slate-500">Plot tidak ditemukan.</p>}
 

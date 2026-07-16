@@ -5,6 +5,7 @@ import PlotForm, { type PlotFormValues } from '../components/PlotForm';
 import { useGeolocation } from '../hooks/useGeolocation';
 import { addPetani, addPlot, listAllPlot } from '../lib/db';
 import { setItem } from '../lib/storage';
+import { seedDummyData, isDemoPlot } from '../data/dummyData';
 import type { Plot } from '../types';
 
 export default function Home() {
@@ -21,6 +22,7 @@ export default function Home() {
   const [saving, setSaving] = useState(false);
   const [savedMessage, setSavedMessage] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [seeding, setSeeding] = useState(false);
 
   const refreshPlots = useCallback(async () => {
     try {
@@ -78,6 +80,25 @@ export default function Home() {
     }
   };
 
+  const handleSeedDemo = async () => {
+    setSeeding(true);
+    setSaveError(null);
+    setSavedMessage(null);
+    try {
+      const result = await seedDummyData();
+      if (result.seeded) {
+        setSavedMessage(`${result.plots.length} data demo dimuat (Pangalengan, komoditas kopi).`);
+        await refreshPlots();
+      } else {
+        setSavedMessage('DB sudah berisi data — data demo tidak dimuat ulang.');
+      }
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : 'Gagal memuat data demo.');
+    } finally {
+      setSeeding(false);
+    }
+  };
+
   return (
     <div className="p-4 space-y-4 max-w-lg mx-auto">
       <div>
@@ -85,6 +106,14 @@ export default function Home() {
         <p className="text-sm text-slate-600">
           Tap peta atau pakai GPS untuk menandai lokasi kebun, lalu isi data petani singkat.
         </p>
+        <button
+          type="button"
+          onClick={handleSeedDemo}
+          disabled={seeding}
+          className="mt-2 text-xs px-3 py-1.5 rounded-md border border-brand-400 text-brand-800 disabled:opacity-50"
+        >
+          {seeding ? 'Memuat…' : 'Muat data demo (3 petani contoh Pangalengan)'}
+        </button>
       </div>
 
       <MapView plots={plots} onPickLocation={handlePickLocation} pickedPosition={picked} />
@@ -119,15 +148,32 @@ export default function Home() {
             <li key={plot.id}>
               <Link
                 to={`/plot/${plot.id}`}
-                className="block text-xs text-slate-500 border border-slate-200 rounded px-2 py-1 hover:border-brand-400 hover:text-brand-800"
+                className="flex items-center justify-between gap-2 text-xs text-slate-500 border border-slate-200 rounded px-2 py-1 hover:border-brand-400 hover:text-brand-800"
               >
-                {plot.komoditas} @ {plot.lat.toFixed(5)}, {plot.lng.toFixed(5)}
-                {plot.gpsAccuracyM ? ` · akurasi ${Math.round(plot.gpsAccuracyM)}m` : ''}
+                <span>
+                  {plot.komoditas} @ {plot.lat.toFixed(5)}, {plot.lng.toFixed(5)}
+                  {plot.gpsAccuracyM ? ` · akurasi ${Math.round(plot.gpsAccuracyM)}m` : ''}
+                </span>
+                {isDemoPlot(plot.id) && (
+                  <span className="shrink-0 text-[10px] font-semibold bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded">
+                    DATA DEMO
+                  </span>
+                )}
               </Link>
             </li>
           ))}
         </ul>
       </div>
+
+      <details className="text-xs text-slate-500 bg-white rounded-lg border border-slate-200 p-3">
+        <summary className="font-medium text-slate-600 cursor-pointer">Tentang akurasi</summary>
+        <p className="mt-2 leading-relaxed">
+          Peta risiko: JRC GFC2020, akurasi ~91%, commission error ~18% (kebun kopi bernaung bisa
+          terbaca hutan). Titik lokasi (point-primary) karena GPS di bawah kanopi meleset 3–11 m.
+          Rantai verifikasi = hash-chain (bukan blockchain). Data demo berlabel jelas dan bukan
+          data pemasok nyata.
+        </p>
+      </details>
     </div>
   );
 }
