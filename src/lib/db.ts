@@ -7,6 +7,7 @@ import type {
   NotifItem,
   Petani,
   Plot,
+  WaOutboxItem,
 } from '../types';
 
 const KEYS = {
@@ -18,6 +19,7 @@ const KEYS = {
   consent: 'pp.consent',
   accessLog: 'pp.accessLog',
   notif: 'pp.notif',
+  waOutbox: 'pp.waOutbox',
 } as const;
 
 async function readAll<T>(key: string): Promise<T[]> {
@@ -79,6 +81,13 @@ export const addNotif = (n: NotifItem) => append(KEYS.notif, n);
 export async function markNotifRead(id: string): Promise<void> {
   const all = await getNotifs();
   await writeAll(KEYS.notif, all.map(n => (n.id === id ? { ...n, read: true } : n)));
+}
+
+export const getWaOutbox = () => readAll<WaOutboxItem>(KEYS.waOutbox);
+export const addWaOutbox = (i: WaOutboxItem) => append(KEYS.waOutbox, i);
+export async function updateWaOutbox(i: WaOutboxItem): Promise<void> {
+  const all = await getWaOutbox();
+  await writeAll(KEYS.waOutbox, all.map(x => (x.id === i.id ? i : x)));
 }
 
 export const getChain = () => readAll<HashChainEntry>(KEYS.chain);

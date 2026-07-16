@@ -11,6 +11,7 @@ import {
   upsertConsent,
 } from './db';
 import { appendEntry } from './hashchain';
+import { enqueueWa } from './waOutbox';
 import type { Kartu } from '../types';
 
 export async function setConsent(kartuId: string, pihak: string, granted: boolean): Promise<void> {
@@ -25,13 +26,20 @@ export async function simulateAccess(kartuId: string, pihak: string): Promise<{ 
   if (!authorized) {
     const kartu = (await getKartus()).find(k => k.id === kartuId);
     const petani = (await getPetani()).find(p => p.id === kartu?.petaniId);
+    const nama = petani?.nama ?? kartuId;
     await addNotif({
       id: newId(),
-      pesan: `Akses TIDAK berizin oleh "${pihak}" ke kartu ${petani?.nama ?? kartuId}`,
+      pesan: `Akses TIDAK berizin oleh "${pihak}" ke kartu ${nama}`,
       severity: 'alert',
       read: false,
       createdAt: now,
     });
+    await enqueueWa(
+      `🚨 *PASPOR PETANI — Peringatan*\n\n` +
+        `Akses TIDAK berizin ke kartu *${nama}*.\n` +
+        `Pihak: ${pihak}\n` +
+        `Waktu: ${now}`,
+    );
   }
   return { authorized };
 }
@@ -52,6 +60,13 @@ export async function overrideKartu(kartu: Kartu): Promise<Kartu> {
       { kartuId: updated.id, tier: updated.tier, stdbStatus: updated.stdbStatus, override: true },
       now,
     ),
+  );
+  const petani = (await getPetani()).find(p => p.id === updated.petaniId);
+  await enqueueWa(
+    `⚠️ *PASPOR PETANI — Override Manual*\n\n` +
+      `Kartu *${petani?.nama ?? updated.id}* diubah oleh petugas.\n` +
+      `Tier sekarang: ${updated.tier === 'export_ready' ? 'EXPORT-READY' : 'LOKAL'}\n` +
+      `Waktu: ${now}`,
   );
   return updated;
 }

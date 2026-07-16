@@ -3,9 +3,12 @@ import { Tabs } from 'expo-router';
 import { View } from 'react-native';
 import { NotifBanner } from '../../components/NotifBanner';
 import { OfflineIndicator } from '../../components/OfflineIndicator';
+import { useWaFlush } from '../../hooks/useWaFlush';
 import { colors, fonts } from '../../theme/tokens';
 
 export default function TabLayout() {
+  useWaFlush();
+
   return (
     <View style={{ flex: 1 }}>
       <NotifBanner />

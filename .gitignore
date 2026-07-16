@@ -42,3 +42,6 @@ example
 /ios
 /android
 dist/
+
+# local env files
+.env

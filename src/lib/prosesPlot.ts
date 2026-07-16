@@ -2,6 +2,7 @@ import { addKartu, addPetani, addPlot, getChain, newId, setChain } from './db';
 import { cekDeforestasi } from './geospatial';
 import { evaluateKartu } from './ruleEngine';
 import { appendEntry } from './hashchain';
+import { enqueueWa } from './waOutbox';
 import type { Kartu, Petani, Plot } from '../types';
 
 export interface PlotInput {
@@ -53,6 +54,14 @@ export async function prosesPlotBaru(input: PlotInput): Promise<Kartu> {
       { kartuId: kartu.id, tier: kartu.tier, stdbStatus: kartu.stdbStatus, lat: plot.lat, lng: plot.lng },
       now,
     ),
+  );
+  await enqueueWa(
+    `✅ *PASPOR PETANI — Kartu Baru*\n\n` +
+      `Petani: *${petani.nama}*${petani.desa ? ` (${petani.desa})` : ''}\n` +
+      `Komoditas: ${plot.komoditas}\n` +
+      `Tier: ${kartu.tier === 'export_ready' ? 'EXPORT-READY' : 'LOKAL'}\n` +
+      `Deforestasi: ${cek.status}\n` +
+      `Koordinat: ${plot.lat.toFixed(5)}, ${plot.lng.toFixed(5)}`,
   );
   return kartu;
 }

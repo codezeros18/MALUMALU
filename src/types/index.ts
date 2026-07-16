@@ -70,3 +70,16 @@ export interface NotifItem {
   read: boolean;
   createdAt: string;
 }
+
+export type WaStatus = 'pending' | 'sent' | 'failed';
+
+export interface WaOutboxItem {
+  id: string;
+  chatId: string;
+  text: string;
+  status: WaStatus;
+  attempts: number;
+  lastError?: string;
+  createdAt: string;
+  sentAt?: string;
+}
