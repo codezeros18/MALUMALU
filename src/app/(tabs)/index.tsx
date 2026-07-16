@@ -1,6 +1,6 @@
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { GridPicker } from '../../components/GridPicker';
 import { MapPicker } from '../../components/MapPicker';
 import { PlotForm } from '../../components/PlotForm';
@@ -88,6 +88,10 @@ export default function LapanganScreen() {
   const tierOf = (plotId: string) => kartus.find(k => k.plotId === plotId)?.tier;
 
   return (
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
     <ScrollView
       style={styles.container}
       contentContainerStyle={styles.content}
@@ -140,6 +144,7 @@ export default function LapanganScreen() {
         </Pressable>
       </View>
     </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 

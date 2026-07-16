@@ -2,6 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { Tabs } from 'expo-router';
 import { View } from 'react-native';
 import { NotifBanner } from '../../components/NotifBanner';
+import { OfflineIndicator } from '../../components/OfflineIndicator';
 import { colors, fonts } from '../../theme/tokens';
 
 export default function TabLayout() {
@@ -15,6 +16,7 @@ export default function TabLayout() {
         headerStyle: { backgroundColor: colors.cover },
         headerTintColor: colors.onCover,
         headerTitleStyle: { fontFamily: fonts.display, fontSize: 20 },
+        headerRight: () => <OfflineIndicator />,
         tabBarActiveTintColor: colors.cover,
         tabBarInactiveTintColor: colors.inkMuted,
         tabBarLabelStyle: { fontFamily: fonts.uiMedium, fontSize: 11 },
