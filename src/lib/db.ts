@@ -163,6 +163,15 @@ export async function listPlotByPetani(petaniId: string): Promise<Plot[]> {
   }
 }
 
+export async function listAllPlot(): Promise<Plot[]> {
+  try {
+    const db = await getDB();
+    return await db.getAll('plot');
+  } catch (err) {
+    throw dbError('listAllPlot', err);
+  }
+}
+
 // ===== KARTU =====
 
 export async function addKartu(input: Omit<Kartu, 'id' | 'createdAt'>): Promise<Kartu> {
