@@ -60,7 +60,8 @@ src/
 
 - **Storage:** AsyncStorage behind `lib/db.ts` (collections: Petani, Plot, Kartu,
   HashChainEntry, ConsentRecord, AccessLog, NotifItem). Async + try/catch everywhere.
-- **Hash-chain:** `expo-crypto` `digestStringAsync(SHA256, ...)`. Entry shape:
+- **Hash-chain:** SHA-256 via `js-sha256` (pure JS: synchronous + Jest-testable,
+  no native module — revised from expo-crypto during planning). Entry shape:
   `{ index, timestamp, dataHash, previousHash, hash }`. Viewer verifies the full chain
   and renders green "Rantai utuh" / red "Rantai rusak di entri #X".
 - **Geospatial:** bundled `pangalengan.json` grid raster over the Pangalengan bbox
