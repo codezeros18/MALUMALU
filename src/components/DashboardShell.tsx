@@ -1,12 +1,24 @@
+import { useEffect, useRef, useState } from 'react';
+import type { ComponentType, ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import type { ReactNode } from 'react';
+import {
+  BarChart3,
+  ChevronDown,
+  ChevronRight,
+  Home,
+  IdCard,
+  LogOut,
+  MapPin,
+  Search,
+  Users,
+} from 'lucide-react';
 import type { Role } from '../context/AppContext';
 import OfflineIndicator from './OfflineIndicator';
 
 interface NavItem {
   label: string;
   to: string;
-  icon: string;
+  icon: ComponentType<{ size?: number; className?: string }>;
 }
 
 interface NavGroup {
@@ -25,24 +37,79 @@ const NAV_BY_ROLE: Record<Role, NavGroup[]> = {
     {
       heading: 'Lapangan',
       items: [
-        { label: 'Peta & Plot', to: '/agen', icon: '📍' },
-        { label: 'Data Petani', to: '/agen/petani', icon: '👥' },
+        { label: 'Peta & Plot', to: '/agen', icon: MapPin },
+        { label: 'Data Petani', to: '/agen/petani', icon: Users },
       ],
     },
   ],
   petani: [
     {
       heading: 'Akun',
-      items: [{ label: 'Portal Saya', to: '/petani', icon: '🪪' }],
+      items: [{ label: 'Portal Saya', to: '/petani', icon: IdCard }],
     },
   ],
   eksportir: [
     {
       heading: 'Monitoring',
-      items: [{ label: 'Dashboard', to: '/eksportir', icon: '📊' }],
+      items: [{ label: 'Dashboard', to: '/eksportir', icon: BarChart3 }],
     },
   ],
 };
+
+function useOutsideClick(onOutside: () => void) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) onOutside();
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [onOutside]);
+  return ref;
+}
+
+function ProfileMenu({ role, onLogout }: { role: Role; onLogout: () => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useOutsideClick(() => setOpen(false));
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        className="w-8 h-8 rounded-full bg-brand-800 text-white grid place-items-center text-xs font-semibold hover:opacity-90 transition-opacity"
+      >
+        {ROLE_LABEL[role].slice(0, 1)}
+      </button>
+
+      {open && (
+        <div
+          role="menu"
+          className="absolute right-0 mt-2 w-44 bg-white border border-slate-200 rounded-lg shadow-lg overflow-hidden z-20"
+        >
+          <div className="px-3 py-2 border-b border-slate-100">
+            <p className="text-[11px] text-slate-400">Masuk sebagai</p>
+            <p className="text-sm font-semibold text-slate-800">{ROLE_LABEL[role]}</p>
+          </div>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              setOpen(false);
+              onLogout();
+            }}
+            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+          >
+            <LogOut size={15} />
+            Keluar
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
 
 interface DashboardShellProps {
   currentRole: Role;
@@ -53,87 +120,127 @@ interface DashboardShellProps {
 export default function DashboardShell({ currentRole, onGantiRole, children }: DashboardShellProps) {
   const location = useLocation();
   const groups = NAV_BY_ROLE[currentRole];
+  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
+  const searchRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        searchRef.current?.focus();
+      }
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, []);
+
+  const activeLabel =
+    groups.flatMap((g) => g.items).find((item) => item.to === location.pathname)?.label ??
+    ROLE_LABEL[currentRole];
+
+  const toggleGroup = (heading: string) =>
+    setCollapsedGroups((prev) => ({ ...prev, [heading]: !prev[heading] }));
 
   return (
-    <div className="font-dashboard min-h-screen flex bg-white text-slate-900">
-      <aside className="no-print w-60 shrink-0 border-r border-slate-200 flex flex-col">
-        <Link to="/" className="flex items-center gap-2 px-5 py-5 shrink-0">
-          <span className="w-7 h-7 rounded-md bg-brand-800 text-white grid place-items-center text-xs font-bold">
-            P
-          </span>
-          <span className="text-sm font-semibold text-slate-900">Paspor Petani</span>
-        </Link>
-
-        <div className="px-5 pb-3">
-          <p className="text-[11px] font-medium text-slate-400 uppercase tracking-wide">Masuk sebagai</p>
-          <p className="text-sm font-semibold text-slate-800 mt-0.5">{ROLE_LABEL[currentRole]}</p>
-        </div>
-
-        <nav className="flex-1 px-3 space-y-5 overflow-y-auto">
-          {groups.map((group) => (
-            <div key={group.heading}>
-              <p className="px-2 mb-1.5 text-[11px] font-semibold text-slate-400 uppercase tracking-wide">
-                {group.heading}
-              </p>
-              <div className="space-y-0.5">
-                {group.items.map((item) => {
-                  const active = location.pathname === item.to;
-                  return (
-                    <Link
-                      key={item.to}
-                      to={item.to}
-                      className={`flex items-center gap-2.5 px-2.5 py-2 rounded-md text-sm transition-colors ${
-                        active
-                          ? 'bg-brand-50 text-brand-800 font-semibold'
-                          : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-                      }`}
-                    >
-                      <span aria-hidden className="text-base leading-none">
-                        {item.icon}
-                      </span>
-                      {item.label}
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
-        </nav>
-
-        <div className="px-3 pb-4 pt-2 border-t border-slate-100 space-y-1">
-          <Link
-            to="/"
-            className="flex items-center gap-2.5 px-2.5 py-2 rounded-md text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors"
-          >
-            <span aria-hidden className="text-base leading-none">
-              🏠
+    <div className="font-dashboard min-h-screen flex flex-col bg-white text-slate-900">
+      <div className="h-14 flex border-b border-slate-200 shrink-0">
+        <div className="w-60 shrink-0 flex items-center gap-2 px-5 border-r border-slate-200">
+          <Link to="/" className="flex items-center gap-2 min-w-0">
+            <span className="w-7 h-7 shrink-0 rounded-md bg-brand-800 text-white grid place-items-center text-xs font-bold">
+              P
             </span>
-            Beranda
+            <span className="min-w-0">
+              <span className="block text-[13px] font-semibold text-slate-900 leading-tight truncate">
+                Paspor Petani
+              </span>
+              <span className="block text-[11px] text-slate-400 leading-tight truncate">
+                {ROLE_LABEL[currentRole]}
+              </span>
+            </span>
           </Link>
-          <button
-            type="button"
-            onClick={onGantiRole}
-            className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-md text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors"
-          >
-            <span aria-hidden className="text-base leading-none">
-              🔁
-            </span>
-            Ganti Peran
-          </button>
         </div>
-      </aside>
 
-      <div className="flex-1 min-w-0 flex flex-col">
-        <header className="no-print border-b border-slate-100 px-8 py-3 flex items-center justify-between shrink-0">
-          <p className="text-xs text-slate-400">
-            <span className="text-slate-500">Paspor Petani</span>
-            <span className="mx-1.5">›</span>
-            <span className="text-slate-700 font-medium">{ROLE_LABEL[currentRole]}</span>
+        <div className="flex-1 min-w-0 flex items-center justify-between px-8">
+          <p className="text-[13px] text-slate-400 flex items-center gap-1.5 min-w-0">
+            <span className="text-slate-500 truncate">{ROLE_LABEL[currentRole]}</span>
+            <ChevronRight size={14} className="shrink-0" />
+            <span className="text-slate-800 font-medium truncate">{activeLabel}</span>
           </p>
-          <OfflineIndicator />
-        </header>
 
-        <main className="flex-1 min-w-0 px-8 py-6">{children}</main>
+          <div className="flex items-center gap-3 shrink-0">
+            <OfflineIndicator />
+            <ProfileMenu role={currentRole} onLogout={onGantiRole} />
+          </div>
+        </div>
+      </div>
+
+      <div className="flex-1 min-h-0 flex">
+        <aside className="no-print w-60 shrink-0 border-r border-slate-200 flex flex-col overflow-y-auto">
+          <div className="px-3 pt-4 pb-2">
+            <div className="relative">
+              <Search size={15} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                ref={searchRef}
+                type="text"
+                placeholder="Cari halaman..."
+                className="w-full text-[13px] bg-slate-50 border border-slate-200 rounded-md pl-8 pr-12 py-1.5 text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-brand-400 transition-colors"
+              />
+              <kbd className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 bg-white border border-slate-200 rounded px-1 py-0.5">
+                Ctrl K
+              </kbd>
+            </div>
+          </div>
+
+          <nav className="flex-1 px-3 pb-4 space-y-4">
+            <Link
+              to="/"
+              className="flex items-center gap-2.5 px-2.5 py-2 rounded-md text-[13px] text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors"
+            >
+              <Home size={16} />
+              Beranda
+            </Link>
+
+            {groups.map((group) => {
+              const collapsed = collapsedGroups[group.heading];
+              return (
+                <div key={group.heading}>
+                  <button
+                    type="button"
+                    onClick={() => toggleGroup(group.heading)}
+                    className="w-full flex items-center justify-between px-2 mb-1 text-[11px] font-semibold text-slate-400 uppercase tracking-wide"
+                  >
+                    {group.heading}
+                    {collapsed ? <ChevronRight size={12} /> : <ChevronDown size={12} />}
+                  </button>
+                  {!collapsed && (
+                    <div className="space-y-0.5">
+                      {group.items.map((item) => {
+                        const active = location.pathname === item.to;
+                        const Icon = item.icon;
+                        return (
+                          <Link
+                            key={item.to}
+                            to={item.to}
+                            className={`flex items-center gap-2.5 px-2.5 py-2 rounded-md text-[13px] transition-colors ${
+                              active
+                                ? 'bg-brand-50 text-brand-800 font-semibold'
+                                : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                            }`}
+                          >
+                            <Icon size={16} />
+                            {item.label}
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </nav>
+        </aside>
+
+        <main className="flex-1 min-w-0 overflow-y-auto px-8 py-6">{children}</main>
       </div>
     </div>
   );
