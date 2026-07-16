@@ -1,4 +1,4 @@
-import { Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
+import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import Home from './pages/Home';
 import PetaniList from './pages/PetaniList';
 import PlotDetail from './pages/PlotDetail';
@@ -8,7 +8,7 @@ import EksportirDashboard from './pages/EksportirDashboard';
 import PetaniPortal from './pages/PetaniPortal';
 import RequireRole from './components/RequireRole';
 import NotifBanner from './components/NotifBanner';
-import OfflineIndicator from './components/OfflineIndicator';
+import DashboardShell from './components/DashboardShell';
 import { AppProvider, useAppContext } from './context/AppContext';
 
 function AppShell() {
@@ -29,76 +29,62 @@ function AppShell() {
     return <TentangKami />;
   }
 
-  return (
-    <div className="min-h-screen flex flex-col bg-slate-50">
-      <NotifBanner />
-      <header className="no-print bg-brand-800 text-white px-6 py-4 shadow">
-        <div className="flex items-center justify-between max-w-4xl mx-auto">
-          <Link to="/" className="text-lg font-semibold tracking-tight">
-            Paspor Petani
-          </Link>
-          <nav className="flex items-center gap-4 text-sm text-brand-100">
-            {currentRole === 'agen' && (
-              <>
-                <Link to="/agen">Home</Link>
-                <Link to="/agen/petani">Petani List</Link>
-              </>
-            )}
-            {currentRole && (
-              <button type="button" onClick={handleGantiRole} className="text-xs underline">
-                Ganti Role
-              </button>
-            )}
-            <OfflineIndicator />
-          </nav>
-        </div>
-      </header>
+  const routes = (
+    <Routes>
+      <Route
+        path="/agen"
+        element={
+          <RequireRole role="agen">
+            <Home />
+          </RequireRole>
+        }
+      />
+      <Route
+        path="/agen/plot/:id"
+        element={
+          <RequireRole role="agen">
+            <PlotDetail />
+          </RequireRole>
+        }
+      />
+      <Route
+        path="/agen/petani"
+        element={
+          <RequireRole role="agen">
+            <PetaniList />
+          </RequireRole>
+        }
+      />
+      <Route
+        path="/petani"
+        element={
+          <RequireRole role="petani">
+            <PetaniPortal />
+          </RequireRole>
+        }
+      />
+      <Route
+        path="/eksportir"
+        element={
+          <RequireRole role="eksportir">
+            <EksportirDashboard />
+          </RequireRole>
+        }
+      />
+    </Routes>
+  );
 
-      <main className="flex-1 max-w-4xl w-full mx-auto">
-        <Routes>
-          <Route
-            path="/agen"
-            element={
-              <RequireRole role="agen">
-                <Home />
-              </RequireRole>
-            }
-          />
-          <Route
-            path="/agen/plot/:id"
-            element={
-              <RequireRole role="agen">
-                <PlotDetail />
-              </RequireRole>
-            }
-          />
-          <Route
-            path="/agen/petani"
-            element={
-              <RequireRole role="agen">
-                <PetaniList />
-              </RequireRole>
-            }
-          />
-          <Route
-            path="/petani"
-            element={
-              <RequireRole role="petani">
-                <PetaniPortal />
-              </RequireRole>
-            }
-          />
-          <Route
-            path="/eksportir"
-            element={
-              <RequireRole role="eksportir">
-                <EksportirDashboard />
-              </RequireRole>
-            }
-          />
-        </Routes>
-      </main>
-    </div>
+  return (
+    <>
+      <NotifBanner />
+      {currentRole ? (
+        <DashboardShell currentRole={currentRole} onGantiRole={handleGantiRole}>
+          {routes}
+        </DashboardShell>
+      ) : (
+        routes
+      )}
+    </>
   );
 }
 
