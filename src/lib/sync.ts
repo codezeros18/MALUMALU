@@ -76,6 +76,23 @@ function toSnakeCase(key: string): string {
   return key.replace(/[A-Z]/g, (m) => `_${m.toLowerCase()}`);
 }
 
+function toCamelCase(key: string): string {
+  return key.replace(/_([a-z0-9])/g, (_, c: string) => c.toUpperCase());
+}
+
+// Konversi baris mentah dari Supabase (kolom snake_case) balik ke bentuk camelCase yang
+// dipakai src/types/index.ts — dipakai dashboard Eksportir (Sprint 13) yang baca
+// langsung dari Supabase (bukan IndexedDB, sehingga tidak lewat lib/db.ts sama sekali).
+export function fromSupabaseRow<T>(row: unknown): T {
+  if (typeof row !== 'object' || row === null) return {} as T;
+  const obj = row as Record<string, unknown>;
+  const result: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(obj)) {
+    result[toCamelCase(key)] = value;
+  }
+  return result as T;
+}
+
 function toSupabaseRow(entityType: SyncEntityType, payload: unknown): Record<string, unknown> {
   if (typeof payload !== 'object' || payload === null) return {};
   const obj = payload as Record<string, unknown>;

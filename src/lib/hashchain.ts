@@ -71,8 +71,13 @@ export interface VerifyChainResult {
   brokenAtIndex: number | null;
 }
 
-export async function verifyChain(): Promise<VerifyChainResult> {
-  const entries = await listHashEntries(); // sudah terurut naik by-index
+// providedEntries opsional: dipakai dashboard Eksportir (Sprint 13) yang memverifikasi
+// rantai dari data Supabase (bukan IndexedDB lokal). Kalau tidak diisi, perilaku persis
+// seperti sebelumnya (fetch fresh dari IndexedDB via listHashEntries).
+export async function verifyChain(providedEntries?: HashChainEntry[]): Promise<VerifyChainResult> {
+  const entries = providedEntries
+    ? [...providedEntries].sort((a, b) => a.index - b.index)
+    : await listHashEntries(); // sudah terurut naik by-index
   let previousHash = GENESIS_HASH;
 
   for (const entry of entries) {

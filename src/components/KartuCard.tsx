@@ -12,6 +12,7 @@ interface KartuCardProps {
   onKartuUpdated?: (kartu: Kartu) => void;
   syncFailed?: boolean; // true kalau ada item syncQueue untuk kartu ini yang gagal (attempts > 0)
   onRetrySync?: () => void;
+  readOnly?: boolean; // sembunyikan tombol "Koreksi manual" (dipakai dashboard Eksportir, Sprint 13)
 }
 
 const TIER_LABEL: Record<Tier, string> = {
@@ -37,7 +38,13 @@ const STDB_TONE: Record<StdbStatus, 'synced' | 'perlu-audit'> = {
 const TIER_OPTIONS: Tier[] = ['lokal', 'export-ready'];
 const STDB_OPTIONS: StdbStatus[] = ['stdb-ready', 'belum-lengkap'];
 
-export default function KartuCard({ kartu, onKartuUpdated, syncFailed, onRetrySync }: KartuCardProps) {
+export default function KartuCard({
+  kartu,
+  onKartuUpdated,
+  syncFailed,
+  onRetrySync,
+  readOnly = false,
+}: KartuCardProps) {
   const [showOverride, setShowOverride] = useState(false);
   const [overrideTier, setOverrideTier] = useState<Tier>(kartu.tier);
   const [overrideStdb, setOverrideStdb] = useState<StdbStatus>(kartu.stdbStatus);
@@ -110,13 +117,13 @@ export default function KartuCard({ kartu, onKartuUpdated, syncFailed, onRetrySy
         Penandaan berbasis titik (point-primary), GPS bisa meleset 3–11m.
       </p>
 
-      {!showOverride && (
+      {!readOnly && !showOverride && (
         <button type="button" onClick={openOverride} className="text-xs text-brand-800 underline">
           Koreksi manual
         </button>
       )}
 
-      {showOverride && (
+      {!readOnly && showOverride && (
         <div className="border-t border-slate-100 pt-3 space-y-2">
           <p className="text-xs font-medium text-slate-600">Koreksi manual (keputusan akhir petugas)</p>
           <div className="flex gap-2">

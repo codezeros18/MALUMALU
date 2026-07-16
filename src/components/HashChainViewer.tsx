@@ -8,22 +8,35 @@ import type { HashChainEntry } from '../types';
 
 interface HashChainViewerProps {
   refreshSignal?: unknown;
+  // Kalau diisi, dipakai langsung tanpa fetch IndexedDB lokal — dipakai dashboard
+  // Eksportir (Sprint 13) yang membaca rantai dari Supabase, bukan device ini.
+  entries?: HashChainEntry[];
+  // Sembunyikan tombol simulasi tamper & reset demo (default false, /agen tidak berubah).
+  readOnly?: boolean;
 }
 
-export default function HashChainViewer({ refreshSignal }: HashChainViewerProps) {
-  const [entries, setEntries] = useState<HashChainEntry[]>([]);
+export default function HashChainViewer({
+  refreshSignal,
+  entries: externalEntries,
+  readOnly = false,
+}: HashChainViewerProps) {
+  const [entries, setEntries] = useState<HashChainEntry[]>(externalEntries ?? []);
   const [result, setResult] = useState<VerifyChainResult | null>(null);
   const [tamperedBackup, setTamperedBackup] = useState<HashChainEntry | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
+    if (externalEntries) {
+      setEntries([...externalEntries].sort((a, b) => a.index - b.index));
+      return;
+    }
     try {
       setEntries(await listHashEntries());
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Gagal memuat rantai hash.');
     }
-  }, []);
+  }, [externalEntries]);
 
   useEffect(() => {
     refresh();
@@ -33,13 +46,13 @@ export default function HashChainViewer({ refreshSignal }: HashChainViewerProps)
     setBusy(true);
     setError(null);
     try {
-      setResult(await verifyChain());
+      setResult(await verifyChain(externalEntries ? entries : undefined));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Gagal verifikasi rantai.');
     } finally {
       setBusy(false);
     }
-  }, []);
+  }, [externalEntries, entries]);
 
   const handleTamper = async () => {
     if (entries.length === 0) return;
@@ -104,12 +117,16 @@ export default function HashChainViewer({ refreshSignal }: HashChainViewerProps)
         <Button onClick={handleVerify} disabled={busy}>
           Verifikasi Rantai
         </Button>
-        <Button variant="danger" onClick={handleTamper} disabled={busy || entries.length === 0}>
-          Simulasi ubah data (demo)
-        </Button>
-        <Button variant="secondary" onClick={handleResetDemo} disabled={busy || !tamperedBackup}>
-          Reset demo
-        </Button>
+        {!readOnly && (
+          <>
+            <Button variant="danger" onClick={handleTamper} disabled={busy || entries.length === 0}>
+              Simulasi ubah data (demo)
+            </Button>
+            <Button variant="secondary" onClick={handleResetDemo} disabled={busy || !tamperedBackup}>
+              Reset demo
+            </Button>
+          </>
+        )}
       </div>
 
       {result && (
@@ -130,6 +147,7 @@ export default function HashChainViewer({ refreshSignal }: HashChainViewerProps)
       <p className="text-[11px] text-slate-400">
         Rantai kriptografis deterministik (SHA-256, append-only) — bukan blockchain, tidak ada
         konsensus terdistribusi.
+        {externalEntries && ' Menampilkan seluruh rantai milik agen terkait (bukan hanya kartu ini).'}
       </p>
     </Card>
   );

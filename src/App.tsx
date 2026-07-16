@@ -3,6 +3,7 @@ import Home from './pages/Home';
 import PetaniList from './pages/PetaniList';
 import PlotDetail from './pages/PlotDetail';
 import Login from './pages/Login';
+import EksportirDashboard from './pages/EksportirDashboard';
 import RequireRole from './components/RequireRole';
 import NotifBanner from './components/NotifBanner';
 import OfflineIndicator from './components/OfflineIndicator';
@@ -83,9 +84,7 @@ function AppShell() {
             path="/eksportir"
             element={
               <RequireRole role="eksportir">
-                <div className="p-4 text-sm text-slate-600">
-                  Dashboard Eksportir — segera hadir (Sprint 13).
-                </div>
+                <EksportirDashboard />
               </RequireRole>
             }
           />
