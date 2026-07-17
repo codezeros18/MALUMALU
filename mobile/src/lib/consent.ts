@@ -1,17 +1,16 @@
 import {
   addAccessLog,
   addNotif,
-  getChain,
   getConsents,
   getKartus,
   getPetani,
   newId,
-  setChain,
   updateKartu,
   upsertConsent,
 } from './db';
-import { appendEntry } from './hashchain';
+import { commitEntry } from './hashchain';
 import { enqueueWa } from './waOutbox';
+import { toChatId } from './waha';
 import type { Kartu } from '../types';
 
 export async function setConsent(kartuId: string, pihak: string, granted: boolean): Promise<void> {
@@ -40,6 +39,15 @@ export async function simulateAccess(kartuId: string, pihak: string): Promise<{ 
         `Pihak: ${pihak}\n` +
         `Waktu: ${now}`,
     );
+    if (petani?.telepon) {
+      await enqueueWa(
+        `🚨 *Peringatan — Akses Tidak Berizin*\n\n` +
+          `Ada pihak ("${pihak}") yang mencoba mengakses data Paspor Anda tanpa izin.\n` +
+          `Waktu: ${now}\n\n` +
+          `Jika Anda tidak mengenali pihak ini, hubungi petugas.`,
+        toChatId(petani.telepon),
+      );
+    }
   }
   return { authorized };
 }
@@ -53,13 +61,9 @@ export async function overrideKartu(kartu: Kartu): Promise<Kartu> {
     alasan: [...kartu.alasan, 'Override manual oleh petugas'],
   };
   await updateKartu(updated);
-  const chain = await getChain();
-  await setChain(
-    appendEntry(
-      chain,
-      { kartuId: updated.id, tier: updated.tier, stdbStatus: updated.stdbStatus, override: true },
-      now,
-    ),
+  await commitEntry(
+    { kartuId: updated.id, tier: updated.tier, stdbStatus: updated.stdbStatus, override: true },
+    now,
   );
   const petani = (await getPetani()).find(p => p.id === updated.petaniId);
   await enqueueWa(

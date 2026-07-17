@@ -13,7 +13,16 @@ beforeEach(async () => {
 });
 
 const seed = () =>
-  prosesPlotBaru({ nama: 'Bu Sari', desa: 'D', telepon: '08', komoditas: 'kopi', lat: -7.15, lng: 107.62, gpsAccuracyM: 5 });
+  prosesPlotBaru({
+    nama: 'Bu Sari',
+    desa: 'D',
+    telepon: '08',
+    komoditas: 'kopi',
+    lat: -7.15,
+    lng: 107.62,
+    gpsAccuracyM: 5,
+    punyaSTDB: true,
+  });
 
 test('access with consent is authorized, no notif', async () => {
   const k = await seed();
@@ -37,8 +46,30 @@ test('unauthorized access queues a WhatsApp alert naming the party', async () =>
   const k = await seed();
   enqueueWaMock.mockClear();
   await simulateAccess(k.id, 'Eksportir X');
-  expect(enqueueWaMock).toHaveBeenCalledTimes(1);
+  expect(enqueueWaMock).toHaveBeenCalledTimes(2);
   expect(enqueueWaMock.mock.calls[0][0]).toMatch(/Eksportir X/);
+});
+
+test('unauthorized access also alerts the farmer herself, naming the party', async () => {
+  const k = await seed();
+  enqueueWaMock.mockClear();
+  await simulateAccess(k.id, 'Eksportir X');
+  const [text, chatId] = enqueueWaMock.mock.calls[1];
+  expect(chatId).toBe('628@c.us');
+  expect(text).toMatch(/Eksportir X/);
+});
+
+test('unauthorized access on a kartu with no phone on file alerts only the officer', async () => {
+  const k = await prosesPlotBaru({
+    nama: 'Tanpa Telepon',
+    komoditas: 'kopi',
+    lat: -7.15,
+    lng: 107.62,
+    punyaSTDB: true,
+  });
+  enqueueWaMock.mockClear();
+  await simulateAccess(k.id, 'Eksportir X');
+  expect(enqueueWaMock).toHaveBeenCalledTimes(1);
 });
 
 test('authorized access queues no WhatsApp message', async () => {

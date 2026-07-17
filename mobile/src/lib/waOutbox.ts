@@ -8,16 +8,17 @@ export interface FlushResult {
 }
 
 /**
- * Queues a WhatsApp message for the officer. Never throws: a notification must
- * not be able to fail the plot/consent write that triggered it.
+ * Queues a WhatsApp message for `chatId`, or the officer when omitted. Never
+ * throws: a notification must not be able to fail the plot/consent write that
+ * triggered it.
  */
-export async function enqueueWa(text: string): Promise<void> {
+export async function enqueueWa(text: string, chatId?: string): Promise<void> {
   try {
-    const chatId = officerChatId();
-    if (!isWaConfigured() || !chatId) return;
+    const target = chatId ?? officerChatId();
+    if (!isWaConfigured() || !target) return;
     await addWaOutbox({
       id: newId(),
-      chatId,
+      chatId: target,
       text,
       status: 'pending',
       attempts: 0,

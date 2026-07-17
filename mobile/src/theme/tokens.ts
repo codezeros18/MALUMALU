@@ -30,3 +30,8 @@ export const spacing = {
   lg: 24,
   xl: 32,
 };
+
+export const radius = {
+  input: 8,
+  card: 12,
+};
