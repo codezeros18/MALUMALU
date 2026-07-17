@@ -1151,3 +1151,99 @@ RLS append-only `hashchain`/`access_log`/`petani_document` — **ketiganya SUDAH
   transaksi terverifikasi nyata per kombinasi komoditas×wilayah×grade — belum ada
   transaksi nyata yang direkam per penulisan ini (memang seharusnya begitu, bukan bug —
   guard ini sengaja mencegah angka menyesatkan dari sampel kosong).
+
+---
+
+## Perbaikan Pasca-Sprint-22 — Poligon-Only, Paket Bukti EUDR, Kelanjutan "Hubungi"
+
+**Kenapa**: tiga permintaan user, dieksekusi via sesi Plan Mode eksplisit.
+
+1. **Simplifikasi Tambah Plot**: user menilai mode "Titik Tunggal" tidak diperlukan —
+   poligon (batas kebun sungguhan) langsung jadi satu-satunya alur, lebih "to the
+   point". Sekalian ditambah input koordinat manual (lat/lng angka langsung) sebagai
+   cara ketiga menambah titik poligon, selain tap peta & GPS — lebih cepat & presisi
+   daripada tap di peta 3D miring, terutama untuk demo/testing.
+2. **Bug data (bukan bug kode)**: user melaporkan "Cek Harga Referensi" tidak
+   menemukan transaksi yang jelas-jelas sudah direkam. Dikonfirmasi lewat cek langsung
+   ke Supabase: transaksi itu tersimpan dengan wilayah `"Pangelangan"` (typo — bukan
+   "Pangalengan"). Filter exact-match memang sengaja ketat (menghindari fuzzy-match
+   yang bisa diam-diam mencampur wilayah berbeda) — solusinya autocomplete, bukan
+   melonggarkan filter.
+3. **Paket Bukti Uji Tuntas (EUDR)**: user menanyakan apakah benar ada syarat dokumen
+   untuk EUDR — dikonfirmasi BENAR (`docs/01_BLUEPRINT_FULL.md` baris 89 sudah mencatat
+   ini sejak awal proyek). Dibangun fitur yang MERANGKUM data yang sudah ada (geolokasi,
+   status deforestasi, legalitas dokumen, integritas hash-chain) jadi satu dokumen
+   unduh untuk eksportir — dengan disclosure eksplisit ini dokumen PENDUKUNG, bukan DDS
+   resmi (petani/platform tidak mengajukan DDS ke sistem UE, itu tetap tanggung jawab
+   operator/eksportir).
+4. **Kelanjutan "Hubungi"**: user menunjukkan bahwa setelah `attemptAccess()` return
+   `authorized: true`, hasilnya cuma teks "Akses diizinkan" tanpa cara benar-benar
+   menghubungi — buntu, tidak ada kelanjutan nyata.
+
+**Keputusan dikonfirmasi user** (AskUserQuestion sebelum plan ditulis): Paket EUDR
+**digerbang di belakang consent** (baru bisa diunduh SETELAH "Hubungi" berhasil, pola
+sama seperti nomor kontak) — `attemptAccess()`/`isAuthorized()` tetap satu-satunya
+jalur akses ke data sensitif petani, tidak ada pintu belakang baru. Cakupan: **hanya
+`/eksportir/terdekat` dulu**, dashboard Eksportir utama tidak disentuh.
+
+**Dibangun**:
+
+1. **`src/pages/TambahPlot.tsx`** — mode toggle "Titik Tunggal"/"Poligon" DIHAPUS,
+   poligon jadi satu-satunya alur. `src/components/PolygonDrawer.tsx` — tambah input
+   koordinat manual (dua `Input type="number"` + tombol "Tambah Titik", validasi
+   rentang lat -90..90/lng -180..180) sebagai cara ketiga menambah titik selain
+   GPS/tap peta. `src/components/PlotForm.tsx` — teks kosong-koordinat diubah jadi
+   "Selesaikan poligon batas kebun di atas dulu" (sebelumnya menyebut "Pakai GPS" yang
+   sudah tidak relevan).
+2. **`src/pages/HargaReferensi.tsx`** — `<datalist>` HTML native (zero dependency)
+   untuk field Wilayah di form "Rekam Transaksi" (dari `ownTransaksi` lokal) dan "Cek
+   Harga Referensi" (dari hasil fetch Supabase terakhir). Input tetap bebas ketik —
+   datalist cuma saran, tidak memaksa dropdown. Data lama yang sudah salah ketik
+   ("Pangelangan") SENGAJA tidak diubah otomatis (keputusan user, bukan diam-diam
+   dimodifikasi).
+3. **`src/pages/PetaniTerdekat.tsx`** — `contactResult` diubah dari `Record<string,
+   string>` jadi `Record<string, {authorized: boolean; message: string}>` supaya ada
+   sinyal boolean eksplisit (bukan cuma teks) untuk nge-gate kelanjutan. Setelah
+   `authorized: true`: tampilkan nomor telepon petani + tombol "Chat WhatsApp" (link
+   `https://wa.me/<nomor>`, REUSE `normalizePhone()` dari `lib/waha.ts` yang sudah ada
+   untuk notif akses-tanpa-izin — TIDAK perlu WAHA server untuk ini, `wa.me` deep-link
+   dibuka manual oleh Eksportir, bukan pesan otomatis) + link "Lihat Paket Bukti EUDR".
+   Kalau `petani.telepon` kosong: pesan jujur "hubungi lewat Agen pendamping".
+4. **`src/pages/PaketBuktiEudr.tsx`** (BARU), rute `/eksportir/paket/:kartuId` —
+   **guard akses ganda**: halaman ini sendiri panggil `isAuthorized(kartuId,
+   'Eksportir')` (REUSE `lib/consent.ts`, tidak ada jalur akses baru) saat dimuat,
+   SEBELUM fetch data apa pun — supaya akses langsung lewat URL (bukan cuma lewat
+   tombol) tetap tertolak kalau belum ada consent. Isi paket 100% REUSE data & fungsi
+   yang sudah ada: `getPolygonRisk()` (Sprint 19, dihitung ulang saat unduh karena tidak
+   pernah disimpan), `getDocumentCompleteness()` + `DocumentUpload` `readOnly` (Sprint
+   16), `HashChainViewer` `entries`+`readOnly` dikelompokkan per-`agentId` (pola sama
+   `EksportirDashboard.tsx`), `KartuCard` `readOnly`, QR code (pola `PassportCard.tsx`).
+   Disclosure permanen (tidak bisa disembunyikan): "Dokumen pendukung... BUKAN Due
+   Diligence Statement resmi. Pengajuan DDS ke sistem UE tetap tanggung jawab
+   operator/eksportir." Tombol "Cetak/Unduh PDF" → `window.print()` (pola sama
+   `PetaniPortal.tsx`, `.no-print` class yang sudah ada di `index.css`).
+
+**Verifikasi nyata (Playwright, 2 browser context terpisah)**:
+- **Guard ganda dibuktikan dengan kartu SUNGGUHAN tanpa consent** (bukan reuse kartu
+  yang consent-nya sudah diberikan sebelumnya di test yang sama — percobaan pertama
+  salah desain begitu, keliru mengira consent itu per-sesi padahal per-nama-pihak;
+  diperbaiki dengan membuat petani B terpisah tanpa consent sama sekali): akses
+  langsung `/eksportir/paket/:kartuId` untuk kartu TANPA consent → **"Akses ditolak"**.
+- Petani A (consent sudah diberikan): link "Lihat Paket Bukti EUDR" **TIDAK muncul**
+  sebelum klik Hubungi (regresi gate) → klik Hubungi → nomor telepon + tombol "Chat
+  WhatsApp" muncul dengan link `wa.me/62...` format benar → link paket EUDR muncul →
+  dibuka → semua bagian tampil (disclosure, geolokasi, legalitas dokumen, hash-chain,
+  QR). Nol console error.
+- Mode poligon-only: toggle "Titik Tunggal" dikonfirmasi TIDAK ADA lagi, UI poligon
+  langsung aktif. Input koordinat manual: 3 titik ditambah via ketik angka (tanpa tap
+  peta sama sekali) → estimasi luas muncul → validasi rentang (lat 200 → ditolak) →
+  plot berhasil disimpan.
+- Datalist wilayah: rekam transaksi baru dengan wilayah "Wilayah Datalist Test" →
+  datalist di form yang sama langsung berisi nilai itu untuk transaksi berikutnya.
+- `tsc -b --noEmit` + `npm run build` + `ruleEngine.test-cases.ts` — semua bersih/PASS
+  (nol regresi ke tier/STDB, tidak disentuh sama sekali oleh perubahan ini).
+
+**Sengaja TIDAK dikerjakan**: paket EUDR di Dashboard Eksportir utama (`/eksportir`,
+hanya di Petani Terdekat sesuai keputusan user); normalisasi otomatis wilayah yang
+sudah salah ketik (datalist cuma cegah typo baru); WAHA otomatis untuk kontak
+Eksportir→Petani (pakai `wa.me` manual, bukan pesan terkirim sendiri).
