@@ -1,16 +1,28 @@
+import { lazy, Suspense } from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import Home from './pages/Home';
 import PetaniList from './pages/PetaniList';
 import PlotDetail from './pages/PlotDetail';
 import Login from './pages/Login';
 import TentangKami from './pages/TentangKami';
-import EksportirDashboard from './pages/EksportirDashboard';
-import PetaniTerdekat from './pages/PetaniTerdekat';
-import PetaniPortal from './pages/PetaniPortal';
 import RequireRole from './components/RequireRole';
 import NotifBanner from './components/NotifBanner';
 import DashboardShell from './components/DashboardShell';
+import PageLoader from './components/ui/PageLoader';
 import { AppProvider, useAppContext } from './context/AppContext';
+
+// Lazy-loaded: hanya inti halaman dashboard (Agen/Petani/Eksportir) yang ditunda
+// muat & dibungkus Suspense di bawah — navbar/sidebar DashboardShell TIDAK ikut
+// re-render/reload saat berpindah halaman karena berada di luar boundary Suspense ini.
+const Home = lazy(() => import('./pages/Home'));
+const TambahPlot = lazy(() => import('./pages/TambahPlot'));
+const PetaniList = lazy(() => import('./pages/PetaniList'));
+const PlotDetail = lazy(() => import('./pages/PlotDetail'));
+const EksportirDashboard = lazy(() => import('./pages/EksportirDashboard'));
+const PetaniTerdekat = lazy(() => import('./pages/PetaniTerdekat'));
+const PetaniPortal = lazy(() => import('./pages/PetaniPortal'));
+const HargaReferensi = lazy(() => import('./pages/HargaReferensi'));
+const PaketBuktiEudr = lazy(() => import('./pages/PaketBuktiEudr'));
 
 function AppShell() {
   const { currentRole, setRole } = useAppContext();

@@ -9,6 +9,7 @@ import type {
   AccessLog,
   NotifItem,
   PetaniDocument,
+  Transaksi,
 } from '../types';
 import { getItem, setItem } from './storage';
 
@@ -22,7 +23,8 @@ export type SyncEntityType =
   | 'consent'
   | 'accessLog'
   | 'notif'
-  | 'petaniDocument';
+  | 'petaniDocument'
+  | 'transaksi';
 
 export interface SyncQueueItem {
   id: string;
@@ -77,44 +79,70 @@ interface PasporPetaniDB extends DBSchema {
     value: PetaniDocument;
     indexes: { 'by-petani': string };
   };
+  transaksi: {
+    key: string;
+    value: Transaksi;
+  };
 }
 
 const DB_NAME = 'paspor-petani';
-const DB_VERSION = 3;
+const DB_VERSION = 5;
 
 let dbPromise: Promise<IDBPDatabase<PasporPetaniDB>> | null = null;
 
 export function getDB(): Promise<IDBPDatabase<PasporPetaniDB>> {
   if (!dbPromise) {
     dbPromise = openDB<PasporPetaniDB>(DB_NAME, DB_VERSION, {
+      // Setiap createObjectStore dijaga dengan objectStoreNames.contains() (bukan cuma
+      // digerbang oldVersion < N) -- kalau versi tercatat di IndexedDB browser pernah
+      // "kepakai" (mis. koneksi lama sempat naik versi sebelum store baru selesai dibuat,
+      // upgrade sempat gagal di tengah jalan) tanpa store yang seharusnya ikut terbuat,
+      // upgrade berikutnya tetap bisa self-heal alih-alih permanen macet dengan store hilang.
       upgrade(db, oldVersion) {
         if (oldVersion < 1) {
-          db.createObjectStore('petani', { keyPath: 'id' });
-
-          const plotStore = db.createObjectStore('plot', { keyPath: 'id' });
-          plotStore.createIndex('by-petani', 'petaniId');
-
-          const kartuStore = db.createObjectStore('kartu', { keyPath: 'id' });
-          kartuStore.createIndex('by-plot', 'plotId');
-          kartuStore.createIndex('by-petani', 'petaniId');
-
-          const hashchainStore = db.createObjectStore('hashchain', { keyPath: 'id' });
-          hashchainStore.createIndex('by-index', 'index');
-
-          const consentStore = db.createObjectStore('consent', { keyPath: 'id' });
-          consentStore.createIndex('by-kartu', 'kartuId');
-
-          const accessLogStore = db.createObjectStore('accessLog', { keyPath: 'id' });
-          accessLogStore.createIndex('by-kartu', 'kartuId');
-
-          db.createObjectStore('notif', { keyPath: 'id' });
+          if (!db.objectStoreNames.contains('petani')) {
+            db.createObjectStore('petani', { keyPath: 'id' });
+          }
+          if (!db.objectStoreNames.contains('plot')) {
+            const plotStore = db.createObjectStore('plot', { keyPath: 'id' });
+            plotStore.createIndex('by-petani', 'petaniId');
+          }
+          if (!db.objectStoreNames.contains('kartu')) {
+            const kartuStore = db.createObjectStore('kartu', { keyPath: 'id' });
+            kartuStore.createIndex('by-plot', 'plotId');
+            kartuStore.createIndex('by-petani', 'petaniId');
+          }
+          if (!db.objectStoreNames.contains('hashchain')) {
+            const hashchainStore = db.createObjectStore('hashchain', { keyPath: 'id' });
+            hashchainStore.createIndex('by-index', 'index');
+          }
+          if (!db.objectStoreNames.contains('consent')) {
+            const consentStore = db.createObjectStore('consent', { keyPath: 'id' });
+            consentStore.createIndex('by-kartu', 'kartuId');
+          }
+          if (!db.objectStoreNames.contains('accessLog')) {
+            const accessLogStore = db.createObjectStore('accessLog', { keyPath: 'id' });
+            accessLogStore.createIndex('by-kartu', 'kartuId');
+          }
+          if (!db.objectStoreNames.contains('notif')) {
+            db.createObjectStore('notif', { keyPath: 'id' });
+          }
         }
         if (oldVersion < 2) {
-          db.createObjectStore('syncQueue', { keyPath: 'id' });
+          if (!db.objectStoreNames.contains('syncQueue')) {
+            db.createObjectStore('syncQueue', { keyPath: 'id' });
+          }
         }
         if (oldVersion < 3) {
-          const documentStore = db.createObjectStore('petaniDocument', { keyPath: 'id' });
-          documentStore.createIndex('by-petani', 'petaniId');
+          if (!db.objectStoreNames.contains('petaniDocument')) {
+            const documentStore = db.createObjectStore('petaniDocument', { keyPath: 'id' });
+            documentStore.createIndex('by-petani', 'petaniId');
+          }
+        }
+        if (oldVersion < 5) {
+          if (!db.objectStoreNames.contains('transaksi')) {
+            db.createObjectStore('transaksi', { keyPath: 'id' });
+          }
         }
       },
       // Tab lain (mis. sesi lama sebelum penambahan store petaniDocument di sprint ini)
@@ -235,6 +263,7 @@ const SYNC_STORE_BY_ENTITY_TYPE = {
   accessLog: 'accessLog',
   notif: 'notif',
   petaniDocument: 'petaniDocument',
+  transaksi: 'transaksi',
 } as const;
 
 // Tandai entity lokal sebagai 'synced' setelah backend.upsert() sukses (dipanggil dari
@@ -663,6 +692,37 @@ export async function markDocumentVerified(id: string): Promise<PetaniDocument> 
     return updated;
   } catch (err) {
     throw dbError('markDocumentVerified', err);
+  }
+}
+
+// ===== TRANSAKSI (Sprint 20 — harga referensi) =====
+
+export async function addTransaksi(
+  input: Omit<Transaksi, 'id' | 'createdAt'>,
+): Promise<Transaksi> {
+  try {
+    const db = await getDB();
+    const transaksi: Transaksi = {
+      ...input,
+      id: nanoid(),
+      createdAt: Date.now(),
+      agentId: input.agentId ?? getDeviceAgentId(),
+      syncStatus: 'local',
+    };
+    await db.put('transaksi', transaksi);
+    await enqueueSync('transaksi', transaksi.id, 'create', transaksi);
+    return transaksi;
+  } catch (err) {
+    throw dbError('addTransaksi', err);
+  }
+}
+
+export async function listTransaksi(): Promise<Transaksi[]> {
+  try {
+    const db = await getDB();
+    return await db.getAll('transaksi');
+  } catch (err) {
+    throw dbError('listTransaksi', err);
   }
 }
 

@@ -1,7 +1,7 @@
 import Map3D, { type Map3DMarker } from './Map3D';
 
 const PANGALENGAN_CENTER = { lat: -7.15, lng: 107.62 };
-const DEFAULT_ZOOM = 12;
+const DEFAULT_ZOOM = 11;
 
 interface NearbyMarker {
   id: string;

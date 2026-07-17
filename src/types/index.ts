@@ -28,12 +28,16 @@ export interface Petani extends Syncable {
 export interface Plot extends Syncable {
   id: string;
   petaniId: string;
-  lat: number;
+  lat: number; // titik representatif — centroid poligon kalau boundary ada, atau titik tunggal
   lng: number;
   komoditas: string; // default: "kopi"
-  luasEstimasiHa?: number;
+  luasEstimasiHa?: number; // dihitung otomatis dari boundary kalau ada (lihat lib/polygon.ts)
   gpsAccuracyM?: number; // akurasi GPS (meter)
   capturedAt: number;
+  // Batas kebun hasil jalan-keliling-sudut Agen (opsional — plot lama/titik-tunggal
+  // tidak punya ini). Minimal 3 titik kalau ada. Lihat lib/polygon.ts untuk cara
+  // hitung centroid & luas darinya.
+  boundary?: { lat: number; lng: number }[];
 }
 
 export type DeforestasiStatus = 'aman' | 'berisiko' | 'perlu-audit';
@@ -130,4 +134,19 @@ export interface PetaniDocument extends Syncable {
   uploadedAt: number;
   verified: boolean; // dikonfirmasi petugas/koperasi secara manual, bukan otomatis
   notes?: string;
+}
+
+// ===== TRANSAKSI & HARGA REFERENSI (Sprint 20 — lihat docs/09_UPGRADE_BLUEPRINT.md §4.2)
+// Harga referensi = AGREGAT transparan dari transaksi terverifikasi, BUKAN angka yang
+// diset satu pihak (eksportir) — ini yang melindungi petani dari harga sepihak/menipu.
+
+export interface Transaksi extends Syncable {
+  id: string;
+  komoditas: string;
+  wilayah: string;
+  grade: string; // boleh kosong ('') kalau komoditas tidak punya pemisahan grade
+  hargaPerKg: number; // Rupiah
+  tanggal: string; // YYYY-MM-DD
+  verified: boolean; // dikonfirmasi Agen di lapangan saat rekam transaksi
+  createdAt: number;
 }

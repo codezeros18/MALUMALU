@@ -2,6 +2,8 @@ import { useState, type FormEvent } from 'react';
 import Card from './ui/Card';
 import Button from './ui/Button';
 import Input from './ui/Input';
+import Select from './ui/Select';
+import { KOMODITAS_OPTIONS, KOMODITAS_LAINNYA } from '../lib/komoditas';
 
 export interface PlotFormValues {
   nama: string;
@@ -36,9 +38,13 @@ export default function PlotForm({
   const [desa, setDesa] = useState('');
   const [telepon, setTelepon] = useState('');
   const [komoditas, setKomoditas] = useState('kopi');
+  const [komoditasLainnya, setKomoditasLainnya] = useState('');
   const [email, setEmail] = useState('');
 
-  const canSubmit = Boolean(position) && nama.trim().length > 0 && !submitting;
+  const isLainnya = komoditas === KOMODITAS_LAINNYA;
+  const komoditasFinal = isLainnya ? komoditasLainnya.trim() : komoditas;
+  const canSubmit =
+    Boolean(position) && nama.trim().length > 0 && komoditasFinal.length > 0 && !submitting;
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -47,13 +53,14 @@ export default function PlotForm({
       nama: nama.trim(),
       desa: desa.trim(),
       telepon: telepon.trim(),
-      komoditas,
+      komoditas: komoditasFinal,
       email: email.trim(),
     });
     setNama('');
     setDesa('');
     setTelepon('');
     setKomoditas('kopi');
+    setKomoditasLainnya('');
     setEmail('');
   };
 
@@ -138,6 +145,7 @@ export default function PlotForm({
           className="w-full text-base"
           placeholder="Opsional — dipakai petani untuk lihat data sendiri di Portal Petani"
         />
+        <p className="text-xs text-slate-400 mt-1">Dipakai petani untuk lihat data sendiri di Portal Petani.</p>
       </div>
 
       <Button type="submit" disabled={!canSubmit} fullWidth size="md" className="py-3 text-base font-bold mt-2">
