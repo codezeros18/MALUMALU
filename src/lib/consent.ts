@@ -7,6 +7,7 @@ import {
   getKartu,
   getPetani,
 } from './db';
+import { supabaseBackend, fromSupabaseRow } from './sync';
 import {
   isWahaEnabled,
   sendWhatsAppText,
@@ -27,14 +28,40 @@ export async function revokeConsent(consentId: string): Promise<void> {
   await dbRevokeConsent(consentId);
 }
 
+// Dipakai ConsentPanel.tsx (grant/revoke/lihat izin) — SENGAJA tetap baca LOKAL saja,
+// bukan Supabase. Ini alur "device yang sama baru saja menulis, langsung baca balik" —
+// kalau dialihkan ke Supabase, ada jeda sinkron outbox yang bikin izin yang BARU SAJA
+// diberikan sempat tidak kelihatan (stale read). Beda kasus dengan isAuthorized() di
+// bawah, yang justru BUTUH baca lintas-device.
 export async function listActiveConsents(kartuId: string): Promise<ConsentRecord[]> {
   const all = await listConsentByKartu(kartuId);
   return all.filter((consent) => !consent.revokedAt);
 }
 
+// Ambil consent aktif dari Supabase (Sprint 21 — lintas-device). Dipakai HANYA oleh
+// isAuthorized() di bawah, bukan ConsentPanel.tsx, supaya UI grant/revoke tetap instan
+// (lihat catatan di listActiveConsents).
+async function fetchActiveConsentsRemote(kartuId: string): Promise<ConsentRecord[]> {
+  const rows = await supabaseBackend.fetchAll('consent');
+  const all = rows.map((r) => fromSupabaseRow<ConsentRecord>(r));
+  return all.filter((c) => c.kartuId === kartuId && !c.revokedAt);
+}
+
+// Cek izin akses — INI yang perlu bekerja LINTAS-DEVICE (mis. Eksportir di laptop
+// kantor mengecek izin yang diberikan Agen di HP lapangan, lihat catatan arsitektur
+// docs/07 §2.2 dan docs/09 §4.3). Baca dari Supabase dulu (sumber kebenaran bersama);
+// FALLBACK ke IndexedDB lokal kalau gagal (offline/network error) — supaya app tetap
+// bisa menilai akses walau tanpa internet, mengorbankan visibilitas lintas-device untuk
+// sementara (bukan gagal total).
 export async function isAuthorized(kartuId: string, who: string): Promise<boolean> {
-  const active = await listActiveConsents(kartuId);
   const target = who.trim().toLowerCase();
+  let active: ConsentRecord[];
+  try {
+    active = await fetchActiveConsentsRemote(kartuId);
+  } catch (err) {
+    console.warn('[consent] gagal cek consent via Supabase (offline/network), fallback ke lokal', err);
+    active = await listActiveConsents(kartuId);
+  }
   return active.some((consent) => consent.grantedTo.trim().toLowerCase() === target);
 }
 

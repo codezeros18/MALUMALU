@@ -5,33 +5,47 @@ import { createServer, IncomingMessage, ServerResponse } from 'http';
 import { handlePriceMessage } from '../src/lib/harga/bot';
 import { SAMPLE_PRICE_SOURCES } from '../src/lib/harga/prices';
 import { sendText, toChatId } from '../src/lib/waha';
-import { parseInboundWebhook, shouldRespond } from './webhookParser';
+import { parseInboundWebhook, shouldRespond, readBody, PayloadTooLargeError } from './webhookParser';
+import { lookupPasporByPhoneSupabase } from './pasporLookupSupabase';
+import { fetchTransaksiPriceSources } from './transaksiSource';
+import { isSupabaseConfigured } from './supabaseRest';
+import type { PriceSource } from '../src/lib/harga/types';
 
 const PORT = Number(process.env.WEBHOOK_PORT) || 3001;
-// Payload webhook WAHA (pesan teks + metadata) biasanya beberapa KB; 100kb
-// jauh lebih dari cukup dan mencegah body tak terbatas (memory exhaustion).
-const MAX_BODY_BYTES = 100 * 1024;
 
-class PayloadTooLargeError extends Error {}
+// Sumber harga: coba data transaksi NYATA (Sprint 20, via Supabase) dulu — fallback ke
+// SAMPLE_PRICE_SOURCES (berlabel DATA DEMO secara eksplisit di komentar prices.ts) kalau
+// Supabase belum dikonfigurasi, fetch gagal, atau tabel masih kosong. Tidak pernah
+// mengklaim data sample sebagai data nyata (prinsip Sprint 20: agregat transparan atau
+// jujur berlabel demo, bukan overclaim).
+async function resolvePriceSources(): Promise<{ sources: PriceSource[]; isDemo: boolean }> {
+  if (!isSupabaseConfigured()) {
+    return { sources: SAMPLE_PRICE_SOURCES, isDemo: true };
+  }
+  try {
+    const real = await fetchTransaksiPriceSources();
+    if (real.length === 0) {
+      return { sources: SAMPLE_PRICE_SOURCES, isDemo: true };
+    }
+    return { sources: real, isDemo: false };
+  } catch (e) {
+    console.error('wahaWebhookServer: gagal ambil transaksi dari Supabase, fallback ke DATA DEMO', e);
+    return { sources: SAMPLE_PRICE_SOURCES, isDemo: true };
+  }
+}
 
-function readBody(req: IncomingMessage): Promise<string> {
-  return new Promise((resolve, reject) => {
-    let raw = '';
-    let bytes = 0;
-    let rejected = false;
-    req.on('data', chunk => {
-      if (rejected) return; // sudah ditolak — biarkan sisa data mengalir & drop, jangan putus socket
-      bytes += chunk.length;
-      if (bytes > MAX_BODY_BYTES) {
-        rejected = true;
-        reject(new PayloadTooLargeError());
-        return;
-      }
-      raw += chunk;
-    });
-    req.on('end', () => { if (!rejected) resolve(raw); });
-    req.on('error', reject);
-  });
+// Nudge "Paspor lengkap": lookup lewat Supabase (server standalone ini tidak bisa
+// menjangkau AsyncStorage milik app Expo — lihat pasporLookupSupabase.ts). Fail-soft:
+// kalau Supabase belum dikonfigurasi atau lookup gagal, bot tetap balas harga TANPA
+// nudge, bukan gagal total.
+async function resolvePasporLookup(telepon: string) {
+  if (!isSupabaseConfigured()) return null;
+  try {
+    return await lookupPasporByPhoneSupabase(telepon);
+  } catch (e) {
+    console.error('wahaWebhookServer: lookup Paspor gagal (fail-soft, balas tanpa nudge)', e);
+    return null;
+  }
 }
 
 async function handleWebhook(req: IncomingMessage, res: ServerResponse): Promise<void> {
@@ -39,11 +53,16 @@ async function handleWebhook(req: IncomingMessage, res: ServerResponse): Promise
   try {
     raw = await readBody(req);
   } catch (e) {
-    const status = e instanceof PayloadTooLargeError ? 413 : 400;
-    res.writeHead(status, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ error: e instanceof PayloadTooLargeError ? 'Payload too large' : 'Bad request' }));
+    if (e instanceof PayloadTooLargeError) {
+      res.writeHead(413, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'payload too large' }));
+    } else {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'bad request' }));
+    }
     return;
   }
+
   // Balas WAHA lebih dulu (WAHA tidak menunggu balasan kita untuk lanjut).
   res.writeHead(200, { 'Content-Type': 'application/json' });
   res.end(JSON.stringify({ ok: true }));
@@ -58,10 +77,15 @@ async function handleWebhook(req: IncomingMessage, res: ServerResponse): Promise
   const inbound = parseInboundWebhook(payload);
   if (!inbound || !shouldRespond(inbound.body)) return;
 
-  // NB: tanpa lookup Paspor — server ini tidak bisa membaca AsyncStorage milik
-  // app mobile. Lihat pasporLookup.ts untuk catatan penggantian ke datastore
-  // platform saat bot berjalan di backend terpisah.
-  const reply = handlePriceMessage(inbound.body, inbound.telepon, SAMPLE_PRICE_SOURCES);
+  const [{ sources, isDemo }, pasporStatus] = await Promise.all([
+    resolvePriceSources(),
+    resolvePasporLookup(inbound.telepon),
+  ]);
+  if (isDemo) {
+    console.info('wahaWebhookServer: membalas dengan DATA DEMO (belum ada transaksi terverifikasi nyata)');
+  }
+
+  const reply = handlePriceMessage(inbound.body, inbound.telepon, sources, () => pasporStatus);
   try {
     await sendText(toChatId(inbound.telepon), reply.text);
   } catch (e) {
@@ -71,7 +95,7 @@ async function handleWebhook(req: IncomingMessage, res: ServerResponse): Promise
 
 createServer((req, res) => {
   if (req.method === 'POST' && req.url === '/webhook') {
-    handleWebhook(req, res).catch(e => console.error('wahaWebhookServer: error', e));
+    handleWebhook(req, res).catch((e) => console.error('wahaWebhookServer: error', e));
     return;
   }
   res.writeHead(404).end();

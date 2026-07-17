@@ -42,6 +42,12 @@ export function filterSources(
  * Agregasi berbobot: avg = Σ(price·txnCount)/Σ(txnCount). low/high dari
  * min/max harga sumber (hanya yang punya txnCount > 0). txnCount hasil adalah
  * total transaksi terverifikasi (sumber eksternal tanpa txn dihitung 0).
+ *
+ * Filter komoditas + wilayah + grade — bukan cuma grade (sesuai signature fungsi
+ * ini). Sebelumnya `komoditas`/`wilayah` diterima tapi tak dipakai menyaring
+ * `sources`, hanya diteruskan ke output — jalur produksi lewat getReferencePrice()
+ * tetap benar karena filterSources() sudah menyaring duluan, tapi aggregateDaily()
+ * sendiri jadi tidak aman dipanggil langsung dengan data campuran komoditas/wilayah.
  */
 export function aggregateDaily(
   sources: PriceSource[],

@@ -9,7 +9,7 @@ import {
   LayoutDashboard,
   LogOut,
   Navigation,
-  Search,
+  TrendingUp,
   Users,
 } from 'lucide-react';
 import type { Role } from '../context/AppContext';
@@ -47,6 +47,7 @@ const NAV_BY_ROLE: Record<Role, NavGroup[]> = {
       items: [
         { label: 'Ringkasan', to: '/agen', icon: LayoutDashboard },
         { label: 'Data Petani', to: '/agen/petani', icon: Users },
+        { label: 'Harga Referensi', to: '/agen/harga', icon: TrendingUp },
       ],
     },
   ],
@@ -62,6 +63,7 @@ const NAV_BY_ROLE: Record<Role, NavGroup[]> = {
       items: [
         { label: 'Dashboard', to: '/eksportir', icon: BarChart3 },
         { label: 'Petani Terdekat', to: '/eksportir/terdekat', icon: Navigation },
+        { label: 'Harga Referensi', to: '/eksportir/harga', icon: TrendingUp },
       ],
     },
   ],
@@ -132,18 +134,6 @@ export default function DashboardShell({ currentRole, onGantiRole, children }: D
   const location = useLocation();
   const groups = NAV_BY_ROLE[currentRole];
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
-  const searchRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
-        e.preventDefault();
-        searchRef.current?.focus();
-      }
-    };
-    document.addEventListener('keydown', handler);
-    return () => document.removeEventListener('keydown', handler);
-  }, []);
 
   const allItems = groups.flatMap((g) => g.items);
   const matchedItem = allItems
@@ -190,22 +180,7 @@ export default function DashboardShell({ currentRole, onGantiRole, children }: D
 
       <div className="flex-1 min-h-0 flex">
         <aside className="no-print w-60 shrink-0 border-r border-slate-200 flex flex-col overflow-y-auto">
-          <div className="px-3 pt-4 pb-2">
-            <div className="relative">
-              <Search size={15} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input
-                ref={searchRef}
-                type="text"
-                placeholder="Cari halaman..."
-                className="w-full text-[13px] bg-slate-50 border border-slate-200 rounded-md pl-8 pr-12 py-1.5 text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-brand-400 transition-colors"
-              />
-              <kbd className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 bg-white border border-slate-200 rounded px-1 py-0.5">
-                Ctrl K
-              </kbd>
-            </div>
-          </div>
-
-          <nav className="flex-1 px-3 pb-4 space-y-4">
+          <nav className="flex-1 px-3 pt-4 pb-4 space-y-4">
             {groups.map((group) => {
               const collapsed = collapsedGroups[group.heading];
               return (

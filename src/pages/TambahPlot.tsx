@@ -2,30 +2,25 @@ import { useEffect, useState } from 'react';
 import { Plus } from 'lucide-react';
 import MapView from '../components/MapView';
 import PlotForm, { type PlotFormValues } from '../components/PlotForm';
+import PolygonDrawer from '../components/PolygonDrawer';
 import PageHeader from '../components/ui/PageHeader';
 import SectionCard from '../components/ui/SectionCard';
-import { useGeolocation } from '../hooks/useGeolocation';
 import { addPetani, addPlot, listAllPlot } from '../lib/db';
 import { setItem } from '../lib/storage';
+import { computeAreaHa, computeCentroid, type LatLng } from '../lib/polygon';
 import type { Plot } from '../types';
 
 const TIPS = [
-  'Tap langsung di peta 3D, atau pakai tombol "Pakai GPS" untuk koordinat otomatis.',
+  'Jalan ke tiap sudut kebun, catat titik lewat GPS, tap di peta 3D, atau ketik koordinat manual.',
   'Akurasi GPS di bawah kanopi kopi bisa meleset 3–11 m — ini normal, bukan kesalahan.',
   'Data tersimpan lokal dulu di perangkat, lalu disinkron ke Supabase saat online.',
-  'Email petani bersifat opsional, tapi dibutuhkan supaya petani bisa cek datanya sendiri di Portal Petani.',
+  'Email petani (tanpa *) dibutuhkan supaya petani bisa cek datanya sendiri di Portal Petani.',
 ];
 
 export default function TambahPlot() {
-  const {
-    position: gpsPosition,
-    loading: gpsLoading,
-    error: gpsError,
-    request: requestGps,
-  } = useGeolocation();
-
-  const [picked, setPicked] = useState<{ lat: number; lng: number } | null>(null);
-  const [accuracyM, setAccuracyM] = useState<number | null>(null);
+  const [picked, setPicked] = useState<LatLng | null>(null);
+  const [drawingPoints, setDrawingPoints] = useState<LatLng[]>([]);
+  const [polygonFinished, setPolygonFinished] = useState(false);
   const [plots, setPlots] = useState<Plot[]>([]);
   const [saving, setSaving] = useState(false);
   const [savedMessage, setSavedMessage] = useState<string | null>(null);
@@ -35,16 +30,20 @@ export default function TambahPlot() {
     listAllPlot().then(setPlots).catch(console.error);
   }, []);
 
-  useEffect(() => {
-    if (gpsPosition) {
-      setPicked({ lat: gpsPosition.lat, lng: gpsPosition.lng });
-      setAccuracyM(gpsPosition.accuracyM);
-    }
-  }, [gpsPosition]);
+  const resetDrawing = () => {
+    setDrawingPoints([]);
+    setPolygonFinished(false);
+    setPicked(null);
+  };
 
   const handlePickLocation = (lat: number, lng: number) => {
-    setPicked({ lat, lng });
-    setAccuracyM(null); // tap manual -> akurasi GPS tidak berlaku
+    if (polygonFinished) return; // sudah selesai — reset dulu kalau mau ubah
+    setDrawingPoints((prev) => [...prev, { lat, lng }]);
+  };
+
+  const handleFinishPolygon = () => {
+    setPicked(computeCentroid(drawingPoints));
+    setPolygonFinished(true);
   };
 
   const handleSubmit = async (values: PlotFormValues) => {
@@ -64,14 +63,14 @@ export default function TambahPlot() {
         lat: picked.lat,
         lng: picked.lng,
         komoditas: values.komoditas,
-        gpsAccuracyM: accuracyM ?? undefined,
         capturedAt: Date.now(),
+        boundary: drawingPoints,
+        luasEstimasiHa: computeAreaHa(drawingPoints),
       });
       setItem('active-petani-id', petani.id);
       setItem('active-plot-id', plot.id);
       setSavedMessage(`Plot tersimpan untuk ${petani.nama}.`);
-      setPicked(null);
-      setAccuracyM(null);
+      resetDrawing();
       setPlots(await listAllPlot());
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : 'Gagal menyimpan plot.');
@@ -80,6 +79,8 @@ export default function TambahPlot() {
     }
   };
 
+  const areaHa = drawingPoints.length >= 3 ? computeAreaHa(drawingPoints) : 0;
+
   return (
     <div className="max-w-5xl">
       <PageHeader
@@ -87,7 +88,7 @@ export default function TambahPlot() {
         backLabel="Kembali ke Ringkasan"
         icon={Plus}
         title="Tandai Plot Baru"
-        description="Tap peta atau pakai GPS untuk menandai lokasi kebun, lalu isi data petani singkat."
+        description="Jalan ke tiap sudut kebun (atau tap/ketik koordinat) untuk menandai batas kebun, lalu isi data petani singkat."
       />
 
       {savedMessage && (
@@ -101,26 +102,61 @@ export default function TambahPlot() {
         </div>
       )}
 
-      <div className="grid lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <SectionCard title="Lokasi Kebun" description="Tap di peta untuk menandai titik kebun.">
-            <MapView plots={plots} onPickLocation={handlePickLocation} pickedPosition={picked} />
-          </SectionCard>
-        </div>
+      <div className="space-y-6">
+        <SectionCard
+          title="Lokasi Kebun"
+          description="Jalan ke tiap sudut kebun, catat titik lewat GPS, tap di peta, atau ketik koordinat."
+        >
+          <MapView
+            plots={plots}
+            onPickLocation={handlePickLocation}
+            pickedPosition={null}
+            drawingPoints={drawingPoints}
+            className="h-80 sm:h-[28rem]"
+          />
 
-        <div className="space-y-6">
-          <SectionCard title="Data Petani" description="Nama wajib diisi, sisanya opsional.">
-            <PlotForm
-              position={picked}
-              gpsLoading={gpsLoading}
-              gpsError={gpsError}
-              accuracyM={accuracyM}
-              onUseGps={requestGps}
-              onSubmit={handleSubmit}
-              submitting={saving}
-              bare
-            />
-          </SectionCard>
+          {!polygonFinished && (
+            <div className="mt-3">
+              <PolygonDrawer
+                points={drawingPoints}
+                onAddPoint={(p) => setDrawingPoints((prev) => [...prev, p])}
+                onRemoveLast={() => setDrawingPoints((prev) => prev.slice(0, -1))}
+                onFinish={handleFinishPolygon}
+                onReset={resetDrawing}
+                disabled={saving}
+              />
+            </div>
+          )}
+
+          {polygonFinished && (
+            <div className="mt-3 flex items-center justify-between text-sm bg-brand-50 border border-brand-400 rounded-md px-3 py-2">
+              <span className="text-brand-800 font-medium">
+                Poligon selesai — {drawingPoints.length} titik, ~
+                {areaHa < 1 ? `${Math.round(areaHa * 10000)} m²` : `${areaHa.toFixed(2)} ha`}
+              </span>
+              <button type="button" onClick={resetDrawing} className="text-xs text-slate-500 hover:underline">
+                Ubah poligon
+              </button>
+            </div>
+          )}
+        </SectionCard>
+
+        <div className="grid lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
+            <SectionCard title="Data Petani">
+              <PlotForm
+                position={picked}
+                gpsLoading={false}
+                gpsError={null}
+                accuracyM={null}
+                onUseGps={() => {}}
+                onSubmit={handleSubmit}
+                submitting={saving}
+                hideGpsButton
+                bare
+              />
+            </SectionCard>
+          </div>
 
           <SectionCard title="Tips Pengambilan Lokasi">
             <ul className="space-y-2 text-xs text-slate-500 leading-relaxed">

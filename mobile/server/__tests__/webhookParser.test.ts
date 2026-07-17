@@ -1,4 +1,11 @@
-import { parseInboundWebhook, shouldRespond } from '../webhookParser';
+import { EventEmitter } from 'events';
+import {
+  parseInboundWebhook,
+  shouldRespond,
+  readBody,
+  PayloadTooLargeError,
+  MAX_WEBHOOK_BODY_BYTES,
+} from '../webhookParser';
 
 describe('parseInboundWebhook', () => {
   it('extracts telepon (digits only) and body from a WAHA message event', () => {
@@ -14,6 +21,22 @@ describe('parseInboundWebhook', () => {
     const payload = {
       event: 'message',
       payload: { from: '6281234567890@c.us', fromMe: true, body: 'harga kopi Pangalengan' },
+    };
+    expect(parseInboundWebhook(payload)).toBeNull();
+  });
+
+  it('does not skip when fromMe is a non-boolean truthy value (strict === true check)', () => {
+    const payload = {
+      event: 'message',
+      payload: { from: '6281234567890@c.us', fromMe: 'yes', body: 'harga kopi Pangalengan' },
+    };
+    expect(parseInboundWebhook(payload)).toEqual({ telepon: '6281234567890', body: 'harga kopi Pangalengan' });
+  });
+
+  it('ignores group chat messages (@g.us) instead of mangling them into a fake phone number', () => {
+    const payload = {
+      event: 'message',
+      payload: { from: '120363012345678901@g.us', fromMe: false, body: 'harga kopi Pangalengan' },
     };
     expect(parseInboundWebhook(payload)).toBeNull();
   });
@@ -54,6 +77,50 @@ describe('parseInboundWebhook', () => {
       payload: { from: '177743094411494@lid', fromMe: false, body: 'harga kopi Pangalengan' },
     };
     expect(parseInboundWebhook(payload)).toEqual({ telepon: '177743094411494', body: 'harga kopi Pangalengan' });
+  });
+});
+
+describe('readBody', () => {
+  function fakeRequest() {
+    const emitter = new EventEmitter() as EventEmitter & { pause?: () => void };
+    emitter.pause = jest.fn();
+    return emitter;
+  }
+
+  it('resolves with the concatenated body once the stream ends', async () => {
+    const req = fakeRequest();
+    const promise = readBody(req);
+    req.emit('data', Buffer.from('{"event":"message"'));
+    req.emit('data', Buffer.from(',"payload":{}}'));
+    req.emit('end');
+    await expect(promise).resolves.toBe('{"event":"message","payload":{}}');
+  });
+
+  it('rejects with PayloadTooLargeError and pauses the stream (NOT destroy — response still needs to send 413 on the same socket) once maxBytes is exceeded', async () => {
+    const req = fakeRequest();
+    const promise = readBody(req, 10);
+    req.emit('data', Buffer.from('this chunk is way over ten bytes'));
+    await expect(promise).rejects.toBeInstanceOf(PayloadTooLargeError);
+    expect(req.pause).toHaveBeenCalled();
+  });
+
+  it('does not resolve after rejecting even if end fires later', async () => {
+    const req = fakeRequest();
+    const promise = readBody(req, 5);
+    req.emit('data', Buffer.from('too many bytes here'));
+    await expect(promise).rejects.toBeInstanceOf(PayloadTooLargeError);
+    req.emit('end'); // should be a no-op, promise already settled
+  });
+
+  it('rejects on stream error', async () => {
+    const req = fakeRequest();
+    const promise = readBody(req);
+    req.emit('error', new Error('boom'));
+    await expect(promise).rejects.toThrow('boom');
+  });
+
+  it('default max size is 100KB', () => {
+    expect(MAX_WEBHOOK_BODY_BYTES).toBe(100 * 1024);
   });
 });
 

@@ -1,13 +1,20 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { distance, point } from '@turf/turf';
 import { supabaseBackend, fromSupabaseRow } from '../lib/sync';
 import { getDocumentCompleteness } from '../lib/ruleEngine';
 import { attemptAccess } from '../lib/consent';
+import { normalizePhone } from '../lib/waha';
 import NearbyMap from '../components/NearbyMap';
 import Badge from '../components/ui/Badge';
 import Button from '../components/ui/Button';
 import EmptyState from '../components/ui/EmptyState';
 import type { Kartu, Petani, Plot, PetaniDocument } from '../types';
+
+interface ContactState {
+  authorized: boolean;
+  message: string;
+}
 
 interface NearbyResult {
   kartu: Kartu;
@@ -25,7 +32,7 @@ export default function PetaniTerdekat() {
   const [error, setError] = useState<string | null>(null);
 
   const [referencePoint, setReferencePoint] = useState<{ lat: number; lng: number } | null>(null);
-  const [contactResult, setContactResult] = useState<Record<string, string>>({});
+  const [contactResult, setContactResult] = useState<Record<string, ContactState>>({});
   const [contactingId, setContactingId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -99,14 +106,20 @@ export default function PetaniTerdekat() {
       const result = await attemptAccess(kartu.id, 'Eksportir');
       setContactResult((prev) => ({
         ...prev,
-        [kartu.id]: result.authorized
-          ? 'Akses diizinkan — kontak dapat dihubungi.'
-          : 'Akses ditolak — belum ada izin dari petani, notif terkirim.',
+        [kartu.id]: {
+          authorized: result.authorized,
+          message: result.authorized
+            ? 'Akses diizinkan — kontak dapat dihubungi.'
+            : 'Akses ditolak — petani belum memberi izin ke "Eksportir". Izin diberikan lewat Agen: buka Detail Plot petani ini → panel Consent & Akses → pilih/isi "Eksportir" → Beri Izin. Notif percobaan akses ini sudah terkirim ke petani.',
+        },
       }));
     } catch (err) {
       setContactResult((prev) => ({
         ...prev,
-        [kartu.id]: err instanceof Error ? err.message : 'Gagal mencoba akses.',
+        [kartu.id]: {
+          authorized: false,
+          message: err instanceof Error ? err.message : 'Gagal mencoba akses.',
+        },
       }));
     } finally {
       setContactingId(null);
@@ -174,7 +187,7 @@ export default function PetaniTerdekat() {
                   <Badge tone="aman">Berkas Lengkap</Badge>
                 </div>
               </div>
-              <div className="text-right shrink-0">
+              <div className="text-right shrink-0 max-w-[260px]">
                 <Button
                   size="sm"
                   variant="secondary"
@@ -183,10 +196,42 @@ export default function PetaniTerdekat() {
                 >
                   {contactingId === n.kartu.id ? 'Menghubungi…' : 'Hubungi'}
                 </Button>
-                {contactResult[n.kartu.id] && (
-                  <p className="text-[11px] text-slate-500 mt-1 max-w-[220px]">
-                    {contactResult[n.kartu.id]}
+
+                {contactResult[n.kartu.id] && !contactResult[n.kartu.id].authorized && (
+                  <p className="text-[11px] text-slate-500 mt-1 text-left">
+                    {contactResult[n.kartu.id].message}
                   </p>
+                )}
+
+                {contactResult[n.kartu.id]?.authorized && (
+                  <div className="mt-2 text-left space-y-1.5 border-t border-slate-100 pt-2">
+                    <p className="text-[11px] text-brand-800 font-medium">
+                      Akses diizinkan — kontak dapat dihubungi.
+                    </p>
+                    {n.petani.telepon && normalizePhone(n.petani.telepon) ? (
+                      <>
+                        <p className="text-xs text-slate-600">{n.petani.telepon}</p>
+                        <a
+                          href={`https://wa.me/${normalizePhone(n.petani.telepon)}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-block text-xs font-medium text-white bg-green-600 hover:bg-green-700 rounded-md px-3 py-1.5 transition-colors"
+                        >
+                          Chat WhatsApp
+                        </a>
+                      </>
+                    ) : (
+                      <p className="text-[11px] text-slate-400">
+                        Nomor telepon belum terdaftar — hubungi lewat Agen pendamping.
+                      </p>
+                    )}
+                    <Link
+                      to={`/eksportir/paket/${n.kartu.id}`}
+                      className="block text-xs font-medium text-brand-800 hover:underline"
+                    >
+                      Lihat Paket Bukti EUDR
+                    </Link>
+                  </div>
                 )}
               </div>
             </li>

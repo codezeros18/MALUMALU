@@ -28,6 +28,7 @@ const TABLE_NAME: Record<SyncEntityType, string> = {
   accessLog: 'access_log',
   notif: 'notif',
   petaniDocument: 'petani_document',
+  transaksi: 'transaksi',
 };
 
 // Kolom yang benar-benar ada di tabel Supabase masing-masing (lihat
@@ -59,6 +60,7 @@ const ALLOWED_COLUMNS: Record<SyncEntityType, string[]> = {
     'captured_at',
     'updated_at',
     'agent_id',
+    'boundary',
   ],
   kartu: [
     'id',
@@ -87,6 +89,17 @@ const ALLOWED_COLUMNS: Record<SyncEntityType, string[]> = {
     'uploaded_at',
     'verified',
     'notes',
+    'agent_id',
+  ],
+  transaksi: [
+    'id',
+    'komoditas',
+    'wilayah',
+    'grade',
+    'harga_per_kg',
+    'tanggal',
+    'verified',
+    'created_at',
     'agent_id',
   ],
 };
