@@ -8,18 +8,42 @@ import { sendText, toChatId } from '../src/lib/waha';
 import { parseInboundWebhook, shouldRespond } from './webhookParser';
 
 const PORT = Number(process.env.WEBHOOK_PORT) || 3001;
+// Payload webhook WAHA (pesan teks + metadata) biasanya beberapa KB; 100kb
+// jauh lebih dari cukup dan mencegah body tak terbatas (memory exhaustion).
+const MAX_BODY_BYTES = 100 * 1024;
+
+class PayloadTooLargeError extends Error {}
 
 function readBody(req: IncomingMessage): Promise<string> {
   return new Promise((resolve, reject) => {
     let raw = '';
-    req.on('data', chunk => { raw += chunk; });
-    req.on('end', () => resolve(raw));
+    let bytes = 0;
+    let rejected = false;
+    req.on('data', chunk => {
+      if (rejected) return; // sudah ditolak — biarkan sisa data mengalir & drop, jangan putus socket
+      bytes += chunk.length;
+      if (bytes > MAX_BODY_BYTES) {
+        rejected = true;
+        reject(new PayloadTooLargeError());
+        return;
+      }
+      raw += chunk;
+    });
+    req.on('end', () => { if (!rejected) resolve(raw); });
     req.on('error', reject);
   });
 }
 
 async function handleWebhook(req: IncomingMessage, res: ServerResponse): Promise<void> {
-  const raw = await readBody(req);
+  let raw: string;
+  try {
+    raw = await readBody(req);
+  } catch (e) {
+    const status = e instanceof PayloadTooLargeError ? 413 : 400;
+    res.writeHead(status, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: e instanceof PayloadTooLargeError ? 'Payload too large' : 'Bad request' }));
+    return;
+  }
   // Balas WAHA lebih dulu (WAHA tidak menunggu balasan kita untuk lanjut).
   res.writeHead(200, { 'Content-Type': 'application/json' });
   res.end(JSON.stringify({ ok: true }));
