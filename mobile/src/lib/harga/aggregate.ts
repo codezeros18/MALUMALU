@@ -50,7 +50,11 @@ export function aggregateDaily(
   grade: Grade = '',
   today: string = todayIso(),
 ): ReferencePrice | null {
-  const matched = sources.filter(s => normalize(s.grade) === normalize(grade));
+  const kom = normalize(String(komoditas));
+  const wil = normalize(String(wilayah));
+  const matched = sources.filter(
+    s => normalize(s.komoditas) === kom && normalize(s.wilayah) === wil && normalize(s.grade) === normalize(grade),
+  );
   if (matched.length === 0) return null;
 
   const priced = matched.filter(s => s.txnCount > 0);

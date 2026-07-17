@@ -50,7 +50,7 @@ describe('aggregateDaily', () => {
     ];
     const ref = aggregateDaily(sources, 'kopi', 'Pangalengan', '', '2026-07-17');
     expect(ref).not.toBeNull();
-    // (58000*4 + 61000*3 + 64000*5) / 12 = 61500
+    // (58000*4 + 61000*3 + 64000*5) / 12 = 61250
     expect(ref!.avg).toBe(61250);
     expect(ref!.low).toBe(58000);
     expect(ref!.high).toBe(64000);
@@ -60,6 +60,18 @@ describe('aggregateDaily', () => {
   it('returns null when no sources match the grade', () => {
     const ref = aggregateDaily([src({ grade: 'A' })], 'kopi', 'Pangalengan', 'B', '2026-07-17');
     expect(ref).toBeNull();
+  });
+
+  it('ignores sources with mismatched komoditas or wilayah even when called directly', () => {
+    const mixed = [
+      src({ komoditas: 'sawit', pricePerKg: 2100, txnCount: 6 }),
+      src({ wilayah: 'Bandung', pricePerKg: 52000, txnCount: 2 }),
+      src({ pricePerKg: 60000, txnCount: 3 }),
+    ];
+    const ref = aggregateDaily(mixed, 'kopi', 'Pangalengan', '', '2026-07-17');
+    expect(ref).not.toBeNull();
+    expect(ref!.avg).toBe(60000);
+    expect(ref!.txnCount).toBe(3);
   });
 
   it('returns null when only external sources with zero txn exist', () => {

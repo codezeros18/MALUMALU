@@ -32,6 +32,29 @@ describe('parseInboundWebhook', () => {
     expect(parseInboundWebhook('not an object')).toBeNull();
     expect(parseInboundWebhook({})).toBeNull();
   });
+
+  it('ignores group chats so a group member typing "harga ..." does not get a garbled reply target', () => {
+    const payload = {
+      event: 'message',
+      payload: { from: '120363012345678901@g.us', fromMe: false, body: 'harga kopi Pangalengan' },
+    };
+    expect(parseInboundWebhook(payload)).toBeNull();
+  });
+
+  it('ignores broadcast and newsletter/channel senders', () => {
+    const broadcast = { event: 'message', payload: { from: 'status@broadcast', fromMe: false, body: 'harga kopi Pangalengan' } };
+    const newsletter = { event: 'message', payload: { from: '123456789@newsletter', fromMe: false, body: 'harga kopi Pangalengan' } };
+    expect(parseInboundWebhook(broadcast)).toBeNull();
+    expect(parseInboundWebhook(newsletter)).toBeNull();
+  });
+
+  it('still accepts @lid senders (this WAHA account represents even self-chat via @lid, not just @c.us)', () => {
+    const payload = {
+      event: 'message',
+      payload: { from: '177743094411494@lid', fromMe: false, body: 'harga kopi Pangalengan' },
+    };
+    expect(parseInboundWebhook(payload)).toEqual({ telepon: '177743094411494', body: 'harga kopi Pangalengan' });
+  });
 });
 
 describe('shouldRespond', () => {
