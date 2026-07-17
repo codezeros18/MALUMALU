@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 
@@ -171,13 +171,13 @@ export default function TentangKami() {
             </p>
 
             <div className="mt-8 sm:mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-              <a
-                href="mailto:lint4ngboy@gmail.com"
+              <Link
+                to="/masuk"
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full text-sm font-bold text-white bg-gradient-to-r from-brand-400 to-brand-800 hover:opacity-90 transition-opacity"
               >
-                Hubungi Kami untuk Kemitraan
-                <span aria-hidden>↗</span>
-              </a>
+                Coba Demo
+                <span aria-hidden>→</span>
+              </Link>
             </div>
 
             <p className="mt-6 text-xs text-slate-400 leading-relaxed px-2">
@@ -395,7 +395,7 @@ export default function TentangKami() {
         </section>
 
         {/* ===== TEKNOLOGI ===== */}
-        <section className="border-t border-slate-100 bg-white">
+        <section id="teknologi" className="border-t border-slate-100 bg-white">
           <div className="max-w-5xl mx-auto px-5 sm:px-6 py-14 sm:py-20">
             <p className="text-xs font-semibold text-brand-800 tracking-wide uppercase">
               Teknologi
@@ -447,13 +447,13 @@ export default function TentangKami() {
               Siap mengubah kebun jadi identitas data milik petani?
             </h2>
             <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
-              <a
-                href="mailto:lint4ngboy@gmail.com"
+              <Link
+                to="/masuk"
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full text-sm font-bold text-white bg-gradient-to-r from-brand-400 to-brand-800 hover:opacity-90 transition-opacity"
               >
-                Hubungi Kami untuk Kemitraan
-                <span aria-hidden>↗</span>
-              </a>
+                Coba Demo
+                <span aria-hidden>→</span>
+              </Link>
             </div>
           </div>
         </section>

@@ -3,10 +3,11 @@ import { Link } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 
 const NAV_LINKS = [
-  { label: 'Beranda', to: '/' },
   { label: 'Tentang Kami', to: '/tentang' },
+  { label: 'Cara Kerja', to: '/#cara-kerja' },
   { label: 'Platform', to: '/#fitur-platform' },
   { label: 'Untuk Siapa', to: '/#model-nilai' },
+  { label: 'Teknologi', to: '/#teknologi' },
   { label: 'Harga', to: '/#model-bisnis' },
 ];
 
@@ -21,7 +22,9 @@ export default function Navbar() {
           <span className="text-base sm:text-lg font-bold text-slate-900">JejakHijau</span>
         </Link>
 
-        <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600">
+        {/* Breakpoint lg (bukan md): 6 tautan + tombol Masuk butuh ruang lebih di
+            layar tablet supaya tidak berdesakan -- di bawah lg tampilkan hamburger. */}
+        <nav className="hidden lg:flex items-center gap-7 text-sm font-medium text-slate-600">
           {NAV_LINKS.map((link) =>
             link.to.includes('#') ? (
               // Anchor lintas-halaman: <a> biasa (bukan react-router <Link>) supaya kalau
@@ -51,38 +54,59 @@ export default function Navbar() {
             onClick={() => setMobileOpen((v) => !v)}
             aria-expanded={mobileOpen}
             aria-label={mobileOpen ? 'Tutup menu' : 'Buka menu'}
-            className="md:hidden w-9 h-9 grid place-items-center rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
+            className="lg:hidden relative w-9 h-9 grid place-items-center rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300 active:scale-95 transition-all"
           >
-            {mobileOpen ? <X size={18} /> : <Menu size={18} />}
+            <span className="relative w-[18px] h-[18px] block">
+              <Menu
+                size={18}
+                className={`absolute inset-0 transition-all duration-300 ease-out ${
+                  mobileOpen ? 'opacity-0 rotate-90 scale-50' : 'opacity-100 rotate-0 scale-100'
+                }`}
+              />
+              <X
+                size={18}
+                className={`absolute inset-0 transition-all duration-300 ease-out ${
+                  mobileOpen ? 'opacity-100 rotate-0 scale-100' : 'opacity-0 -rotate-90 scale-50'
+                }`}
+              />
+            </span>
           </button>
         </div>
       </div>
 
-      {mobileOpen && (
-        <nav className="md:hidden border-t border-slate-100 bg-white px-5 py-3 flex flex-col text-sm font-medium text-slate-600">
-          {NAV_LINKS.map((link) =>
-            link.to.includes('#') ? (
-              <a
-                key={link.label}
-                href={link.to}
-                onClick={() => setMobileOpen(false)}
-                className="py-2.5 border-b border-slate-50 last:border-0 hover:text-slate-900 transition-colors"
-              >
-                {link.label}
-              </a>
-            ) : (
-              <Link
-                key={link.label}
-                to={link.to}
-                onClick={() => setMobileOpen(false)}
-                className="py-2.5 border-b border-slate-50 last:border-0 hover:text-slate-900 transition-colors"
-              >
-                {link.label}
-              </Link>
-            ),
-          )}
+      {/* Trik grid-rows animasi tinggi otomatis (0fr <-> 1fr) -- tanpa ini,
+          panel cuma muncul/hilang instan (mount/unmount), tidak smooth. */}
+      <div
+        className={`lg:hidden grid transition-[grid-template-rows,opacity] duration-300 ease-out ${
+          mobileOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+        }`}
+      >
+        <nav className="overflow-hidden border-slate-100 bg-white">
+          <div className="border-t border-slate-100 px-5 py-3 flex flex-col text-sm font-medium text-slate-600">
+            {NAV_LINKS.map((link) =>
+              link.to.includes('#') ? (
+                <a
+                  key={link.label}
+                  href={link.to}
+                  onClick={() => setMobileOpen(false)}
+                  className="py-2.5 border-b border-slate-50 last:border-0 hover:text-slate-900 transition-colors"
+                >
+                  {link.label}
+                </a>
+              ) : (
+                <Link
+                  key={link.label}
+                  to={link.to}
+                  onClick={() => setMobileOpen(false)}
+                  className="py-2.5 border-b border-slate-50 last:border-0 hover:text-slate-900 transition-colors"
+                >
+                  {link.label}
+                </Link>
+              ),
+            )}
+          </div>
         </nav>
-      )}
+      </div>
     </header>
   );
 }
