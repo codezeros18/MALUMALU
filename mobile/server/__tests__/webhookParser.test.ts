@@ -59,8 +59,8 @@ describe('parseInboundWebhook', () => {
 
 describe('readBody', () => {
   function fakeRequest() {
-    const emitter = new EventEmitter() as EventEmitter & { destroy?: () => void };
-    emitter.destroy = jest.fn();
+    const emitter = new EventEmitter() as EventEmitter & { pause?: () => void };
+    emitter.pause = jest.fn();
     return emitter;
   }
 
@@ -73,12 +73,12 @@ describe('readBody', () => {
     await expect(promise).resolves.toBe('{"event":"message","payload":{}}');
   });
 
-  it('rejects with PayloadTooLargeError and destroys the stream once maxBytes is exceeded', async () => {
+  it('rejects with PayloadTooLargeError and pauses the stream (NOT destroy — response still needs to send 413 on the same socket) once maxBytes is exceeded', async () => {
     const req = fakeRequest();
     const promise = readBody(req, 10);
     req.emit('data', Buffer.from('this chunk is way over ten bytes'));
     await expect(promise).rejects.toBeInstanceOf(PayloadTooLargeError);
-    expect(req.destroy).toHaveBeenCalled();
+    expect(req.pause).toHaveBeenCalled();
   });
 
   it('does not resolve after rejecting even if end fires later', async () => {

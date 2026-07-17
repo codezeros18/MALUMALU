@@ -81,7 +81,7 @@ export default function PlotForm({
             {accuracyM !== null && ` · akurasi ${Math.round(accuracyM)}m`}
           </p>
         ) : (
-          <p className="text-sm text-slate-400">Tap peta atau pakai GPS.</p>
+          <p className="text-sm text-slate-400">Selesaikan poligon batas kebun di atas dulu.</p>
         )}
         {accuracyM !== null && accuracyM > LOW_ACCURACY_THRESHOLD_M && (
           <p className="text-xs text-amber-700 mt-1">

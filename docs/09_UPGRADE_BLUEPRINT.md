@@ -39,7 +39,7 @@ Inti geospasial yang sudah ada: `src/lib/raster.ts` (loader JRC offline), `src/l
 | **RLS hardening per-role (`auth.uid()`)** | ⚠️ ADA, permisif — **dibuktikan empiris** (DELETE anon key berhasil di 7 tabel tanpa auth). **BLOCKER ditemukan Sprint 21**: app belum punya Supabase Auth sungguhan, jadi `auth.uid()` selalu NULL — policy per-role akan mematikan seluruh app kalau dijalankan sekarang | **DEFER** ke sprint Auth terpisah (dikonfirmasi user) | — (butuh Sprint Auth dulu) |
 | **RLS append-only (hashchain/access_log/petani_document)** | ❌ belum ada — sub-bagian dari hardening yang TIDAK butuh auth.uid() | **HARDEN** (SQL disiapkan, aman dijalankan sekarang) | 21 |
 | **Consent cek lintas-device via Supabase** | ⚠️ keterbatasan dikonfirmasi tepat (masih baca IndexedDB lokal) | **UPGRADE — SELESAI** (tidak butuh auth.uid(), dibuktikan 2 browser context terpisah) | 21 |
-| **WA bot bugfix + wire nudge ke Supabase** | ⚠️ 3/6 SUDAH DIFIX (rata-rata berbobot, `fromMe`), 3-4 MASIH ADA (deep-link hardcode, `@g.us`, `readBody` limit, nudge tidak aktif sama sekali) — detail per-item di §5 audit | **FIX** (dipersempit ke yang masih ada) | 22 |
+| **WA bot bugfix + wire nudge ke Supabase** | ⚠️ 3/6 SUDAH DIFIX (rata-rata berbobot, `fromMe`), 3-4 MASIH ADA (deep-link hardcode, `@g.us`, `readBody` limit, nudge tidak aktif sama sekali) — detail per-item di §5 audit | **FIX — SELESAI.** 1 item ("perbaiki" rata-rata ke 61.500) DITOLAK sebagai salah (61.250 sudah matematis benar) | 22 |
 | **Company profile** | ✅ ada (`TentangKami.tsx`) | **DEFER** | — |
 | **Redis untuk offline** | ❌ tidak ada dependency di manapun, dikonfirmasi | **JANGAN** | — |
 | **Upload file asli ke Supabase Storage** | ❌ sengaja ditunda, dikonfirmasi (hash+metadata saja) | **DEFER** (stretch) | — |
@@ -193,29 +193,45 @@ Fix bug yang di-flag reviewer (semua sudah dikonfirmasi ADA):
 - [x] 21.4 Regresi: alur consent Sprint 7 (grant/revoke via `ConsentPanel.tsx`, sengaja TETAP baca lokal supaya tidak ada stale-read setelah grant) & panel nearby Sprint 17 tetap jalan — dikonfirmasi
 - [x] 21.5 Build + **uji lintas-device sungguhan** (2 browser context terpisah, IndexedDB masing-masing kosong dari awal — bukan 1 browser context yang "kebetulan benar" seperti pengujian Sprint 17 sebelumnya)
 
-### 🟦 SPRINT 22 — WA Bot Hardening + Wire Nudge (dipersempit oleh audit)
-- [x] ~~22.1 Fix rata-rata berbobot + test~~ — **SKIP, SUDAH DIFIX** (kode benar, jest PASS, hanya komentar test punya typo aritmatika kosmetik)
-- [ ] 22.2 Deep-link scheme dari env (`EXPO_PUBLIC_STATUS_SCHEME`) — MASIH hardcode di `bot.ts:9`
-- [x] ~~`fromMe` ketat~~ — **SKIP, SUDAH DIFIX** (`webhookParser.ts:20`)
-- [ ] 22.3 `parseInboundWebhook`: abaikan group `@g.us` — MASIH BUG (strip suffix, bukan tolak pesan)
-- [ ] 22.4 `readBody`: limit ukuran + 413 — MASIH TIDAK ADA sama sekali
-- [ ] 22.5 `aggregateDaily`: filter komoditas + wilayah — bug laten (jalur produksi via `getReferencePrice` sudah benar), prioritas rendah/opsional
-- [ ] 22.6 Wire nudge "Paspor lengkap" ke Supabase (via `telepon`), bukan AsyncStorage — **lebih parah dari deskripsi**: nudge saat ini TIDAK DIPANGGIL SAMA SEKALI di `wahaWebhookServer.ts` (bukan cuma salah sumber data)
-- [ ] 22.7 Sambungkan harga WA ke referensi Sprint 20
-- [ ] 22.8 Jest suite hijau + verifikasi WAHA end-to-end — **sudah dikonfirmasi hijau (10 suite/67 test PASS) untuk kode SAAT INI**, jalankan ulang setelah fix 22.2-22.6
+### 🟦 SPRINT 22 — WA Bot Hardening + Wire Nudge — ✅ SELESAI (1 item ditolak, salah)
+- [x] ~~22.1 "Fix" rata-rata berbobot ke 61.500~~ — **DITOLAK, JANGAN DIKERJAKAN.** Audit
+      Sprint 18 & perhitungan ulang mengonfirmasi **61.250 adalah jawaban matematis yang
+      BENAR** ((58000×4+61000×3+64000×5)/12=61250). Angka "61.500" di prompt asli SALAH
+      HITUNG. Kode & test (`aggregateDaily`) sudah benar & tetap PASS — "memperbaikinya"
+      ke 61.500 justru akan MEMASUKKAN bug ke kode yang sudah benar. Komentar test yang
+      salah tulis "=61500" sudah diperbaiki jadi penjelasan yang akurat.
+- [x] 22.2 Deep-link scheme dari env (`bot.ts`: `process.env.EXPO_PUBLIC_STATUS_SCHEME || 'pasporpetani://status'`) + test env-override (reset-modules)
+- [x] ~~`fromMe` ketat~~ — sudah benar sebelumnya, DIPERKUAT jadi `=== true` eksplisit (bukan cuma truthy JS) + test nilai non-boolean
+- [x] 22.3 `parseInboundWebhook`: abaikan group `@g.us` (`from.endsWith('@g.us')` → null, sebelum sempat di-strip jadi "nomor telepon" palsu) — balasan otomatis terarah benar karena pesan grup sekarang tidak diproses sama sekali
+- [x] 22.4 `readBody` (dipindah ke `webhookParser.ts` supaya testable): limit 100KB + `PayloadTooLargeError` → wahaWebhookServer balas HTTP 413. **Bug ditemukan & diperbaiki saat verifikasi end-to-end**: implementasi awal pakai `req.destroy()` yang mematikan socket SEBELUM 413 sempat terkirim (klien cuma lihat connection reset) — diganti `req.pause()`, dikonfirmasi ulang lewat request HTTP asli ke server yang benar-benar berjalan
+- [x] 22.5 `aggregateDaily`: sekarang filter komoditas + wilayah + grade (bukan cuma grade) — test baru membuktikan sumber wilayah/komoditas lain tidak lagi ikut tercampur ke rata-rata
+- [x] 22.6 Nudge "Paspor lengkap" via Supabase — `mobile/server/pasporLookupSupabase.ts` (BARU, REST fetch, bukan AsyncStorage) diwire ke `wahaWebhookServer.ts` (sebelumnya benar-benar TIDAK dipanggil sama sekali, dikonfirmasi sekarang aktif + fail-soft kalau Supabase belum dikonfigurasi)
+- [x] 22.7 Harga WA disambungkan ke `transaksi` Supabase (`mobile/server/transaksiSource.ts`, BARU) — fallback otomatis ke `SAMPLE_PRICE_SOURCES` berlabel DATA DEMO (dicatat via log eksplisit) kalau Supabase belum dikonfigurasi/kosong/gagal fetch, TIDAK PERNAH mengklaim sample sebagai data nyata
+- [x] 22.8 Jest **13 suite / 93 test — semua PASS** (4 suite baru, 26 test baru). Verifikasi WAHA end-to-end: **tidak ada instance WAHA nyata tersedia** di lingkungan ini, jadi verifikasi dilakukan dengan menjalankan `wahaWebhookServer.ts` SUNGGUHAN (`npx tsx`, bukan mock) dan mengirim request HTTP asli — 5 skenario dikonfirmasi (pesan normal, grup diabaikan, oversized→413, fromMe:true diabaikan, server tetap hidup setelahnya)
 
 ---
 
-## 6. Definition of Done (fase upgrade)
+## 6. Definition of Done (fase upgrade) — status akhir
 
-- [ ] Audit repo selesai; blueprint dikoreksi bila ada yang sudah ada/berbeda.
-- [ ] Polygon risk-score jalan (additif), disclosure tampil, nol regresi tier/STDB/hash-chain.
-- [ ] Harga referensi dari transaksi terverifikasi (satu rumus, bug rata-rata fixed) atau berlabel `DATA DEMO` jujur.
-- [ ] RLS diperketat + terbukti lintas-akun (gap produksi tertutup).
-- [ ] Consent lintas-device via Supabase (fallback offline).
-- [ ] Semua bug WA yang di-flag diperbaiki + Jest hijau + WAHA end-to-end oke.
-- [ ] Offline tetap jalan (IndexedDB+outbox); TIDAK ada Redis ditambahkan.
-- [ ] `docs/06_PROGRESS_LOG.md` di-update.
+- [x] Audit repo selesai; blueprint dikoreksi bila ada yang sudah ada/berbeda.
+- [x] Polygon risk-score jalan (additif), disclosure tampil, nol regresi tier/STDB/hash-chain.
+- [x] Harga referensi dari transaksi terverifikasi — rumus rata-rata dikonfirmasi SUDAH
+      benar sejak awal (bukan bug, lihat §5 Sprint 22), tabel `transaksi` dibuat & aktif.
+      Belum ada transaksi nyata cukup (>=3/kombinasi) → tampil "data belum cukup" (jujur,
+      bukan `DATA DEMO` palsu, sesuai desain guard-nya).
+- [~] RLS diperketat SEBAGIAN — append-only untuk `hashchain`/`access_log`/
+      `petani_document` aktif & terbukti (dikonfirmasi lewat probe row nyata). Per-role
+      penuh (`auth.uid()`) **DITUNDA** — butuh Supabase Auth sungguhan dulu (blocker
+      ditemukan & dikonfirmasi ke user, bukan diabaikan). Gap produksi INI BELUM
+      tertutup sepenuhnya — dicatat jelas di "Known issues" bagian Ringkasan Sprint 18-22.
+- [x] Consent lintas-device via Supabase (fallback offline) — dibuktikan 2 browser
+      context terpisah, bukan asumsi.
+- [x] Semua bug WA yang di-flag DAN benar-benar ada (5/6) diperbaiki + Jest 13 suite/93
+      test hijau + verifikasi end-to-end via server sungguhan (WAHA nyata tidak
+      tersedia di lingkungan ini, dicatat jujur). 1 item ("fix" ke 61.500) ditolak
+      sebagai salah hitung.
+- [x] Offline tetap jalan (IndexedDB+outbox); TIDAK ada Redis ditambahkan.
+- [x] `docs/06_PROGRESS_LOG.md` di-update (termasuk ringkasan penutup Sprint 18-22).
 
 ---
 

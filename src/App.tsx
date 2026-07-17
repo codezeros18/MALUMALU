@@ -19,6 +19,7 @@ const EksportirDashboard = lazy(() => import('./pages/EksportirDashboard'));
 const PetaniTerdekat = lazy(() => import('./pages/PetaniTerdekat'));
 const PetaniPortal = lazy(() => import('./pages/PetaniPortal'));
 const HargaReferensi = lazy(() => import('./pages/HargaReferensi'));
+const PaketBuktiEudr = lazy(() => import('./pages/PaketBuktiEudr'));
 
 function AppShell() {
   const { currentRole, setRole } = useAppContext();
@@ -110,6 +111,14 @@ function AppShell() {
           element={
             <RequireRole role="eksportir">
               <HargaReferensi />
+            </RequireRole>
+          }
+        />
+        <Route
+          path="/eksportir/paket/:kartuId"
+          element={
+            <RequireRole role="eksportir">
+              <PaketBuktiEudr />
             </RequireRole>
           }
         />

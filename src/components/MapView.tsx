@@ -2,7 +2,7 @@ import Map3D, { type Map3DMarker, type Map3DPolygon } from './Map3D';
 import type { Plot } from '../types';
 
 const PANGALENGAN_CENTER = { lat: -7.15, lng: 107.62 };
-const DEFAULT_ZOOM = 13;
+const DEFAULT_ZOOM = 12;
 
 interface MapViewProps {
   plots: Plot[];

@@ -1,4 +1,4 @@
-# 📖 PROGRESS LOG — Paspor Petani v2 (Sprint 0–17)
+# 📖 PROGRESS LOG — Paspor Petani v2 (Sprint 0–22)
 
 > Dokumentasi naratif dari semua yang sudah dikerjakan. Tujuannya: supaya sesi Claude
 > Code manapun (baru, reset, atau dilanjutkan orang lain) bisa paham state repo saat ini
@@ -8,11 +8,14 @@
 > verifikasi nyata (bukan cuma "tsc bersih") → state akhir.
 >
 > **Bagian Sprint 0–8** di bawah ini adalah log asli akhir fase MVP (sebelum Supabase
-> ada). Sprint 9–15 (full production: sync, 3 role, komponen reusable) dan Sprint 16–17
-> (dokumen verifikasi + panel Eksportir) ditambahkan di bagian bawah — lihat
-> `docs/04_FULL_PRODUCTION_BLUEPRINT.md`/`docs/05_FULL_PRODUCTION_PROMPTS.md` dan
-> `docs/07_DOKUMEN_VERIFIKASI_BLUEPRINT.md`/`docs/08_DOKUMEN_VERIFIKASI_PROMPTS.md`
-> untuk detail teknis lengkap masing-masing fase.
+> ada). Sprint 9–15 (full production: sync, 3 role, komponen reusable), Sprint 16–17
+> (dokumen verifikasi + panel Eksportir), dan Sprint 18–22 (audit + polygon risk-score +
+> harga referensi + RLS hardening + WA bot hardening) ditambahkan berurutan di bagian
+> bawah — lihat `docs/04_FULL_PRODUCTION_BLUEPRINT.md`/`docs/05_FULL_PRODUCTION_PROMPTS.md`,
+> `docs/07_DOKUMEN_VERIFIKASI_BLUEPRINT.md`/`docs/08_DOKUMEN_VERIFIKASI_PROMPTS.md`, dan
+> `docs/09_UPGRADE_BLUEPRINT.md`/`docs/10_UPGRADE_PROMPTS.md` untuk detail teknis lengkap
+> masing-masing fase. Ringkasan penutup fase upgrade: bagian "Ringkasan Sprint 18–22" di
+> bawah.
 
 ---
 
@@ -939,3 +942,212 @@ dua device fisik berbeda).
 - Uji "login sebagai agen A tidak bisa lihat data agen B" — butuh identitas akun
   sungguhan dari Auth untuk berarti apa-apa; sekarang semua "agen" memakai anon key
   yang sama sehingga skenario ini belum bisa dibuktikan secara jujur.
+
+---
+
+## Sprint 22 — WA Bot Hardening + Wire Nudge (1 item prompt ditolak sebagai salah)
+
+**Kenapa**: `docs/09_UPGRADE_BLUEPRINT.md` §4.4 minta perbaiki 6 bug yang di-flag
+reviewer pada layanan harga WA (`mobile/`). Audit Sprint 18 sudah mengonfirmasi mana
+yang benar-benar masih ada (3-4 dari 6) — sprint ini mengerjakan yang nyata, TDD
+(test ditulis/diperbarui bareng tiap fix).
+
+**⚠️ Satu item prompt DITOLAK sebagai salah, bukan dikerjakan buta**: prompt asli
+meminta "perbaiki rata-rata berbobot supaya hasil 61.500 (bukan 61.250)". Dihitung
+ulang manual: `(58000×4 + 61000×3 + 64000×5) / (4+3+5) = 735000/12 = 61250`. **61.250
+adalah jawaban matematis yang BENAR** — audit Sprint 18 sudah mengonfirmasi ini, dan
+kode `aggregateDaily` yang ada sekarang SUDAH menghasilkan 61250 dengan test yang
+PASS. Kalau kode "diperbaiki" mengikuti prompt supaya menghasilkan 61.500, itu artinya
+SENGAJA memasukkan bug matematis ke kode yang tadinya benar. Ditolak, bukan
+dikerjakan — komentar test yang salah tulis "= 61500" (typo aritmatika, bukan
+assertion) diperbaiki jadi penjelasan yang akurat, tidak lebih.
+
+**Dibangun** (5 dari 6 item lain, semua nyata dikonfirmasi audit):
+
+1. **Deep-link scheme dari env** (`mobile/src/lib/harga/bot.ts`) — `STATUS_LINK_SCHEME
+   = process.env.EXPO_PUBLIC_STATUS_SCHEME || 'pasporpetani://status'`, bukan hardcode
+   literal lagi. Test baru pakai `jest.resetModules()` + `require()` ulang untuk
+   membuktikan override env benar-benar terbaca (bukan cuma nilai default kebetulan
+   sama).
+2. **`fromMe` diperketat** (`mobile/server/webhookParser.ts`) — `fromMe === true`
+   eksplisit (bukan truthy JS biasa) supaya nilai malformed/tipe lain tidak diam-diam
+   men-skip semua pesan. Test baru: `fromMe: 'yes'` (string truthy, bukan boolean)
+   TIDAK di-skip.
+3. **Pesan grup (`@g.us`) diabaikan** — `from.endsWith('@g.us')` → return null SEBELUM
+   sempat di-strip jadi "nomor telepon" palsu (JID grup yang panjang, kalau lolos akan
+   diperlakukan seolah nomor asli). Ini sekaligus menutup kekhawatiran "balasan
+   terarah ke chatId yang salah" dari prompt asli — begitu grup ditolak di titik parse,
+   tidak ada balasan yang dicoba sama sekali untuk grup.
+4. **`readBody` dengan limit ukuran + HTTP 413** — dipindah dari
+   `wahaWebhookServer.ts` ke `webhookParser.ts` (supaya testable tanpa I/O sungguhan,
+   pola yang sama seperti `parseInboundWebhook`). Batas 100KB (`MAX_WEBHOOK_BODY_BYTES`),
+   `PayloadTooLargeError` custom yang ditangkap `wahaWebhookServer.ts` untuk membalas
+   413. **Bug ditemukan & diperbaiki SAAT verifikasi end-to-end** (bukan cuma lolos
+   test unit): implementasi pertama memanggil `req.destroy()` begitu batas terlampaui
+   — ternyata ini mematikan socket TCP yang dipakai bersama request & response
+   SEBELUM sempat menulis 413, jadi klien cuma melihat connection reset mentah
+   (dikonfirmasi nyata: `curl` exit code 56 "failure receiving data"). Diganti
+   `req.pause()` (berhenti mengakumulasi tanpa mematikan socket) — setelah fix,
+   `curl` ke server yang benar-benar berjalan mengonfirmasi HTTP 413 bersih.
+5. **`aggregateDaily` filter komoditas + wilayah + grade** (`mobile/src/lib/harga/
+   aggregate.ts`) — sebelumnya HANYA filter grade (komoditas/wilayah diterima tapi
+   tidak dipakai menyaring). Test baru: sumber dengan wilayah/komoditas berbeda TIDAK
+   lagi mencemari rata-rata saat `aggregateDaily` dipanggil langsung (bukan lewat
+   `getReferencePrice()` yang sudah pre-filter).
+6. **Nudge "Paspor lengkap" via Supabase** — `mobile/server/pasporLookupSupabase.ts`
+   (BARU): replikasi logika `lengkap`/`tier` yang SAMA PERSIS dengan versi AsyncStorage
+   (`mobile/src/lib/harga/pasporLookup.ts`), tapi baca dari tabel Supabase
+   `petani`/`plot`/`kartu` via REST (`mobile/server/supabaseRest.ts`, BARU — fetch()
+   polos, bukan `@supabase/supabase-js` penuh, supaya server tetap ringan). Konversi
+   `tier` web (`'export-ready'`, strip) ↔ mobile (`'export_ready'`, underscore)
+   didokumentasikan eksplisit di satu titik. **Sebelumnya nudge ini benar-benar TIDAK
+   PERNAH dipanggil** di `wahaWebhookServer.ts` (parameter `lookup` diomit total) —
+   sekarang aktif, fail-soft (kalau Supabase belum dikonfigurasi/gagal, bot tetap
+   balas harga TANPA nudge, bukan gagal total).
+7. **Harga WA disambungkan ke data nyata** — `mobile/server/transaksiSource.ts`
+   (BARU): `mapTransaksiToPriceSources()` (pure, testable) memetakan baris `Transaksi`
+   individual (tabel `transaksi`, Sprint 20 web) ke `PriceSource[]` (bentuk yang
+   dipakai `aggregateDaily`/`getReferencePrice` mobile — rumus SUDAH BENAR, tidak
+   disentuh) dengan `txnCount: 1` per baris (satu transaksi nyata = bobot 1, prinsip
+   matematis sama seperti dijelaskan di `src/lib/harga/aggregate.ts` web, Sprint 20).
+   `wahaWebhookServer.ts` sekarang coba `fetchTransaksiPriceSources()` dulu, **fallback
+   otomatis ke `SAMPLE_PRICE_SOURCES` berlabel DATA DEMO** (log eksplisit
+   "membalas dengan DATA DEMO") kalau Supabase belum dikonfigurasi, fetch gagal, atau
+   tabel kosong — tidak pernah mengklaim data sample sebagai data nyata.
+
+**Env baru** (`mobile/.env.example`): `SUPABASE_URL`/`SUPABASE_ANON_KEY` — dipakai
+HANYA oleh `mobile/server/` (proses Node standalone), BUKAN app Expo itu sendiri (yang
+masih sepenuhnya offline/AsyncStorage, tidak berubah). Anon key publik, bukan
+service_role, konsisten dengan aturan yang sama sejak Sprint 9 web.
+
+**Verifikasi nyata**:
+- `npx tsc --noEmit` di `mobile/` bersih (2 error pra-eksisting di `src/app/status.tsx`
+  soal `theme/tokens.ts` yang tidak disentuh sama sekali oleh Sprint 22 — dikonfirmasi
+  lewat `git diff --stat` kosong untuk file itu, di luar cakupan sprint ini).
+- Jest **13 suite / 93 test — semua PASS** (naik dari 10 suite/67 test sebelum sprint
+  ini; 4 suite baru: `supabaseRest`, `pasporLookupSupabase`, `transaksiSource`, plus
+  test tambahan di `webhookParser` & `harga`).
+- **Verifikasi end-to-end nyata tanpa instance WAHA** (tidak tersedia di lingkungan
+  ini — dicatat jujur, bukan diklaim ada): `wahaWebhookServer.ts` dijalankan
+  SUNGGUHAN (`npx tsx`, proses HTTP asli, bukan mock) di port lokal, diuji 5 skenario
+  lewat `curl` sungguhan — pesan normal (200, diproses, coba balas — gagal graceful
+  karena WAHA memang tidak dikonfigurasi di lingkungan ini, sesuai ekspektasi), pesan
+  grup `@g.us` (200 ack, TIDAK diproses lebih lanjut, dikonfirmasi lewat log kosong),
+  payload oversized (413 bersih setelah fix `req.pause()`), `fromMe:true` (200 ack,
+  diabaikan), dan server tetap hidup+responsif setelah semua skenario (regresi: tidak
+  ada crash dari salah satu request).
+
+**Sengaja TIDAK dikerjakan**: "perbaikan" rata-rata berbobot ke 61.500 — lihat
+penjelasan penolakan di atas.
+
+---
+
+## Ringkasan Sprint 18–22 (Fase Upgrade) — Rollup Penutup
+
+> Ringkasan tingkat-tinggi. Detail teknis lengkap (file:line, algoritma, hasil test)
+> ada di masing-masing entri sprint di atas — bagian ini TIDAK mengulang itu, hanya
+> menyambungkan gambaran besarnya.
+
+### Apa yang diaudit (Sprint 18)
+
+Blueprint `docs/09_UPGRADE_BLUEPRINT.md` disusun dari dokumen yang di-share, bukan dari
+membaca repo langsung — jadi sprint pertama fase ini murni audit (nol kode diubah):
+konfirmasi struktur repo (web + `mobile/` + `mobile/server/`), tanda tangan fungsi inti
+per file:line, status RLS per tabel (dibuktikan empiris via percobaan DELETE anon key,
+bukan cuma baca dokumen), dan status 6 bug WA yang di-flag reviewer. Audit ini
+mengoreksi beberapa asumsi blueprint yang meleset dari repo nyata (lihat "Audit
+Sprint 18" di atas untuk tabelnya) — koreksi itu yang menentukan cakupan Sprint 19-22
+di bawah, bukan blueprint asli apa adanya.
+
+### Apa yang dibangun/diperbaiki per sprint
+
+- **Sprint 19 — Skor Risiko Deforestasi Poligon**: `getPolygonRisk()` baru
+  (`src/lib/geospatial.ts`), diwire ke `PolygonDrawer.tsx` yang sudah ada. **Dilewati**:
+  UI gambar poligon (`PolygonRiskMap.tsx` yang diminta blueprint) — sudah ada dari sesi
+  sebelum audit, tidak dibangun ulang.
+- **Sprint 20 — Harga Referensi dari Transaksi Terverifikasi**: tabel `transaksi` +
+  `src/lib/harga/aggregate.ts` (web) + halaman `HargaReferensi.tsx` (role-aware, Agen
+  rekam+lihat, Eksportir lihat saja, Petani tidak dapat akses).
+- **Sprint 21 — RLS Hardening + Consent Lintas-Device**: **dipersempit setelah blocker
+  ditemukan** (app belum punya Supabase Auth sungguhan — lihat di bawah) dan
+  dikonfirmasi ke user sebelum eksekusi. Yang dikerjakan: consent lintas-device via
+  Supabase (`lib/consent.ts`) + RLS append-only untuk `hashchain`/`access_log`/
+  `petani_document`. **Ditunda**: RLS per-role (`auth.uid()`) untuk tabel lain.
+- **Sprint 22 — WA Bot Hardening + Wire Nudge**: 5 dari 6 bug diperbaiki (env scheme,
+  `fromMe` ketat, tolak grup `@g.us`, `readBody` size-limit+413, filter
+  `aggregateDaily`, nudge+harga via Supabase). **Ditolak** (bukan dikerjakan): "perbaiki"
+  rata-rata berbobot ke 61.500 — nilai itu salah hitung, kode yang ada sudah benar.
+
+### Daftar file baru/berubah (kumulatif Sprint 19–22)
+
+**Web (root) — baru:**
+`src/lib/harga/aggregate.ts`, `src/lib/komoditas.ts`, `src/pages/HargaReferensi.tsx`
+
+**Web (root) — diubah:**
+`src/lib/geospatial.ts`, `src/components/PolygonDrawer.tsx`, `src/types/index.ts`,
+`src/lib/db.ts`, `src/lib/sync.ts`, `src/components/PlotForm.tsx`, `src/App.tsx`,
+`src/components/DashboardShell.tsx`, `src/lib/consent.ts`
+
+**Mobile — baru:**
+`mobile/server/supabaseRest.ts`, `mobile/server/pasporLookupSupabase.ts`,
+`mobile/server/transaksiSource.ts`, `mobile/server/__tests__/supabaseRest.test.ts`,
+`mobile/server/__tests__/pasporLookupSupabase.test.ts`,
+`mobile/server/__tests__/transaksiSource.test.ts`
+
+**Mobile — diubah:**
+`mobile/src/lib/harga/bot.ts`, `mobile/src/lib/harga/aggregate.ts`,
+`mobile/server/webhookParser.ts`, `mobile/server/wahaWebhookServer.ts`,
+`mobile/server/__tests__/webhookParser.test.ts`,
+`mobile/src/lib/harga/__tests__/harga.test.ts`, `mobile/.env.example`
+
+**SQL Supabase dijalankan user** (dikonfirmasi empiris lewat REST, bukan asumsi):
+`alter table plot add column boundary jsonb`, tabel `transaksi` + `demo_allow_all`,
+RLS append-only `hashchain`/`access_log`/`petani_document` — **ketiganya SUDAH aktif**.
+
+### Keputusan teknis penting (dicatat eksplisit, bukan diam-diam)
+
+1. **Blocker RLS per-role**: `auth.uid()` selalu `NULL` tanpa Supabase Auth sungguhan —
+   menjalankan policy per-role sekarang akan mematikan seluruh app. Dikonfirmasi ke
+   user via pertanyaan sebelum eksekusi, dipilih "partial hardening dulu". Per-role
+   penuh butuh sprint Auth terpisah (belum dijadwalkan).
+2. **Agregasi harga "samakan rumus", bukan modul shared**: web & mobile dua paket npm
+   independen tanpa workspace — bikin monorepo sungguhan sekarang berisiko ke pipeline
+   build yang sudah jalan (Vercel/Expo). Prinsip matematis disamakan (rumus rata-rata
+   berbobot yang sama), diimplementasikan dua kali dengan bentuk data yang cocok
+   masing-masing konteks (`Transaksi[]` individual di web, `PriceSource[]`
+   pre-agregat di mobile — `txnCount:1` per baris transaksi adalah kasus khusus dari
+   rumus yang sama, bukan rumus kedua).
+3. **Satu bug "fix" DITOLAK**: rata-rata berbobot 61.250 sudah matematis benar (dihitung
+   ulang manual + dikonfirmasi audit Sprint 18 + test PASS). Prompt yang minta ubah ke
+   61.500 salah hitung — dituruti buta akan memasukkan bug ke kode yang benar.
+4. **`req.pause()` bukan `req.destroy()`** untuk pembatasan ukuran payload webhook —
+   ditemukan & diperbaiki SAAT verifikasi end-to-end (bukan cuma lolos test unit):
+   `destroy()` mematikan socket sebelum HTTP 413 sempat terkirim.
+
+### Known issues / gap yang tersisa (jujur, bukan disembunyikan)
+
+- **Supabase Auth belum ada** — blocker utama Sprint 21 (lihat di atas). Tanpa ini:
+  RLS per-role penuh, dan uji "agen A tidak bisa lihat data agen B", keduanya belum
+  bisa dikerjakan/dibuktikan secara jujur.
+- **`mobile/server/.env` perlu diisi manual** (`SUPABASE_URL`, `SUPABASE_ANON_KEY`,
+  plus config WAHA yang sudah ada sebelumnya) supaya nudge Paspor & harga referensi
+  nyata aktif di server webhook — tanpa ini, fallback otomatis ke perilaku sebelumnya
+  (tanpa nudge / `SAMPLE_PRICE_SOURCES` berlabel DATA DEMO), bukan gagal total.
+- **Tidak ada instance WAHA nyata di lingkungan ini** — verifikasi Sprint 22 dilakukan
+  lewat server HTTP sungguhan + `curl`, BUKAN round-trip WhatsApp asli. Kalau WAHA
+  sungguhan sudah dikonfigurasi, disarankan uji manual sekali: kirim "harga kopi
+  Pangalengan" dari WA asli, konfirmasi balasan formatnya benar.
+- **`markDocumentVerified()` masih dead code** (tidak diwire ke UI manapun) — kalau
+  nanti diaktifkan untuk alur "petugas verifikasi dokumen", perlu policy `UPDATE`
+  terpisah di `petani_document` (saat ini INSERT+SELECT saja, hasil hardening append-only
+  Sprint 21).
+- **Satu baris probe RLS tersisa di `hashchain`** (`id: "__rls-probe__"`, dibuat sesi
+  ini untuk membuktikan append-only bekerja) — **tidak bisa dihapus lagi lewat anon
+  key** (justru bukti hardening-nya berfungsi). Baris ini tidak terhubung ke
+  petani/plot/kartu manapun (isolated `agent_id: "probe"`) sehingga tidak mengganggu
+  verifikasi hash-chain agen manapun, tapi kalau mau tabel yang bersih sepenuhnya,
+  perlu dihapus manual lewat Supabase Dashboard (akses admin, bukan anon key).
+- **Harga referensi masih akan tampil "data belum cukup"** sampai ada minimal 3
+  transaksi terverifikasi nyata per kombinasi komoditas×wilayah×grade — belum ada
+  transaksi nyata yang direkam per penulisan ini (memang seharusnya begitu, bukan bug —
+  guard ini sengaja mencegah angka menyesatkan dari sampel kosong).

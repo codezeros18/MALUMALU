@@ -24,9 +24,19 @@ function formatRp(n: number): string {
   return `Rp ${n.toLocaleString('id-ID')}`;
 }
 
+function uniqueWilayah(items: { wilayah: string }[]): string[] {
+  return Array.from(new Set(items.map((t) => t.wilayah).filter(Boolean))).sort();
+}
+
 // ===== Rekam Transaksi (Agen saja) =====
 
-function RekamTransaksiForm({ onRecorded }: { onRecorded: () => void }) {
+function RekamTransaksiForm({
+  onRecorded,
+  wilayahSuggestions,
+}: {
+  onRecorded: () => void;
+  wilayahSuggestions: string[];
+}) {
   const [komoditas, setKomoditas] = useState('kopi');
   const [komoditasLainnya, setKomoditasLainnya] = useState('');
   const [wilayah, setWilayah] = useState('');
@@ -107,7 +117,17 @@ function RekamTransaksiForm({ onRecorded }: { onRecorded: () => void }) {
             onChange={(e) => setWilayah(e.target.value)}
             className="mt-1 w-full text-base"
             placeholder="Contoh: Pangalengan"
+            list="wilayah-suggestions-rekam"
           />
+          <datalist id="wilayah-suggestions-rekam">
+            {wilayahSuggestions.map((w) => (
+              <option key={w} value={w} />
+            ))}
+          </datalist>
+          <p className="text-[11px] text-slate-400 mt-1">
+            Pakai ejaan yang sama persis dengan transaksi sebelumnya (mis. "Pangalengan")
+            supaya ikut terhitung di agregat yang sama — hindari typo.
+          </p>
         </div>
 
         <div>
@@ -203,6 +223,9 @@ function CekHargaReferensi() {
   const [result, setResult] = useState<ReferencePrice | null>(null);
   const [matchedCount, setMatchedCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  // Saran wilayah — terisi dari transaksi yang sudah pernah diambil dari Supabase
+  // (bukan tebakan, murni supaya ejaan konsisten dengan data yang benar-benar ada).
+  const [wilayahSuggestions, setWilayahSuggestions] = useState<string[]>([]);
 
   const isLainnya = komoditas === KOMODITAS_LAINNYA;
   const komoditasFinal = isLainnya ? komoditasLainnya.trim() : komoditas;
@@ -215,6 +238,7 @@ function CekHargaReferensi() {
     try {
       const rows = await supabaseBackend.fetchAll('transaksi');
       const transaksi = rows.map((r) => fromSupabaseRow<Transaksi>(r));
+      setWilayahSuggestions(uniqueWilayah(transaksi));
       const ref = getReferencePrice(transaksi, komoditasFinal, wilayah.trim(), grade.trim());
       setResult(ref);
       setMatchedCount(
@@ -271,7 +295,13 @@ function CekHargaReferensi() {
               onChange={(e) => setWilayah(e.target.value)}
               className="mt-1 w-full text-base"
               placeholder="Contoh: Pangalengan"
+              list="wilayah-suggestions-cek"
             />
+            <datalist id="wilayah-suggestions-cek">
+              {wilayahSuggestions.map((w) => (
+                <option key={w} value={w} />
+              ))}
+            </datalist>
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700">Grade</label>
@@ -355,7 +385,7 @@ export default function HargaReferensi() {
       <div className="space-y-6">
         {isAgen && (
           <div className="grid lg:grid-cols-2 gap-6">
-            <RekamTransaksiForm onRecorded={refreshOwn} />
+            <RekamTransaksiForm onRecorded={refreshOwn} wilayahSuggestions={uniqueWilayah(ownTransaksi)} />
             <RiwayatTransaksi items={ownTransaksi} />
           </div>
         )}

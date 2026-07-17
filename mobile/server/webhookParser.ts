@@ -56,13 +56,20 @@ interface ReadableLike {
   on(event: 'data', listener: (chunk: Buffer | string) => void): unknown;
   on(event: 'end', listener: () => void): unknown;
   on(event: 'error', listener: (err: Error) => void): unknown;
-  destroy?(): void;
+  pause?(): void;
 }
 
 /**
  * Akumulasi body request sampai `end`, tolak (reject PayloadTooLargeError) begitu
  * ukuran melebihi `maxBytes` — pemanggil (wahaWebhookServer.ts) bertanggung jawab
  * membalas HTTP 413 saat error ini ditangkap.
+ *
+ * SENGAJA tidak memanggil req.destroy() saat batas terlampaui — request & response
+ * berbagi socket TCP yang sama; men-destroy request akan ikut mematikan socket
+ * SEBELUM 413 sempat ditulis, sehingga klien cuma lihat connection reset mentah,
+ * bukan error HTTP yang jelas. Cukup berhenti mengakumulasi (dijaga flag `rejected`,
+ * mencegah memory growth) dan pause stream — koneksi ditutup wajar setelah pemanggil
+ * menulis & mengakhiri response 413.
  */
 export function readBody(req: ReadableLike, maxBytes = MAX_WEBHOOK_BODY_BYTES): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -74,7 +81,7 @@ export function readBody(req: ReadableLike, maxBytes = MAX_WEBHOOK_BODY_BYTES): 
       bytes += Buffer.byteLength(chunk);
       if (bytes > maxBytes) {
         rejected = true;
-        req.destroy?.();
+        req.pause?.();
         reject(new PayloadTooLargeError());
         return;
       }

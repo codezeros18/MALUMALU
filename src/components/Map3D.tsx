@@ -84,9 +84,9 @@ export default function Map3D({
       style: STYLE_URL,
       center: [center.lng, center.lat],
       zoom,
-      pitch: 60,
+      pitch: 50,
       bearing: -17,
-      maxPitch: 85,
+      maxPitch: 75,
     });
     mapRef.current = map;
 
@@ -100,7 +100,7 @@ export default function Map3D({
         encoding: 'terrarium',
         maxzoom: 15,
       });
-      map.setTerrain({ source: 'terrain-dem', exaggeration: 1.4 });
+      map.setTerrain({ source: 'terrain-dem', exaggeration: 1.15 });
 
       const firstSymbolId = map.getStyle().layers?.find((l) => l.type === 'symbol')?.id;
       map.addLayer(

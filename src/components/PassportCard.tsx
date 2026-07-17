@@ -128,7 +128,7 @@ export default function PassportCard({ petani, plot, kartu }: PassportCardProps)
             </p>
             <Map3D
               center={{ lat: plot.lat, lng: plot.lng }}
-              zoom={14}
+              zoom={13}
               markers={
                 plot.boundary && plot.boundary.length >= 3
                   ? []
