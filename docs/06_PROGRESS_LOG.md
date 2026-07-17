@@ -1247,3 +1247,136 @@ jalur akses ke data sensitif petani, tidak ada pintu belakang baru. Cakupan: **h
 hanya di Petani Terdekat sesuai keputusan user); normalisasi otomatis wilayah yang
 sudah salah ketik (datalist cuma cegah typo baru); WAHA otomatis untuk kontak
 Eksportir→Petani (pakai `wa.me` manual, bukan pesan terkirim sendiri).
+
+---
+
+## Perbaikan Pasca-Sprint-22 (lanjutan) — Fix Hash-Chain agentId, Periode Produksi EUDR, Rekomendasi Mitigasi Risiko
+
+**Bug dilaporkan user**: "Rantai rusak di entri #0" muncul di Paket Bukti EUDR untuk
+petani "Vassel" (data uji sungguhan, bukan demo).
+
+**Investigasi**: recompute manual hash-chain "Vassel" lewat script Node berdiri sendiri
+(mirror persis `stableStringify`/`computeDataHash`/`computeEntryHash` dari
+`lib/hashchain.ts`) — ketemu **3 entri terpisah** semuanya `index=0,
+previous_hash="GENESIS"` di bawah `agentId` yang SAMA, alih-alih satu rantai
+berkelanjutan. Root cause: `agentId` disimpan di **localStorage** (`getDeviceAgentId()`)
+sementara data hash-chain aktual ada di **IndexedDB** — dua penyimpanan yang independen.
+Kalau IndexedDB direset/dibersihkan (mis. "Clear site data" browser yang tidak konsisten
+menghapus localStorage) sementara `agentId` lama masih ada di localStorage,
+`getDeviceAgentId()` memakai ulang ID lama padahal `getLastHashEntry()` (query ke
+IndexedDB yang sudah kosong) tidak menemukan apa-apa → `appendEntry()` menulis ulang
+index 0/GENESIS baru di bawah agentId yang sama, memecah rantai jadi beberapa
+"generasi" yang masing-masing kelihatan valid sendiri-sendiri tapi rusak saat digabung
+per-agentId (pola grouping yang dipakai `EksportirDashboard.tsx`/`PaketBuktiEudr.tsx`).
+
+**Fix** (`src/lib/db.ts`, `getDB()` → `upgrade(db, oldVersion)`): tambah
+`removeItem(DEVICE_AGENT_ID_KEY)` sebagai statement PERTAMA di dalam blok
+`if (oldVersion < 1)` — blok ini HANYA jalan saat IndexedDB benar-benar baru di browser
+tsb (bukan migrasi versi biasa), jadi titik yang tepat untuk memastikan agentId baru
+juga selalu di-generate ulang, tidak pernah menimpa index 0 di bawah agentId yang sudah
+pernah dipakai sebelumnya.
+
+**Batasan jujur**: data "Vassel" yang SUDAH terlanjur pecah (3 fragmen) **permanen tidak
+bisa diperbaiki lewat software** — RLS append-only Sprint 21 memblokir UPDATE/DELETE ke
+tabel `hashchain` bahkan lewat anon key (dikonfirmasi lewat probe row yang gagal
+dihapus). Ini trade-off jujur dari desain append-only: kesalahan pun jadi tak-dapat-diubah,
+konsisten dengan filosofi "hash-chain, bukan blockchain, tapi tamper-evident" proyek ini.
+
+**Verifikasi**: `tsc -b --noEmit` + `npm run build` bersih. Playwright regresi ulang
+`test-verify-eudr-hashchain.mjs` atas 5 petani "Petani Terdekat" — 4 rantai (dibuat
+SETELAH fix) semuanya **valid**, hanya "Vassel" (data SEBELUM fix) yang tetap
+`broken=true` di entri #0 — sesuai ekspektasi (bukti fix bekerja untuk device baru, dan
+bukti kerusakan lama memang tidak hilang sendiri).
+
+### Fitur baru 1 — Periode Produksi (EUDR)
+
+User bertanya: EUDR mensyaratkan geolokasi disertai waktu/periode produksi komoditas,
+bukan cuma titik/poligon lokasi saja — apakah app ini sudah punya field itu? **Jawaban:
+belum, ditambahkan sekarang.**
+
+- `src/types/index.ts` — `Plot` dapat 2 field baru opsional:
+  `periodeProduksiMulai`/`periodeProduksiSelesai` (string `YYYY-MM-DD`). Opsional
+  supaya plot lama tanpa data ini tetap valid tanpa migrasi paksa.
+- `src/components/PlotForm.tsx` — 2 `Input type="date"` baru di antara Komoditas dan
+  Telepon, dengan penjelasan singkat kenapa field ini ada. Validasi: tanggal selesai
+  tidak boleh sebelum tanggal mulai (blok submit + pesan error), tapi field ini sendiri
+  BOLEH dikosongkan (tidak wajib — banyak petani belum tahu tanggal pastinya).
+- `src/pages/TambahPlot.tsx` — diteruskan ke `addPlot()`.
+- `src/lib/sync.ts` — kolom `periode_produksi_mulai`/`periode_produksi_selesai`
+  ditambahkan ke `ALLOWED_COLUMNS.plot` (konversi camelCase↔snake_case otomatis lewat
+  `toSupabaseRow`/`fromSupabaseRow`, tidak perlu kode konversi manual). **User perlu
+  jalankan SQL manual di Supabase**: `alter table plot add column if not exists
+  periode_produksi_mulai date, add column if not exists periode_produksi_selesai date;`
+- `src/pages/PlotDetail.tsx` — ditampilkan di kartu "Informasi Plot".
+- `src/pages/PaketBuktiEudr.tsx` — ditampilkan di kartu Geolokasi, dengan peringatan
+  kuning kalau kosong ("Belum diisi — EUDR mensyaratkan geolokasi disertai periode
+  produksi") supaya eksportir langsung lihat kalau ada data yang perlu dilengkapi.
+
+### Fitur baru 2 — Rekomendasi Mitigasi Risiko Deforestasi
+
+User minta: kalau risk assessment "sedang"/"tinggi", app harus menyediakan panduan
+mitigasi konkret (mis. "perlu restorasi dan reboisasi"), bukan cuma badge risiko tanpa
+tindak lanjut.
+
+- `src/lib/geospatial.ts` — fungsi baru **pure, tidak disimpan** (dihitung ulang dari
+  level risiko saat ini, konsisten dengan `getPolygonRisk()`):
+  - `deforestasiStatusToRiskLevel()` — petakan `DeforestasiStatus` (titik-tunggal:
+    aman/berisiko/perlu-audit) ke skala `PolygonRiskLevel` (rendah/sedang/tinggi) yang
+    sama dipakai poligon, supaya satu set konten mitigasi berlaku untuk kedua jalur.
+  - `getMitigationGuidance(level)` — konten referensi detail per level (judul,
+    ringkasan, daftar aksi konkret, disclaimer). Level **sedang**: verifikasi lapangan
+    (ground-truthing), foto kondisi lahan, telusuri riwayat lahan sebelum cut-off EUDR
+    31 Des 2020, pertimbangkan buffer vegetasi tepi lahan. Level **tinggi**: audit
+    lapangan wajib sebelum tier export-ready, susun rencana **restorasi & reboisasi**
+    sesuai pedoman dinas kehutanan setempat, pertimbangkan pisahkan panen dari batch
+    ekspor, konsultasi dinas lingkungan. **Disclaimer permanen**: "Rekomendasi umum
+    berbasis praktik uji tuntas EUDR — bukan nasihat hukum/lingkungan resmi."
+- `src/types/index.ts` — `Kartu` dapat field baru opsional `mitigasiRisiko` (catatan
+  bebas petugas) + `mitigasiRisikoUpdatedAt`. **Murni advisory/log** — TIDAK pernah
+  dibaca oleh `lib/ruleEngine.ts` (`tentukanTier`/`tentukanStdbStatus` tetap
+  deterministik, tidak disentuh sama sekali).
+- `src/components/KartuCard.tsx` — box rekomendasi otomatis muncul kapan pun
+  `kartu.deforestasi !== 'aman'` (berlaku di SEMUA tempat `KartuCard` dipakai: Detail
+  Plot Agen, Paket Bukti EUDR Eksportir — tanpa kode tambahan karena reuse komponen
+  yang sama). Kalau sudah ada catatan mitigasi tersimpan, ditampilkan sebagai kutipan.
+  Tombol "Catat Tindakan Mitigasi" (disembunyikan di mode `readOnly` — jadi Eksportir
+  di Paket Bukti EUDR bisa LIHAT rekomendasi + catatan tapi tidak bisa mengedit, hanya
+  Agen/petugas yang bisa) buka textarea, simpan lewat `commitKartu()` (REUSE hash-chain
+  commit yang sudah ada — perubahan catatan mitigasi pun tercatat & terverifikasi di
+  rantai, konsisten dengan semua perubahan kartu lain).
+- `src/lib/sync.ts` — kolom `mitigasi_risiko`/`mitigasi_risiko_updated_at` ditambahkan
+  ke `ALLOWED_COLUMNS.kartu`. **User perlu jalankan SQL manual di Supabase**:
+  `alter table kartu add column if not exists mitigasi_risiko text, add column if not
+  exists mitigasi_risiko_updated_at bigint;`
+
+**Verifikasi (Playwright, build+preview)**: plot poligon dibuat di area forest-heavy
+(koordinat sama dipakai `test-polygon-risk.mjs` sebelumnya untuk memastikan hasil
+`perlu-audit`) dengan periode produksi terisi → Detail Plot menampilkan periode produksi
+persis seperti diisi → "Buat & Commit Kartu" → status deforestasi `perlu-audit` → box
+"Risiko tinggi — mitigasi wajib sebelum status export-ready" muncul otomatis dengan 5
+poin aksi konkret (audit lapangan, restorasi & reboisasi, dst) → klik "Catat Tindakan
+Mitigasi" → isi catatan → simpan → catatan tersimpan & tampil kembali setelah reload
+state. Nol console error. `tsc -b --noEmit` + `npm run build` bersih.
+
+**SQL yang perlu dijalankan user secara manual di Supabase** (belum dijalankan — sesuai
+aturan proyek, semua perubahan skema Supabase dilakukan manual oleh user):
+
+```sql
+alter table plot
+  add column if not exists periode_produksi_mulai date,
+  add column if not exists periode_produksi_selesai date;
+
+alter table kartu
+  add column if not exists mitigasi_risiko text,
+  add column if not exists mitigasi_risiko_updated_at bigint;
+```
+
+**PENTING — urutan langkah**: field baru sudah otomatis ikut ke `ALLOWED_COLUMNS` di
+`lib/sync.ts`, artinya sinkron ke Supabase akan MENCOBA mengirim kolom
+`periode_produksi_mulai`/`periode_produksi_selesai`/`mitigasi_risiko`/
+`mitigasi_risiko_updated_at` mulai sekarang. Kalau SQL di atas BELUM dijalankan, upsert
+plot/kartu ke Supabase akan gagal dengan error "column does not exist" dari Postgrest
+(masuk syncQueue sebagai gagal, retry otomatis sampai 5x lalu berhenti — sesuai
+`MAX_AUTO_RETRY_ATTEMPTS` yang sudah ada). Data tetap aman tersimpan LOKAL di IndexedDB
+selama itu. **Jalankan SQL di atas dulu sebelum data baru mulai direkam**, supaya tidak
+ada plot/kartu yang menumpuk gagal sinkron di antrean.

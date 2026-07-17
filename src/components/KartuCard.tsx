@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { commitKartu } from '../lib/hashchain';
+import { deforestasiStatusToRiskLevel, getMitigationGuidance } from '../lib/geospatial';
 import Card from './ui/Card';
 import Button from './ui/Button';
 import Select from './ui/Select';
@@ -51,6 +52,33 @@ export default function KartuCard({
   const [alasanKoreksi, setAlasanKoreksi] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [showMitigasi, setShowMitigasi] = useState(false);
+  const [catatanMitigasi, setCatatanMitigasi] = useState(kartu.mitigasiRisiko ?? '');
+  const [savingMitigasi, setSavingMitigasi] = useState(false);
+  const [mitigasiError, setMitigasiError] = useState<string | null>(null);
+
+  const riskLevel = deforestasiStatusToRiskLevel(kartu.deforestasi);
+  const guidance = kartu.deforestasi !== 'aman' ? getMitigationGuidance(riskLevel) : null;
+
+  const handleSaveMitigasi = async () => {
+    setSavingMitigasi(true);
+    setMitigasiError(null);
+    try {
+      const updated: Kartu = {
+        ...kartu,
+        mitigasiRisiko: catatanMitigasi.trim() || undefined,
+        mitigasiRisikoUpdatedAt: Date.now(),
+      };
+      const committed = await commitKartu(updated);
+      onKartuUpdated?.(committed);
+      setShowMitigasi(false);
+    } catch (err) {
+      setMitigasiError(err instanceof Error ? err.message : 'Gagal menyimpan catatan mitigasi.');
+    } finally {
+      setSavingMitigasi(false);
+    }
+  };
 
   const openOverride = () => {
     setOverrideTier(kartu.tier);
@@ -116,6 +144,61 @@ export default function KartuCard({
         Peta JRC ~91% akurasi, commission error ~18% (kebun kopi bernaung bisa terbaca hutan).
         Penandaan berbasis titik (point-primary), GPS bisa meleset 3–11m.
       </p>
+
+      {guidance && (
+        <div className="border-t border-slate-100 pt-3 space-y-2">
+          <p className="text-xs font-semibold text-amber-800">{guidance.title}</p>
+          <p className="text-xs text-slate-600">{guidance.summary}</p>
+          <ul className="text-xs text-slate-600 list-disc list-inside space-y-1">
+            {guidance.actions.map((action) => (
+              <li key={action}>{action}</li>
+            ))}
+          </ul>
+          <p className="text-[11px] text-slate-400">{guidance.disclaimer}</p>
+
+          {kartu.mitigasiRisiko && (
+            <div className="rounded-md bg-slate-50 border border-slate-200 px-2 py-1.5">
+              <p className="text-[11px] font-medium text-slate-500">Catatan mitigasi tercatat:</p>
+              <p className="text-xs text-slate-700 whitespace-pre-wrap">{kartu.mitigasiRisiko}</p>
+            </div>
+          )}
+
+          {!readOnly && !showMitigasi && (
+            <button type="button" onClick={() => setShowMitigasi(true)} className="text-xs text-brand-800 underline">
+              {kartu.mitigasiRisiko ? 'Perbarui catatan mitigasi' : 'Catat Tindakan Mitigasi'}
+            </button>
+          )}
+
+          {!readOnly && showMitigasi && (
+            <div className="space-y-2">
+              <Textarea
+                value={catatanMitigasi}
+                onChange={(e) => setCatatanMitigasi(e.target.value)}
+                placeholder="Contoh: sudah dilakukan ground-truthing 12/07, rencana reboisasi area tepi lahan bulan depan…"
+                className="w-full text-xs"
+                rows={3}
+              />
+              {mitigasiError && <p className="text-xs text-red-600">{mitigasiError}</p>}
+              <div className="flex gap-2">
+                <Button onClick={handleSaveMitigasi} disabled={savingMitigasi} fullWidth size="sm" className="flex-1">
+                  {savingMitigasi ? 'Menyimpan…' : 'Simpan Catatan'}
+                </Button>
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    setShowMitigasi(false);
+                    setCatatanMitigasi(kartu.mitigasiRisiko ?? '');
+                  }}
+                  disabled={savingMitigasi}
+                  size="sm"
+                >
+                  Batal
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {!readOnly && !showOverride && (
         <button type="button" onClick={openOverride} className="text-xs text-brand-800 underline">

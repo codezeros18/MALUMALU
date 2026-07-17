@@ -116,6 +116,12 @@ export default function PlotDetail() {
             {plot.gpsAccuracyM ? ` · akurasi ${Math.round(plot.gpsAccuracyM)}m` : ''}
           </p>
           <p className="text-sm text-slate-600 mt-1">Komoditas: {plot.komoditas}</p>
+          <p className="text-sm text-slate-600 mt-1">
+            Periode produksi:{' '}
+            {plot.periodeProduksiMulai || plot.periodeProduksiSelesai
+              ? `${plot.periodeProduksiMulai || '—'} s/d ${plot.periodeProduksiSelesai || '—'}`
+              : 'Belum diisi'}
+          </p>
           {plot.boundary && plot.boundary.length >= 3 && (
             <>
               <p className="text-sm text-slate-600 mt-1">

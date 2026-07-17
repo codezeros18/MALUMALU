@@ -38,6 +38,11 @@ export interface Plot extends Syncable {
   // tidak punya ini). Minimal 3 titik kalau ada. Lihat lib/polygon.ts untuk cara
   // hitung centroid & luas darinya.
   boundary?: { lat: number; lng: number }[];
+  // Periode produksi (EUDR mewajibkan geolokasi DISERTAI waktu/periode produksi
+  // komoditas, bukan cuma titik/poligon lokasinya saja — lihat docs/01_BLUEPRINT_FULL.md).
+  // Format YYYY-MM-DD. Opsional supaya plot lama tanpa data ini tetap valid.
+  periodeProduksiMulai?: string;
+  periodeProduksiSelesai?: string;
 }
 
 export type DeforestasiStatus = 'aman' | 'berisiko' | 'perlu-audit';
@@ -63,6 +68,11 @@ export interface Kartu extends Syncable {
   deforestasi: DeforestasiStatus;
   hashChainRef: string; // id entri hash-chain terakhir
   createdAt: number;
+  // Catatan tindakan mitigasi risiko deforestasi (restorasi, reboisasi, audit lapangan,
+  // dll) yang dicatat petugas saat status berisiko/perlu-audit. Murni advisory/log —
+  // TIDAK memengaruhi tier/stdbStatus (itu tetap deterministik lewat lib/ruleEngine.ts).
+  mitigasiRisiko?: string;
+  mitigasiRisikoUpdatedAt?: number;
 }
 
 // ===== HASH-CHAIN =====

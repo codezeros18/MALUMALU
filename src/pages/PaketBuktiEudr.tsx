@@ -180,6 +180,14 @@ export default function PaketBuktiEudr() {
 
       <Card className="space-y-2">
         <p className="text-sm font-semibold text-slate-700">Geolokasi</p>
+        <p className="text-sm text-slate-600">
+          Periode produksi:{' '}
+          {plot?.periodeProduksiMulai || plot?.periodeProduksiSelesai ? (
+            `${plot.periodeProduksiMulai || '—'} s/d ${plot.periodeProduksiSelesai || '—'}`
+          ) : (
+            <span className="text-amber-700">Belum diisi — EUDR mensyaratkan geolokasi disertai periode produksi.</span>
+          )}
+        </p>
         {plot?.boundary && plot.boundary.length >= 3 ? (
           <div className="space-y-1">
             <p className="text-sm text-slate-600">

@@ -11,6 +11,8 @@ export interface PlotFormValues {
   telepon: string;
   komoditas: string;
   email: string;
+  periodeProduksiMulai: string;
+  periodeProduksiSelesai: string;
 }
 
 interface PlotFormProps {
@@ -47,11 +49,20 @@ export default function PlotForm({
   const [komoditas, setKomoditas] = useState('kopi');
   const [komoditasLainnya, setKomoditasLainnya] = useState('');
   const [email, setEmail] = useState('');
+  const [periodeProduksiMulai, setPeriodeProduksiMulai] = useState('');
+  const [periodeProduksiSelesai, setPeriodeProduksiSelesai] = useState('');
 
   const isLainnya = komoditas === KOMODITAS_LAINNYA;
   const komoditasFinal = isLainnya ? komoditasLainnya.trim() : komoditas;
+  const periodeInvalid = Boolean(
+    periodeProduksiMulai && periodeProduksiSelesai && periodeProduksiSelesai < periodeProduksiMulai,
+  );
   const canSubmit =
-    Boolean(position) && nama.trim().length > 0 && komoditasFinal.length > 0 && !submitting;
+    Boolean(position) &&
+    nama.trim().length > 0 &&
+    komoditasFinal.length > 0 &&
+    !periodeInvalid &&
+    !submitting;
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -62,6 +73,8 @@ export default function PlotForm({
       telepon: telepon.trim(),
       komoditas: komoditasFinal,
       email: email.trim(),
+      periodeProduksiMulai,
+      periodeProduksiSelesai,
     });
     setNama('');
     setDesa('');
@@ -69,6 +82,8 @@ export default function PlotForm({
     setKomoditas('kopi');
     setKomoditasLainnya('');
     setEmail('');
+    setPeriodeProduksiMulai('');
+    setPeriodeProduksiSelesai('');
   };
 
   const fields = (
@@ -147,6 +162,31 @@ export default function PlotForm({
             className="mt-2 w-full text-base"
             placeholder="Contoh: pinang"
           />
+        )}
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-slate-700">Periode produksi</label>
+        <p className="text-xs text-slate-400 mb-1">
+          EUDR mensyaratkan geolokasi disertai waktu/periode produksi komoditas, bukan cuma titik
+          lokasinya saja. Boleh dikosongkan dulu kalau belum tahu, bisa dilengkapi nanti.
+        </p>
+        <div className="flex gap-2">
+          <Input
+            type="date"
+            value={periodeProduksiMulai}
+            onChange={(e) => setPeriodeProduksiMulai(e.target.value)}
+            className="flex-1 text-base"
+          />
+          <Input
+            type="date"
+            value={periodeProduksiSelesai}
+            onChange={(e) => setPeriodeProduksiSelesai(e.target.value)}
+            className="flex-1 text-base"
+          />
+        </div>
+        {periodeInvalid && (
+          <p className="text-xs text-red-600 mt-1">Tanggal selesai tidak boleh sebelum tanggal mulai.</p>
         )}
       </div>
 

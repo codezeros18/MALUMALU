@@ -61,6 +61,8 @@ const ALLOWED_COLUMNS: Record<SyncEntityType, string[]> = {
     'updated_at',
     'agent_id',
     'boundary',
+    'periode_produksi_mulai',
+    'periode_produksi_selesai',
   ],
   kartu: [
     'id',
@@ -74,6 +76,8 @@ const ALLOWED_COLUMNS: Record<SyncEntityType, string[]> = {
     'created_at',
     'updated_at',
     'agent_id',
+    'mitigasi_risiko',
+    'mitigasi_risiko_updated_at',
   ],
   hashchain: ['id', 'index', 'timestamp', 'payload', 'data_hash', 'previous_hash', 'hash', 'agent_id'],
   consent: ['id', 'kartu_id', 'granted_to', 'scope', 'granted_at', 'revoked_at'],

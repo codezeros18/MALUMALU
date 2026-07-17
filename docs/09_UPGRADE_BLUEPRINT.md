@@ -251,3 +251,4 @@ Fix bug yang di-flag reviewer (semua sudah dikonfirmasi ADA):
 Kalau saat Sprint 18 ternyata sebagian fitur di atas **sudah ada** di repo (mis. polygon sudah
 dibuat, atau bug WA sudah difix), **hapus item itu dari tracker dan lompati** — jangan duplikasi.
 Blueprint ini disusun dari dokumen, jadi audit repo adalah sumber kebenaran final.
+wada

@@ -11,7 +11,9 @@ import type {
   PetaniDocument,
   Transaksi,
 } from '../types';
-import { getItem, setItem } from './storage';
+import { getItem, setItem, removeItem } from './storage';
+
+const DEVICE_AGENT_ID_KEY = 'device-agent-id';
 
 // ===== SYNC QUEUE (fase full-production, lihat docs/04_FULL_PRODUCTION_BLUEPRINT.md §1) =====
 
@@ -100,6 +102,18 @@ export function getDB(): Promise<IDBPDatabase<PasporPetaniDB>> {
       // upgrade berikutnya tetap bisa self-heal alih-alih permanen macet dengan store hilang.
       upgrade(db, oldVersion) {
         if (oldVersion < 1) {
+          // IndexedDB benar-benar baru di browser ini (bukan cuma migrasi versi biasa).
+          // Kalau localStorage kebetulan masih menyimpan device-agent-id LAMA (mis. user
+          // "Clear site data" di DevTools yang menghapus IndexedDB tapi tidak selalu
+          // menghapus localStorage secara bersamaan, tergantung browser), agentId lama
+          // itu akan dipakai lagi oleh getDeviceAgentId() padahal riwayat hash-chain
+          // lokalnya sudah hilang -> appendEntry() menulis ulang index 0/GENESIS di
+          // BAWAH agentId yang sama, membuat rantai orang itu (dilihat per-agentId,
+          // pola EksportirDashboard/PaketBuktiEudr) terpecah jadi beberapa "generasi"
+          // yang masing-masing kelihatan "rusak" saat digabung. Reset agentId di sini
+          // supaya IndexedDB baru SELALU dapat identitas baru juga — tidak pernah
+          // menimpa index 0 di bawah agentId yang sudah pernah dipakai.
+          removeItem(DEVICE_AGENT_ID_KEY);
           if (!db.objectStoreNames.contains('petani')) {
             db.createObjectStore('petani', { keyPath: 'id' });
           }
@@ -181,8 +195,6 @@ function dbError(op: string, err: unknown): Error {
   const detail = err instanceof Error ? err.message : String(err);
   return new Error(`Operasi database gagal: ${op} (${detail})`);
 }
-
-const DEVICE_AGENT_ID_KEY = 'device-agent-id';
 
 // Identitas device/agen sementara (demo-auth) — dipakai sampai Sprint 11 memasang role
 // sungguhan. Konsisten per-browser (persist di localStorage), supaya dashboard Eksportir

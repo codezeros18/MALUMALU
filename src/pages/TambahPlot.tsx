@@ -66,6 +66,8 @@ export default function TambahPlot() {
         capturedAt: Date.now(),
         boundary: drawingPoints,
         luasEstimasiHa: computeAreaHa(drawingPoints),
+        periodeProduksiMulai: values.periodeProduksiMulai || undefined,
+        periodeProduksiSelesai: values.periodeProduksiSelesai || undefined,
       });
       setItem('active-petani-id', petani.id);
       setItem('active-plot-id', plot.id);
