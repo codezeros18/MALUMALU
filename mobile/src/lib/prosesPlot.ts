@@ -1,7 +1,7 @@
-import { addKartu, addPetani, addPlot, getChain, newId, setChain } from './db';
+import { addKartu, addPetani, addPlot, newId } from './db';
 import { cekDeforestasi } from './geospatial';
 import { evaluateKartu } from './ruleEngine';
-import { appendEntry } from './hashchain';
+import { commitEntry } from './hashchain';
 import { enqueueWa } from './waOutbox';
 import type { Kartu, Petani, Plot } from '../types';
 
@@ -13,6 +13,9 @@ export interface PlotInput {
   lat: number;
   lng: number;
   gpsAccuracyM?: number;
+  // Sudah punya sertifikat STDB terbit? Wajib diisi eksplisit (bukan default tersembunyi)
+  // supaya setiap pemanggil sadar ini menentukan tier export_ready — lihat ruleEngine.ts.
+  punyaSTDB: boolean;
 }
 
 export async function prosesPlotBaru(input: PlotInput): Promise<Kartu> {
@@ -34,7 +37,7 @@ export async function prosesPlotBaru(input: PlotInput): Promise<Kartu> {
     capturedAt: now,
   };
   const cek = cekDeforestasi(input.lat, input.lng);
-  const rule = evaluateKartu(petani, plot, cek);
+  const rule = evaluateKartu(petani, plot, cek, input.punyaSTDB);
   const kartu: Kartu = {
     id: newId(),
     petaniId: petani.id,
@@ -47,13 +50,9 @@ export async function prosesPlotBaru(input: PlotInput): Promise<Kartu> {
   await addPetani(petani);
   await addPlot(plot);
   await addKartu(kartu);
-  const chain = await getChain();
-  await setChain(
-    appendEntry(
-      chain,
-      { kartuId: kartu.id, tier: kartu.tier, stdbStatus: kartu.stdbStatus, lat: plot.lat, lng: plot.lng },
-      now,
-    ),
+  await commitEntry(
+    { kartuId: kartu.id, tier: kartu.tier, stdbStatus: kartu.stdbStatus, lat: plot.lat, lng: plot.lng },
+    now,
   );
   await enqueueWa(
     `✅ *PASPOR PETANI — Kartu Baru*\n\n` +

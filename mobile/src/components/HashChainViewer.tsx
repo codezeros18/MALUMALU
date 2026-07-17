@@ -1,5 +1,4 @@
 import { useFocusEffect } from 'expo-router';
-import { sha256 } from 'js-sha256';
 import { useCallback, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { getChain, getChainBackup, setChain, setChainBackup } from '../lib/db';
@@ -37,7 +36,11 @@ export function HashChainViewer() {
     if (c.length === 0) return;
     await setChainBackup(c);
     const mid = Math.floor(c.length / 2);
-    const bad = c.map((e, i) => (i === mid ? { ...e, dataHash: sha256('data-diubah-diam-diam') } : e));
+    const bad = c.map((e, i) => {
+      if (i !== mid) return e;
+      const payload = (e.payload ?? {}) as Record<string, unknown>;
+      return { ...e, payload: { ...payload, tier: 'export_ready' } };
+    });
     await setChain(bad);
     setTampered(true);
     await reload(true);

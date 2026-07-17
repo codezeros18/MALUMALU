@@ -42,6 +42,7 @@ export interface Kartu {
 export interface HashChainEntry {
   index: number;
   timestamp: string;
+  payload: unknown;
   dataHash: string;
   previousHash: string;
   hash: string;

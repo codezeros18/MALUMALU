@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import { getCurrentPosition } from '../lib/gps';
 import { prosesPlotBaru } from '../lib/prosesPlot';
 import { colors, fonts, spacing } from '../theme/tokens';
@@ -17,6 +17,7 @@ export function PlotForm({ coord, accuracyM, onCoordFromGps, onSaved }: PlotForm
   const [desa, setDesa] = useState('');
   const [telepon, setTelepon] = useState('');
   const [komoditas, setKomoditas] = useState('kopi');
+  const [punyaSTDB, setPunyaSTDB] = useState(false);
   const [gpsLoading, setGpsLoading] = useState(false);
   const [warning, setWarning] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -52,11 +53,13 @@ export function PlotForm({ coord, accuracyM, onCoordFromGps, onSaved }: PlotForm
         lat: coord.lat,
         lng: coord.lng,
         gpsAccuracyM: accuracyM ?? undefined,
+        punyaSTDB,
       });
       setNama('');
       setDesa('');
       setTelepon('');
       setKomoditas('kopi');
+      setPunyaSTDB(false);
       onSaved(kartu);
     } catch (e) {
       setWarning(e instanceof Error ? e.message : 'Gagal menyimpan. Coba lagi.');
@@ -80,6 +83,14 @@ export function PlotForm({ coord, accuracyM, onCoordFromGps, onSaved }: PlotForm
 
       <Text style={styles.label}>Komoditas</Text>
       <TextInput style={styles.input} value={komoditas} onChangeText={setKomoditas} placeholderTextColor={colors.inkMuted} />
+
+      <View style={styles.stdbRow}>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.label}>Sudah punya STDB?</Text>
+          <Text style={styles.stdbHint}>Wajib untuk tier export-ready (paritas dengan web).</Text>
+        </View>
+        <Switch value={punyaSTDB} onValueChange={setPunyaSTDB} />
+      </View>
 
       <View style={styles.coordRow}>
         <View style={{ flex: 1 }}>
@@ -138,6 +149,8 @@ const styles = StyleSheet.create({
     color: colors.ink,
     backgroundColor: colors.paper,
   },
+  stdbRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: 8 },
+  stdbHint: { fontFamily: fonts.ui, fontSize: 11, color: colors.inkMuted, marginTop: 2 },
   coordRow: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing.sm, marginTop: 4 },
   coordText: { fontFamily: fonts.mono, fontSize: 12, color: colors.ink, marginTop: 4 },
   gpsBtn: {

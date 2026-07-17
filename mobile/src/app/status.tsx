@@ -23,7 +23,16 @@ function buildView(petani: Petani, plot: Plot | undefined, kartu: Kartu | undefi
   const cek = plot
     ? cekDeforestasi(plot.lat, plot.lng)
     : { status: 'di_luar_area' as const, cellValue: null, source: '', catatan: '' };
-  const rule = evaluateKartu(petani, plot ?? ({ id: '', petaniId: petani.id, lat: 0, lng: 0, komoditas: '', capturedAt: '' } as Plot), cek);
+  // punyaSTDB tidak tersimpan di Petani/Plot (sama seperti web — hanya input sesaat
+  // waktu Kartu dibuat, lihat ruleEngine.ts). Layar ini cuma pratinjau cadangan dipakai
+  // saat BELUM ada Kartu tersimpan (lihat `tier` di bawah) — default false (konservatif,
+  // tidak pernah overclaim export-ready tanpa Kartu nyata yang mengonfirmasinya).
+  const rule = evaluateKartu(
+    petani,
+    plot ?? ({ id: '', petaniId: petani.id, lat: 0, lng: 0, komoditas: '', capturedAt: '' } as Plot),
+    cek,
+    false,
+  );
   const stdbLengkap = Boolean(petani.nama && petani.desa && petani.telepon);
   const gpsOk = !plot || plot.gpsAccuracyM === undefined || plot.gpsAccuracyM <= 20;
   return {
@@ -137,7 +146,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card,
     borderRadius: radius.card,
     borderWidth: 1,
-    borderColor: colors.lineStrong,
+    borderColor: colors.line,
     padding: spacing.md,
   },
   tierRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },

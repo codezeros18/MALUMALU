@@ -26,29 +26,38 @@ const cek = (status: DeforestasiCheck['status']): DeforestasiCheck => ({
   catatan: 'c',
 });
 
-test('aman + complete data + good gps => export_ready / lengkap', () => {
-  const r = evaluateKartu(petani(), plot(), cek('aman'));
+test('aman + complete data + good gps + punya STDB => export_ready / lengkap', () => {
+  const r = evaluateKartu(petani(), plot(), cek('aman'), true);
   expect(r.tier).toBe('export_ready');
   expect(r.stdbStatus).toBe('lengkap');
 });
 
-test('terindikasi forces lokal even with complete data', () => {
-  expect(evaluateKartu(petani(), plot(), cek('terindikasi')).tier).toBe('lokal');
+test('terindikasi forces lokal even with complete data and STDB', () => {
+  expect(evaluateKartu(petani(), plot(), cek('terindikasi'), true).tier).toBe('lokal');
 });
 
 test('missing telepon => belum_lengkap + lokal, reason mentions data', () => {
-  const r = evaluateKartu(petani({ telepon: undefined }), plot(), cek('aman'));
+  const r = evaluateKartu(petani({ telepon: undefined }), plot(), cek('aman'), true);
   expect(r.tier).toBe('lokal');
   expect(r.stdbStatus).toBe('belum_lengkap');
   expect(r.alasan.join(' ')).toMatch(/belum lengkap/i);
 });
 
 test('gps accuracy > 20m forces lokal with point-primary reason', () => {
-  const r = evaluateKartu(petani(), plot({ gpsAccuracyM: 35 }), cek('aman'));
+  const r = evaluateKartu(petani(), plot({ gpsAccuracyM: 35 }), cek('aman'), true);
   expect(r.tier).toBe('lokal');
   expect(r.alasan.join(' ')).toMatch(/akurasi gps/i);
 });
 
 test('di_luar_area forces lokal', () => {
-  expect(evaluateKartu(petani(), plot(), cek('di_luar_area')).tier).toBe('lokal');
+  expect(evaluateKartu(petani(), plot(), cek('di_luar_area'), true).tier).toBe('lokal');
+});
+
+test('without punyaSTDB, otherwise-eligible plot stays lokal, reason mentions STDB', () => {
+  // Regression test for bug #3: mobile used to have no punyaSTDB concept at all, so an
+  // otherwise-perfect plot (aman + complete data + good gps) reached export_ready with
+  // no certificate on file — diverging from web, which always required one.
+  const r = evaluateKartu(petani(), plot(), cek('aman'), false);
+  expect(r.tier).toBe('lokal');
+  expect(r.alasan.join(' ')).toMatch(/belum memiliki stdb/i);
 });

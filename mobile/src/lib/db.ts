@@ -41,9 +41,32 @@ async function writeAll<T>(key: string, items: T[]): Promise<void> {
   }
 }
 
+// Serializes read-modify-write cycles per storage key. AsyncStorage has no
+// transactions, so two concurrent callers on the same key (e.g. two plot
+// submissions, or an outbox enqueue racing a flush's status update) can each
+// read the same pre-write snapshot and then overwrite one another's write —
+// silently dropping whichever landed first. Queuing callers per key here
+// keeps each read-modify-write atomic relative to others on that same key.
+const keyLocks = new Map<string, Promise<unknown>>();
+
+function withKeyLock<T>(key: string, fn: () => Promise<T>): Promise<T> {
+  const previous = keyLocks.get(key) ?? Promise.resolve();
+  const run = previous.then(fn, fn);
+  keyLocks.set(
+    key,
+    run.then(
+      () => undefined,
+      () => undefined,
+    ),
+  );
+  return run;
+}
+
 async function append<T>(key: string, item: T): Promise<void> {
-  const items = await readAll<T>(key);
-  await writeAll(key, [...items, item]);
+  await withKeyLock(key, async () => {
+    const items = await readAll<T>(key);
+    await writeAll(key, [...items, item]);
+  });
 }
 
 export function newId(): string {
@@ -86,14 +109,24 @@ export async function markNotifRead(id: string): Promise<void> {
 export const getWaOutbox = () => readAll<WaOutboxItem>(KEYS.waOutbox);
 export const addWaOutbox = (i: WaOutboxItem) => append(KEYS.waOutbox, i);
 export async function updateWaOutbox(i: WaOutboxItem): Promise<void> {
-  const all = await getWaOutbox();
-  await writeAll(KEYS.waOutbox, all.map(x => (x.id === i.id ? i : x)));
+  await withKeyLock(KEYS.waOutbox, async () => {
+    const all = await getWaOutbox();
+    await writeAll(KEYS.waOutbox, all.map(x => (x.id === i.id ? i : x)));
+  });
 }
 
 export const getChain = () => readAll<HashChainEntry>(KEYS.chain);
 export const setChain = (entries: HashChainEntry[]) => writeAll(KEYS.chain, entries);
 export const getChainBackup = () => readAll<HashChainEntry>(KEYS.chainBackup);
 export const setChainBackup = (entries: HashChainEntry[]) => writeAll(KEYS.chainBackup, entries);
+
+// Locked read-modify-write helper for the hash-chain specifically (see
+// hashchain.ts's commitEntry) — exported rather than folded into a generic
+// "append" here because appending a chain entry needs appendEntry()'s hashing
+// logic between the read and the write, not just a plain item push.
+export function withChainLock<T>(fn: () => Promise<T>): Promise<T> {
+  return withKeyLock(KEYS.chain, fn);
+}
 
 export async function clearAllData(): Promise<void> {
   await AsyncStorage.multiRemove(Object.values(KEYS));

@@ -13,7 +13,16 @@ beforeEach(async () => {
 });
 
 const seed = () =>
-  prosesPlotBaru({ nama: 'Bu Sari', desa: 'D', telepon: '08', komoditas: 'kopi', lat: -7.15, lng: 107.62, gpsAccuracyM: 5 });
+  prosesPlotBaru({
+    nama: 'Bu Sari',
+    desa: 'D',
+    telepon: '08',
+    komoditas: 'kopi',
+    lat: -7.15,
+    lng: 107.62,
+    gpsAccuracyM: 5,
+    punyaSTDB: true,
+  });
 
 test('access with consent is authorized, no notif', async () => {
   const k = await seed();
