@@ -212,8 +212,8 @@ export default function KartuCard({
           <div className="flex gap-2">
             <Select
               value={overrideTier}
-              onChange={(e) => setOverrideTier(e.target.value as Tier)}
-              className="flex-1 text-xs"
+              onChange={(v) => setOverrideTier(v as Tier)}
+              className="flex-1"
             >
               {TIER_OPTIONS.map((t) => (
                 <option key={t} value={t}>
@@ -223,8 +223,8 @@ export default function KartuCard({
             </Select>
             <Select
               value={overrideStdb}
-              onChange={(e) => setOverrideStdb(e.target.value as StdbStatus)}
-              className="flex-1 text-xs"
+              onChange={(v) => setOverrideStdb(v as StdbStatus)}
+              className="flex-1"
             >
               {STDB_OPTIONS.map((s) => (
                 <option key={s} value={s}>

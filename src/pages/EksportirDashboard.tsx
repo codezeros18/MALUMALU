@@ -189,8 +189,8 @@ export default function EksportirDashboard() {
         <div className="flex flex-wrap items-center gap-2">
           <Select
             value={tierFilter}
-            onChange={(e) => setTierFilter(e.target.value as TierFilter)}
-            className="text-xs"
+            onChange={(v) => setTierFilter(v as TierFilter)}
+            className="w-40"
           >
             <option value="semua">Semua tier</option>
             <option value="lokal">Lokal</option>
@@ -198,8 +198,8 @@ export default function EksportirDashboard() {
           </Select>
           <Select
             value={stdbFilter}
-            onChange={(e) => setStdbFilter(e.target.value as StdbFilter)}
-            className="text-xs"
+            onChange={(v) => setStdbFilter(v as StdbFilter)}
+            className="w-48"
           >
             <option value="semua">Semua status STDB</option>
             <option value="stdb-ready">STDB Ready</option>

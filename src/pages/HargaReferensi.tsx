@@ -90,8 +90,8 @@ function RekamTransaksiForm({
           <label className="block text-sm font-medium text-slate-700">Komoditas *</label>
           <Select
             value={komoditas}
-            onChange={(e) => setKomoditas(e.target.value)}
-            className="mt-1 w-full text-base py-2"
+            onChange={setKomoditas}
+            className="mt-1 w-full"
           >
             {KOMODITAS_OPTIONS.map((k) => (
               <option key={k} value={k}>
@@ -269,8 +269,8 @@ function CekHargaReferensi() {
             <label className="block text-sm font-medium text-slate-700">Komoditas *</label>
             <Select
               value={komoditas}
-              onChange={(e) => setKomoditas(e.target.value)}
-              className="mt-1 w-full text-base py-2"
+              onChange={setKomoditas}
+              className="mt-1 w-full"
             >
               {KOMODITAS_OPTIONS.map((k) => (
                 <option key={k} value={k}>

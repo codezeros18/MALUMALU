@@ -105,9 +105,9 @@ npm run dev          # → http://localhost:5173
 |---|---|
 | `/` · `/tentang` | Public landing |
 | `/masuk` | Role selection |
-| `/agen` · `/agen/tambah` · `/agen/plot/:id` · `/agen/petani` | Field officer |
+| `/agen` · `/agen/tambah` · `/agen/plot/:id` · `/agen/petani` · `/agen/harga` | Field officer |
 | `/petani` | Farmer portal — view own card, revoke consent |
-| `/eksportir` · `/eksportir/terdekat` | Exporter dashboard |
+| `/eksportir` · `/eksportir/terdekat` · `/eksportir/harga` · `/eksportir/paket/:kartuId` | Exporter dashboard, nearest-farmer search, reference pricing, EUDR evidence packet |
 
 ---
 
