@@ -4,6 +4,19 @@ import { VitePWA } from 'vite-plugin-pwa';
 
 // https://vite.dev/config/
 export default defineConfig({
+  // Port dikunci + strictPort: kalau 5173 masih dipakai proses `npm run dev` lama yang
+  // belum benar-benar mati, Vite akan GAGAL START (error jelas) alih-alih diam-diam
+  // pindah ke port lain (5174, dst). Ini penting karena IndexedDB/localStorage terikat
+  // ke origin (host+port) — pindah port tanpa sadar = kelihatan seperti "data hilang"
+  // padahal cuma buka origin/kotak penyimpanan browser yang berbeda.
+  server: {
+    port: 5173,
+    strictPort: true,
+  },
+  preview: {
+    port: 4173,
+    strictPort: true,
+  },
   plugins: [
     react(),
     VitePWA({
