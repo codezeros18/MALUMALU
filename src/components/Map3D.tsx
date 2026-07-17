@@ -20,22 +20,60 @@ export interface Map3DMarker {
   label?: string;
 }
 
+export interface Map3DPolygon {
+  id: string;
+  points: { lat: number; lng: number }[];
+  color?: string;
+}
+
+const POLYGON_SOURCE_ID = 'polygons-source';
+
+function toFeatureCollection(polygons: Map3DPolygon[]) {
+  return {
+    type: 'FeatureCollection' as const,
+    features: polygons
+      .filter((p) => p.points.length >= 3)
+      .map((p) => {
+        const ring = p.points.map((pt) => [pt.lng, pt.lat]);
+        const first = ring[0];
+        const last = ring[ring.length - 1];
+        if (first[0] !== last[0] || first[1] !== last[1]) ring.push(first);
+        return {
+          type: 'Feature' as const,
+          properties: { color: p.color ?? '#1F5C3A' },
+          geometry: { type: 'Polygon' as const, coordinates: [ring] },
+        };
+      }),
+  };
+}
+
 interface Map3DProps {
   center: { lat: number; lng: number };
   zoom: number;
   markers: Map3DMarker[];
+  polygons?: Map3DPolygon[];
   onPick?: (lat: number, lng: number) => void;
   offlineHint?: string;
   className?: string;
 }
 
-export default function Map3D({ center, zoom, markers, onPick, offlineHint, className }: Map3DProps) {
+export default function Map3D({
+  center,
+  zoom,
+  markers,
+  polygons = [],
+  onPick,
+  offlineHint,
+  className,
+}: Map3DProps) {
   const isOnline = useOnlineStatus();
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const markerRefs = useRef<Map<string, maplibregl.Marker>>(new Map());
   const onPickRef = useRef(onPick);
   onPickRef.current = onPick;
+  const polygonsRef = useRef(polygons);
+  polygonsRef.current = polygons;
 
   useEffect(() => {
     if (!isOnline || !containerRef.current) return;
@@ -74,6 +112,23 @@ export default function Map3D({ center, zoom, markers, onPick, offlineHint, clas
         },
         firstSymbolId,
       );
+
+      // Batas kebun (poligon hasil jalan-keliling-sudut Agen) — satu source, semua
+      // poligon jadi feature terpisah supaya update-nya murah (setData, bukan
+      // remove+re-add layer tiap kali titik baru dicatat).
+      map.addSource(POLYGON_SOURCE_ID, { type: 'geojson', data: toFeatureCollection(polygonsRef.current) });
+      map.addLayer({
+        id: 'polygons-fill',
+        type: 'fill',
+        source: POLYGON_SOURCE_ID,
+        paint: { 'fill-color': ['get', 'color'], 'fill-opacity': 0.25 },
+      });
+      map.addLayer({
+        id: 'polygons-outline',
+        type: 'line',
+        source: POLYGON_SOURCE_ID,
+        paint: { 'line-color': ['get', 'color'], 'line-width': 2 },
+      });
     });
 
     map.on('click', (e) => onPickRef.current?.(e.lngLat.lat, e.lngLat.lng));
@@ -127,6 +182,13 @@ export default function Map3D({ center, zoom, markers, onPick, offlineHint, clas
       }
     }
   }, [markers, isOnline]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !isOnline) return;
+    const source = map.getSource(POLYGON_SOURCE_ID) as maplibregl.GeoJSONSource | undefined;
+    source?.setData(toFeatureCollection(polygons));
+  }, [polygons, isOnline]);
 
   const handleOfflineClick = (e: ReactMouseEvent<HTMLDivElement>) => {
     if (!onPick || !containerRef.current) return;

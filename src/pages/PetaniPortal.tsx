@@ -4,13 +4,22 @@ import { ArrowLeft, LogOut } from 'lucide-react';
 import { listPetani, listPlotByPetani, getKartuByPlot } from '../lib/db';
 import { supabaseBackend, fromSupabaseRow } from '../lib/sync';
 import { useAppContext } from '../context/AppContext';
+import PassportCard from '../components/PassportCard';
 import KartuCard from '../components/KartuCard';
 import HashChainViewer from '../components/HashChainViewer';
 import ConsentPanel from '../components/ConsentPanel';
+import DocumentUpload from '../components/DocumentUpload';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import EmptyState from '../components/ui/EmptyState';
-import type { Petani, Kartu } from '../types';
+import type { Petani, Kartu, Plot } from '../types';
+
+interface KartuEntry {
+  kartu: Kartu;
+  plot?: Plot;
+}
+
+type ViewMode = 'paspor' | 'dokumen';
 
 export default function PetaniPortal() {
   const navigate = useNavigate();
@@ -20,7 +29,8 @@ export default function PetaniPortal() {
   const [searching, setSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [petani, setPetani] = useState<Petani | null>(null);
-  const [kartuList, setKartuList] = useState<Kartu[]>([]);
+  const [entries, setEntries] = useState<KartuEntry[]>([]);
+  const [view, setView] = useState<ViewMode>('paspor');
 
   const handleKeluar = () => {
     setRole(null);
@@ -31,7 +41,8 @@ export default function PetaniPortal() {
     setEmail('');
     setError(null);
     setPetani(null);
-    setKartuList([]);
+    setEntries([]);
+    setView('paspor');
   };
 
   const handleSearch = async () => {
@@ -40,7 +51,7 @@ export default function PetaniPortal() {
     setSearching(true);
     setError(null);
     setPetani(null);
-    setKartuList([]);
+    setEntries([]);
     try {
       // Cari lokal dulu (device ini) — kalau tidak ketemu, coba data sinkron dari agen
       // lain via Supabase. Plot/Kartu tetap diambil dari IndexedDB LOKAL (lihat catatan
@@ -67,12 +78,12 @@ export default function PetaniPortal() {
       setPetani(match);
 
       const plots = await listPlotByPetani(match.id);
-      const kartus: Kartu[] = [];
+      const kartuEntries: KartuEntry[] = [];
       for (const plot of plots) {
         const kartu = await getKartuByPlot(plot.id);
-        if (kartu) kartus.push(kartu);
+        if (kartu) kartuEntries.push({ kartu, plot });
       }
-      setKartuList(kartus);
+      setEntries(kartuEntries);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Gagal mencari data.');
     } finally {
@@ -103,28 +114,57 @@ export default function PetaniPortal() {
         </div>
 
         <div className="max-w-lg mx-auto px-4 pb-8 space-y-4">
-          <div className="bg-white rounded-lg border border-slate-200 p-4">
-            <p className="text-sm text-slate-600">Petani</p>
-            <p className="text-lg font-semibold text-brand-800">{petani.nama}</p>
-            {petani.desa && <p className="text-xs text-slate-500">{petani.desa}</p>}
-          </div>
+          <div className="no-print flex items-center justify-between gap-3">
+            <div className="inline-flex bg-slate-100 rounded-lg p-1 text-sm">
+              <button
+                type="button"
+                onClick={() => setView('paspor')}
+                className={`px-3 py-1.5 rounded-md font-medium transition-colors ${
+                  view === 'paspor' ? 'bg-white text-brand-800 shadow-sm' : 'text-slate-500'
+                }`}
+              >
+                Paspor Digital
+              </button>
+              <button
+                type="button"
+                onClick={() => setView('dokumen')}
+                className={`px-3 py-1.5 rounded-md font-medium transition-colors ${
+                  view === 'dokumen' ? 'bg-white text-brand-800 shadow-sm' : 'text-slate-500'
+                }`}
+              >
+                Dokumen Lengkap
+              </button>
+            </div>
 
-          <div className="no-print flex justify-end">
             <Button variant="secondary" size="sm" onClick={() => window.print()}>
-              Unduh sebagai PDF
+              {view === 'paspor' ? 'Unduh sebagai Paspor' : 'Unduh sebagai Dokumen'}
             </Button>
           </div>
 
-          {kartuList.length === 0 ? (
+          {entries.length === 0 ? (
             <EmptyState message="Belum ada kartu/plot yang tersedia untuk petani ini di perangkat ini." />
+          ) : view === 'paspor' ? (
+            <div className="space-y-4">
+              {entries.map(({ kartu, plot }) => (
+                <PassportCard key={kartu.id} petani={petani} plot={plot} kartu={kartu} />
+              ))}
+            </div>
           ) : (
-            kartuList.map((kartu) => (
-              <div key={kartu.id} className="space-y-4">
-                <KartuCard kartu={kartu} readOnly />
-                <HashChainViewer refreshSignal={kartu.hashChainRef} readOnly />
-                <ConsentPanel kartuId={kartu.id} mode="petani" />
+            <div className="space-y-4">
+              <div className="bg-white rounded-lg border border-slate-200 p-4">
+                <p className="text-sm text-slate-600">Petani</p>
+                <p className="text-lg font-semibold text-brand-800">{petani.nama}</p>
+                {petani.desa && <p className="text-xs text-slate-500">{petani.desa}</p>}
               </div>
-            ))
+              <DocumentUpload petaniId={petani.id} readOnly />
+              {entries.map(({ kartu }) => (
+                <div key={kartu.id} className="space-y-4">
+                  <KartuCard kartu={kartu} readOnly />
+                  <HashChainViewer refreshSignal={kartu.hashChainRef} readOnly />
+                  <ConsentPanel kartuId={kartu.id} mode="petani" />
+                </div>
+              ))}
+            </div>
           )}
         </div>
       </div>

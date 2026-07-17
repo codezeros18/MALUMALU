@@ -28,12 +28,16 @@ export interface Petani extends Syncable {
 export interface Plot extends Syncable {
   id: string;
   petaniId: string;
-  lat: number;
+  lat: number; // titik representatif — centroid poligon kalau boundary ada, atau titik tunggal
   lng: number;
   komoditas: string; // default: "kopi"
-  luasEstimasiHa?: number;
+  luasEstimasiHa?: number; // dihitung otomatis dari boundary kalau ada (lihat lib/polygon.ts)
   gpsAccuracyM?: number; // akurasi GPS (meter)
   capturedAt: number;
+  // Batas kebun hasil jalan-keliling-sudut Agen (opsional — plot lama/titik-tunggal
+  // tidak punya ini). Minimal 3 titik kalau ada. Lihat lib/polygon.ts untuk cara
+  // hitung centroid & luas darinya.
+  boundary?: { lat: number; lng: number }[];
 }
 
 export type DeforestasiStatus = 'aman' | 'berisiko' | 'perlu-audit';

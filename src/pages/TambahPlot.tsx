@@ -13,7 +13,7 @@ const TIPS = [
   'Tap langsung di peta 3D, atau pakai tombol "Pakai GPS" untuk koordinat otomatis.',
   'Akurasi GPS di bawah kanopi kopi bisa meleset 3–11 m — ini normal, bukan kesalahan.',
   'Data tersimpan lokal dulu di perangkat, lalu disinkron ke Supabase saat online.',
-  'Email petani bersifat opsional, tapi dibutuhkan supaya petani bisa cek datanya sendiri di Portal Petani.',
+  'Email petani (tanpa *) dibutuhkan supaya petani bisa cek datanya sendiri di Portal Petani.',
 ];
 
 export default function TambahPlot() {
@@ -101,26 +101,31 @@ export default function TambahPlot() {
         </div>
       )}
 
-      <div className="grid lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <SectionCard title="Lokasi Kebun" description="Tap di peta untuk menandai titik kebun.">
-            <MapView plots={plots} onPickLocation={handlePickLocation} pickedPosition={picked} />
-          </SectionCard>
-        </div>
+      <div className="space-y-6">
+        <SectionCard title="Lokasi Kebun" description="Tap di peta untuk menandai titik kebun.">
+          <MapView
+            plots={plots}
+            onPickLocation={handlePickLocation}
+            pickedPosition={picked}
+            className="h-80 sm:h-[28rem]"
+          />
+        </SectionCard>
 
-        <div className="space-y-6">
-          <SectionCard title="Data Petani" description="Nama wajib diisi, sisanya opsional.">
-            <PlotForm
-              position={picked}
-              gpsLoading={gpsLoading}
-              gpsError={gpsError}
-              accuracyM={accuracyM}
-              onUseGps={requestGps}
-              onSubmit={handleSubmit}
-              submitting={saving}
-              bare
-            />
-          </SectionCard>
+        <div className="grid lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
+            <SectionCard title="Data Petani">
+              <PlotForm
+                position={picked}
+                gpsLoading={gpsLoading}
+                gpsError={gpsError}
+                accuracyM={accuracyM}
+                onUseGps={requestGps}
+                onSubmit={handleSubmit}
+                submitting={saving}
+                bare
+              />
+            </SectionCard>
+          </div>
 
           <SectionCard title="Tips Pengambilan Lokasi">
             <ul className="space-y-2 text-xs text-slate-500 leading-relaxed">

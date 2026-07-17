@@ -40,6 +40,9 @@ interface DocumentUploadProps {
   // checklist "Sudah punya STDB" ke bukti dokumen STDB yang sungguh-sungguh diunggah,
   // bukan klaim manual tanpa bukti.
   onDocumentsChange?: (documents: PetaniDocument[]) => void;
+  // Sembunyikan kontrol unggah/ganti — dipakai Portal Petani supaya petani hanya bisa
+  // melihat status dokumen, bukan mengubah bukti legalitas yang diunggah petugas.
+  readOnly?: boolean;
 }
 
 function sortRequiredFirst(types: DocumentType[]): DocumentType[] {
@@ -55,7 +58,11 @@ function statusFor(doc: PetaniDocument | undefined): { label: string; tone: Badg
   return { label: 'Tersimpan lokal', tone: 'pending' };
 }
 
-export default function DocumentUpload({ petaniId, onDocumentsChange }: DocumentUploadProps) {
+export default function DocumentUpload({
+  petaniId,
+  onDocumentsChange,
+  readOnly = false,
+}: DocumentUploadProps) {
   const [documents, setDocuments] = useState<PetaniDocument[]>([]);
   const [busyType, setBusyType] = useState<DocumentType | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -131,21 +138,23 @@ export default function DocumentUpload({ petaniId, onDocumentsChange }: Document
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <Badge tone={status.tone}>{status.label}</Badge>
-                    <label className="text-brand-800 font-medium cursor-pointer hover:underline">
-                      {busyType === type ? 'Menyimpan…' : doc ? 'Ganti' : 'Unggah'}
-                      <input
-                        type="file"
-                        accept="image/*,.pdf"
-                        capture="environment"
-                        className="hidden"
-                        disabled={busyType !== null}
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          void handleFileChange(type, file);
-                          e.target.value = '';
-                        }}
-                      />
-                    </label>
+                    {!readOnly && (
+                      <label className="text-brand-800 font-medium cursor-pointer hover:underline">
+                        {busyType === type ? 'Menyimpan…' : doc ? 'Ganti' : 'Unggah'}
+                        <input
+                          type="file"
+                          accept="image/*,.pdf"
+                          capture="environment"
+                          className="hidden"
+                          disabled={busyType !== null}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            void handleFileChange(type, file);
+                            e.target.value = '';
+                          }}
+                        />
+                      </label>
+                    )}
                   </div>
                 </li>
               );

@@ -162,9 +162,17 @@ export default function Home() {
         <Button variant="secondary" size="sm" onClick={handleSeedDemo} disabled={seeding}>
           {seeding ? 'Memuat…' : 'Muat data demo (3 petani contoh Pangalengan)'}
         </Button>
-        <Button variant="secondary" size="sm" onClick={handleSyncNow} disabled={syncing}>
-          {syncing ? 'Menyinkron…' : 'Sinkron sekarang'}
-        </Button>
+        <button
+          type="button"
+          onClick={handleSyncNow}
+          disabled={syncing}
+          title="Sinkron sekarang"
+          className="w-9 h-9 shrink-0 grid place-items-center rounded-md border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-800 disabled:opacity-50 transition-colors"
+        >
+          <span aria-hidden className={syncing ? 'animate-spin' : ''}>
+            ↻
+          </span>
+        </button>
       </div>
 
       {message && (
