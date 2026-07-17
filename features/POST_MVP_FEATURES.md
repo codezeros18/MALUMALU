@@ -1,4 +1,4 @@
-# 🧩 POST-MVP FEATURES — Paspor Petani v2
+# 🧩 POST-MVP FEATURES — JejakHijau v2
 
 > **HANYA kerjakan setelah 8 sprint MVP hijau semua di `TRACKER.md`.** Tiap fitur berdiri sendiri, punya prompt copy-paste sendiri, dan role-nya ditandai. Kerjakan berurutan sesuai prioritas (P1 dulu). Jangan sentuh ini kalau MVP belum selesai.
 
@@ -23,7 +23,7 @@
 
 ### >>> PROMPT >>>
 ```
-Post-MVP P1 — Draf Dosir via LLM untuk Paspor Petani v2 (aku AI Engineer).
+Post-MVP P1 — Draf Dosir via LLM untuk JejakHijau v2 (aku AI Engineer).
 MVP sudah selesai. Sekarang tambahkan fitur draf dosir. Prinsip: deterministik dulu (templat), LLM sebagai peningkat opsional, diungkap terbuka, ada fallback.
 
 Lakukan:
@@ -45,7 +45,7 @@ Commit: `git commit -m "post-mvp-p1: dosir template + optional llm enhance + fal
 
 ### >>> PROMPT >>>
 ```
-Post-MVP P2 — Multi-Plot Management untuk Paspor Petani v2 (aku Fullstack).
+Post-MVP P2 — Multi-Plot Management untuk JejakHijau v2 (aku Fullstack).
 Lakukan:
 1. Perluas PetaniList.tsx: tampilkan daftar petani + jumlah plot masing-masing.
 2. Halaman detail petani: daftar semua plot + kartunya, tombol tambah plot baru (reuse alur Sprint 4).
@@ -63,7 +63,7 @@ Commit: `git commit -m "post-mvp-p2: multi-plot management + petani detail"`.
 
 ### >>> PROMPT >>>
 ```
-Post-MVP P3 — Ekspor PDF untuk Paspor Petani v2 (aku Fullstack).
+Post-MVP P3 — Ekspor PDF untuk JejakHijau v2 (aku Fullstack).
 Lakukan:
 1. Install jspdf (atau html2canvas + jspdf).
 2. Fungsi exportKartuPDF(kartu, petani, plot): render kartu + status + alasan + hash-chain ref + disclaimer keterbatasan → PDF, trigger download.
@@ -81,7 +81,7 @@ Commit: `git commit -m "post-mvp-p3: export kartu to pdf"`.
 
 ### >>> PROMPT >>>
 ```
-Post-MVP P4 — Mock Sinkron e-STDB untuk Paspor Petani v2 (aku Fullstack).
+Post-MVP P4 — Mock Sinkron e-STDB untuk JejakHijau v2 (aku Fullstack).
 Lakukan:
 1. Tombol "Kirim ke e-STDB (simulasi)" pada kartu stdb-ready.
 2. Simulasikan: tampilkan modal "Andai tersambung ke e-STDB pemerintah, data ini akan dikirim: [ringkasan]". Beri BADGE JELAS "SIMULASI — belum ada API publik e-STDB".
@@ -99,7 +99,7 @@ Commit: `git commit -m "post-mvp-p4: mock e-stdb sync (labeled)"`.
 
 ### >>> PROMPT >>>
 ```
-Post-MVP P5 — Ringkasan Koperasi untuk Paspor Petani v2 (aku Fullstack).
+Post-MVP P5 — Ringkasan Koperasi untuk JejakHijau v2 (aku Fullstack).
 Lakukan:
 1. Halaman "Ringkasan": hitung dari DB → total petani, total plot, jumlah stdb-ready vs belum-lengkap, jumlah per tier, jumlah perlu-audit.
 2. Tampilkan kartu statistik sederhana + (opsional) chart ringan. Semua offline dari IndexedDB.
@@ -116,7 +116,7 @@ Commit: `git commit -m "post-mvp-p5: cooperative summary dashboard"`.
 
 ### >>> PROMPT >>>
 ```
-Post-MVP P6 — Multi-Bahasa untuk Paspor Petani v2 (aku Fullstack).
+Post-MVP P6 — Multi-Bahasa untuk JejakHijau v2 (aku Fullstack).
 Lakukan:
 1. Setup i18n ringan (mis. objek dictionary sederhana, tanpa library berat) untuk ID & EN.
 2. Toggle bahasa di header. Terjemahkan label utama + disclosure.

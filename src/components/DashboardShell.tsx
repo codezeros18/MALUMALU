@@ -150,12 +150,10 @@ export default function DashboardShell({ currentRole, onGantiRole, children }: D
       <div className="h-14 flex border-b border-slate-200 shrink-0">
         <div className="w-60 shrink-0 flex items-center gap-2 px-5 border-r border-slate-200">
           <div className="flex items-center gap-2 min-w-0">
-            <span className="w-7 h-7 shrink-0 rounded-md bg-brand-800 text-white grid place-items-center text-xs font-bold">
-              P
-            </span>
+            <img src="/JejakHijau.png" alt="JejakHijau" className="w-7 h-7 shrink-0 object-contain" />
             <span className="min-w-0">
               <span className="block text-[13px] font-semibold text-slate-900 leading-tight truncate">
-                Paspor Petani
+                JejakHijau
               </span>
               <span className="block text-[11px] text-slate-400 leading-tight truncate">
                 {ROLE_LABEL[currentRole]}

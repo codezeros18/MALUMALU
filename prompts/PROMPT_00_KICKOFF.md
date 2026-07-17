@@ -7,7 +7,7 @@
 ---
 
 ## Cara Pakai
-1. Pastikan folder `paspor-petani-blueprint/` sudah ada di dalam workspace VS Code kamu.
+1. Pastikan folder `jejakhijau-blueprint/` sudah ada di dalam workspace VS Code kamu.
 2. Copy **SELURUH blok di bawah** (antara garis `>>>` dan `<<<`).
 3. Paste ke Claude Code → enter.
 4. Tunggu sampai Claude Code selesai membaca & memberi ringkasan pemahaman + rencana. **Jangan lanjut ke Sprint 1 sebelum ini selesai.**
@@ -16,11 +16,11 @@
 
 >>> COPY MULAI DARI SINI >>>
 
-Kamu adalah engineer yang akan membantu membangun proyek **Paspor Petani v2**, sebuah aplikasi PWA web offline-first (React + Vite + TypeScript) untuk kompetisi hackathon 30 jam.
+Kamu adalah engineer yang akan membantu membangun proyek **JejakHijau v2**, sebuah aplikasi PWA web offline-first (React + Vite + TypeScript) untuk kompetisi hackathon 30 jam.
 
 TUGAS KICKOFF (lakukan sekarang, berurutan):
 
-1. Baca dan pahami file konteks berikut di folder `paspor-petani-blueprint/`:
+1. Baca dan pahami file konteks berikut di folder `jejakhijau-blueprint/`:
    - `00_START_HERE.md` (peta paket + role + cara pakai)
    - `docs/01_BLUEPRINT_FULL.md` (ide lengkap & alasan)
    - `docs/02_TECH_ARCHITECTURE.md` (tech stack, data model, struktur folder, konvensi — INI SUMBER KEBENARAN TEKNIS)

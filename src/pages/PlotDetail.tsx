@@ -9,14 +9,12 @@ import MapView from '../components/MapView';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Checkbox from '../components/ui/Checkbox';
-import Badge from '../components/ui/Badge';
 import PageHeader from '../components/ui/PageHeader';
 import SectionCard from '../components/ui/SectionCard';
 import { getPlot, getPetani, getKartuByPlot, listSyncQueue, requeueForSync } from '../lib/db';
 import { commitKartu } from '../lib/hashchain';
 import { generateKartu } from '../lib/ruleEngine';
 import { cekDeforestasi } from '../lib/geospatial';
-import { isDemoPlot } from '../data/dummyData';
 import { useAppContext } from '../context/AppContext';
 import type { Plot, Petani, Kartu, PetaniDocument } from '../types';
 
@@ -97,14 +95,13 @@ export default function PlotDetail() {
   if (!id) return null;
 
   return (
-    <div className="max-w-3xl space-y-4">
+    <div className="space-y-4">
       <PageHeader
         backTo="/agen"
         backLabel="Kembali ke Ringkasan"
         icon={FileText}
         title="Detail Plot"
         description={petani ? `Petani: ${petani.nama}` : undefined}
-        actions={plot && isDemoPlot(plot.id) ? <Badge tone="demo">DATA DEMO</Badge> : undefined}
       />
 
       {!plot && <p className="text-sm text-slate-500">Plot tidak ditemukan.</p>}

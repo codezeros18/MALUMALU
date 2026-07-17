@@ -32,7 +32,7 @@ Membangun inti geospasial: wrapper GPS, preprocessing raster JRC (crop Pangaleng
 ## >>> PROMPT UNTUK CLAUDE CODE >>>
 
 ```
-Kita mulai SPRINT 3 — Geospatial Core untuk Paspor Petani v2 (aku role AI Engineer).
+Kita mulai SPRINT 3 — Geospatial Core untuk JejakHijau v2 (aku role AI Engineer).
 Acuan: docs/02_TECH_ARCHITECTURE.md (bagian "Point-in-Raster" + data model DeforestasiCheck).
 PENTING: aku HANYA menyentuh file milik role AI: src/lib/gps.ts, src/lib/raster.ts, src/lib/geospatial.ts, src/hooks/useGeolocation.ts (nanti Sprint 4), scripts/, public/rasters/. Jangan ubah file lain.
 

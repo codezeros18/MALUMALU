@@ -69,10 +69,10 @@ sesuai "Cara Kerja": sumber harga → agregasi → balasan bot.
 - **`bot.ts`** — `parsePriceQuery` + `handlePriceMessage`: memformat balasan
   `📊 Harga referensi … (update hari ini)` + nudge STDB+GPS + link status.
 - **`pasporLookup.ts`** — `lookupPasporByPhone`/`resolvePasporForBot`: menghubungkan
-  bot ke data Paspor Petani (AsyncStorage di app; ganti ke datastore platform bila
+  bot ke data JejakHijau (AsyncStorage di app; ganti ke datastore platform bila
   bot berjalan di backend terpisah).
 
-**Deep link:** balasan bot menunjuk ke `pasporpetani://status` yang dibuka oleh
+**Deep link:** balasan bot menunjuk ke `jejakhijau://status` yang dibuka oleh
 `src/app/status.tsx` (menampilkan kelengkapan STDB+GPS dan tier petani).
 
 ### Server webhook (`server/`)

@@ -13,10 +13,8 @@ export default function Navbar() {
     <header className="border-b border-slate-100 bg-white">
       <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2 shrink-0">
-          <span className="w-8 h-8 rounded-md bg-brand-800 text-white grid place-items-center text-sm font-bold">
-            P
-          </span>
-          <span className="text-lg font-bold text-slate-900">Paspor Petani</span>
+          <img src="/JejakHijau.png" alt="JejakHijau" className="w-8 h-8 object-contain" />
+          <span className="text-lg font-bold text-slate-900">JejakHijau</span>
         </Link>
 
         <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600">

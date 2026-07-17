@@ -23,7 +23,7 @@ Membangun rantai verifikasi (hash-chain) yang membuat kartu **tamper-evident**: 
 ## >>> PROMPT UNTUK CLAUDE CODE >>>
 
 ```
-Kita mulai SPRINT 6 — Hash-Chain untuk Paspor Petani v2 (aku role Fullstack).
+Kita mulai SPRINT 6 — Hash-Chain untuk JejakHijau v2 (aku role Fullstack).
 Acuan: docs/02_TECH_ARCHITECTURE.md (tipe HashChainEntry) + docs/03_MVP_SCOPE.md (F6). Gunakan crypto-js (SHA-256). Simpan via src/lib/db.ts (addHashEntry, listHashEntries, getLastHashEntry).
 
 PENTING KONSEP: hash-chain = rantai append-only. Tiap entri berisi index, timestamp, payload (snapshot kartu), dataHash (hash payload), previousHash (hash entri sebelumnya), dan hash (hash gabungan index+timestamp+dataHash+previousHash). Kalau payload diubah tapi hash lama dipertahankan, verifikasi akan gagal → tamper terdeteksi. Ini BUKAN blockchain (tanpa konsensus terdistribusi), cukup rantai kriptografis deterministik. Jangan sebut "blockchain" di UI.

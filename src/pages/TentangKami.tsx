@@ -169,7 +169,7 @@ export default function TentangKami() {
               penyalahgunaan identitas ratusan petani untuk pengajuan kredit fiktif. Kami
               memakai kejadian semacam itu sebagai ilustrasi akar masalah — lemahnya
               kepemilikan dan kendali petani atas datanya sendiri — bukan klaim bahwa
-              Paspor Petani dapat mencegahnya secara langsung.
+              JejakHijau dapat mencegahnya secara langsung.
             </p>
             <p className="mt-4 text-slate-600 max-w-2xl leading-relaxed">
               Dari arah lain, regulasi antideforestasi Uni Eropa yang berlaku bertahap

@@ -1,4 +1,4 @@
-# ✅ TRACKER — Paspor Petani v2
+# ✅ TRACKER — JejakHijau v2
 
 > **Papan pelacakan utama.** Setelah tiap task selesai & lolos Definition of Done, ganti `[ ]` → `[x]`.
 > Legenda: `[ ]` belum · `[x]` ✅ selesai · `[~]` 🟡 sedang dikerjakan · `[!]` ❌ blocked/gagal

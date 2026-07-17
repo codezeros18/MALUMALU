@@ -38,7 +38,7 @@ export interface SyncQueueItem {
   attempts: number;
 }
 
-interface PasporPetaniDB extends DBSchema {
+interface JejakHijauDB extends DBSchema {
   petani: {
     key: string;
     value: Petani;
@@ -87,14 +87,19 @@ interface PasporPetaniDB extends DBSchema {
   };
 }
 
+// SENGAJA TIDAK diganti ke 'jejakhijau' meski rebranding — ini nama IndexedDB
+// sungguhan di browser tiap user. Mengubah string ini bikin browser buka database BARU
+// yang kosong di load berikutnya, menghilangkan (bukan cuma "menyembunyikan") seluruh
+// data plot/petani/kartu/syncQueue yang sudah tersimpan lokal. Sama persis kelas bug
+// yang baru diperbaiki untuk device-agent-id (lihat komentar di upgrade() bawah).
 const DB_NAME = 'paspor-petani';
 const DB_VERSION = 5;
 
-let dbPromise: Promise<IDBPDatabase<PasporPetaniDB>> | null = null;
+let dbPromise: Promise<IDBPDatabase<JejakHijauDB>> | null = null;
 
-export function getDB(): Promise<IDBPDatabase<PasporPetaniDB>> {
+export function getDB(): Promise<IDBPDatabase<JejakHijauDB>> {
   if (!dbPromise) {
-    dbPromise = openDB<PasporPetaniDB>(DB_NAME, DB_VERSION, {
+    dbPromise = openDB<JejakHijauDB>(DB_NAME, DB_VERSION, {
       // Setiap createObjectStore dijaga dengan objectStoreNames.contains() (bukan cuma
       // digerbang oldVersion < N) -- kalau versi tercatat di IndexedDB browser pernah
       // "kepakai" (mis. koneksi lama sempat naik versi sebelum store baru selesai dibuat,

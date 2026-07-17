@@ -1,6 +1,6 @@
 // DOMAIN HARGA — layanan referensi harga harian lewat WhatsApp.
 // Vocabulary sengaja dipadankan dengan app mobile (komoditas, wilayah, STDB+GPS)
-// agar bot dan Paspor Petani berbicara dalam konsep yang sama.
+// agar bot dan JejakHijau berbicara dalam konsep yang sama.
 
 export type Komoditas = 'kopi' | 'sawit' | string;
 

@@ -1,4 +1,4 @@
-# 🚀 FULL PRODUCTION BLUEPRINT — Paspor Petani v2 (Fase Pasca-MVP)
+# 🚀 FULL PRODUCTION BLUEPRINT — JejakHijau v2 (Fase Pasca-MVP)
 
 > Blueprint + daftar fitur + tracker digabung jadi satu file (sesuai permintaan — tidak
 > dipisah-pisah seperti fase MVP). Acuan teknis untuk Sprint 9–15. Baca bersama

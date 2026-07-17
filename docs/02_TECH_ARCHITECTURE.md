@@ -1,4 +1,4 @@
-# 🏗️ TECH ARCHITECTURE — Paspor Petani v2
+# 🏗️ TECH ARCHITECTURE — JejakHijau v2
 
 > Arsitektur, tech stack, data model, struktur folder, dan konvensi. Ini "sumber kebenaran teknis" — semua sprint mengacu ke sini. Claude Code baca ini saat kickoff.
 
@@ -23,8 +23,8 @@
 
 **Install dasar (Sprint 1):**
 ```bash
-npm create vite@latest paspor-petani -- --template react-ts
-cd paspor-petani
+npm create vite@latest jejakhijau -- --template react-ts
+cd jejakhijau
 npm install
 npm install leaflet react-leaflet @turf/turf geotiff idb crypto-js nanoid
 npm install -D tailwindcss postcss autoprefixer vite-plugin-pwa
@@ -36,7 +36,7 @@ npm install -D @types/leaflet @types/crypto-js
 ## 2. Struktur Folder (WAJIB diikuti — biar FS & AI tidak konflik)
 
 ```
-paspor-petani/
+jejakhijau/
 ├── public/
 │   ├── manifest.json
 │   └── rasters/

@@ -1,6 +1,6 @@
 // WAHA client — kirim notifikasi WhatsApp ke petani (PROTOTIPE).
 //
-// Konteks: Paspor Petani notif engine (consent.ts) memicu ini saat akses
+// Konteks: JejakHijau notif engine (consent.ts) memicu ini saat akses
 // tak-terotorisasi terdeteksi. Petani gaptek tetap kejangkau lewat WA yang
 // sudah dipakai sehari-hari.
 //
@@ -81,7 +81,7 @@ export function buildUnauthorizedAccessMessage(
   accessedBy: string,
 ): string {
   return [
-    `🚨 Paspor Petani — PERINGATAN`,
+    `🚨 JejakHijau — PERINGATAN`,
     `Data kebun Anda (${petaniNama}) baru saja dicoba diakses oleh "${accessedBy}" TANPA izin.`,
     `Ini bukan Anda? Segera hubungi petugas koperasi/penyuluh pendamping.`,
     `Jangan bagikan KTP atau data kebun ke pihak tak dikenal.`,

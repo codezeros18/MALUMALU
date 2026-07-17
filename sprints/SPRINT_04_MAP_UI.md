@@ -25,7 +25,7 @@ Membangun antarmuka peta: tampilkan peta Pangalengan, tap untuk menandai plot (a
 ## >>> PROMPT UNTUK CLAUDE CODE >>>
 
 ```
-Kita mulai SPRINT 4 — Map UI & Plot Tagging untuk Paspor Petani v2 (aku role Fullstack).
+Kita mulai SPRINT 4 — Map UI & Plot Tagging untuk JejakHijau v2 (aku role Fullstack).
 Modul geospasial sudah tersedia dari Sprint 3: src/lib/gps.ts (getCurrentPosition) dan src/lib/geospatial.ts (cekDeforestasi). Data layer dari Sprint 2: src/lib/db.ts (addPetani, addPlot, dst). Pakai tipe dari src/types/index.ts.
 
 Lakukan:

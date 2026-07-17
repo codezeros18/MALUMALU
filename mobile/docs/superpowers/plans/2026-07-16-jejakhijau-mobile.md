@@ -1,8 +1,8 @@
-# Paspor Petani Mobile Implementation Plan
+# JejakHijau Mobile Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** An Expo/Android app running the full 6-step Paspor Petani demo (farmer → plot → deforestation check → tiered card → tamper-evident hash-chain → consent/notif), fully offline, in the "Paspor" theme.
+**Goal:** An Expo/Android app running the full 6-step JejakHijau demo (farmer → plot → deforestation check → tiered card → tamper-evident hash-chain → consent/notif), fully offline, in the "Paspor" theme.
 
 **Architecture:** Expo managed workflow + expo-router tabs. Pure logic lives in `src/lib/*` (mirrors the MALUMALU website blueprint's contracts so files can be copied between projects), UI in `src/components/*` + `app/(tabs)/*`, storage in AsyncStorage behind `src/lib/db.ts`.
 
@@ -34,7 +34,7 @@
 - [ ] **Step 2: Scaffold into temp dir and merge** (create-expo-app refuses non-empty dirs):
 
 ```bash
-cd ~/Projects/paspor-petani-mobile
+cd ~/Projects/jejakhijau-mobile
 npx create-expo-app@latest scaffold-tmp --template default --no-install
 rsync -a --exclude .git scaffold-tmp/ .
 rm -rf scaffold-tmp
@@ -65,7 +65,7 @@ jest.mock('@react-native-async-storage/async-storage', () =>
 );
 ```
 
-- [ ] **Step 5: App identity** — in `app.json` set `"name": "Paspor Petani"`, `"slug": "paspor-petani"`, `"android": { "package": "com.malumalu.pasporpetani", "adaptiveIcon": { "backgroundColor": "#1F5C3A" } }`, splash `backgroundColor` `#1F5C3A`.
+- [ ] **Step 5: App identity** — in `app.json` set `"name": "JejakHijau"`, `"slug": "jejakhijau"`, `"android": { "package": "com.malumalu.jejakhijau", "adaptiveIcon": { "backgroundColor": "#1F5C3A" } }`, splash `backgroundColor` `#1F5C3A`.
 - [ ] **Step 6: Verify** — `npm test` runs (0 tests is fine, must not error on config); `npx expo start` boots and shows QR (then kill it).
 - [ ] **Step 7: Commit** — `git add -A && git commit -m "feat: scaffold expo app with deps and jest harness"`
 
@@ -115,7 +115,7 @@ export const fonts = {
 ```
 
 - [ ] **Step 3: Root layout** `app/_layout.tsx` — load fonts with `useFonts` (from each @expo-google-fonts package + `Lora_600SemiBold`, `SpaceMono_400Regular`), render `<Stack screenOptions={{ headerShown: false }} />` once loaded (null while loading).
-- [ ] **Step 4: Tabs layout** `app/(tabs)/_layout.tsx` — `<Tabs>` with 4 screens: `index` "Lapangan" (🌱/map icon), `kartu` "Kartu", `rantai` "Rantai", `izin` "Izin". Style: `tabBarActiveTintColor: colors.cover`, header shown with `headerStyle: { backgroundColor: colors.cover }`, `headerTintColor: colors.onCover`, `headerTitle: 'Paspor Petani'`, `sceneStyle/contentStyle` background `colors.paper`. Use `@expo/vector-icons` Ionicons for tab icons.
+- [ ] **Step 4: Tabs layout** `app/(tabs)/_layout.tsx` — `<Tabs>` with 4 screens: `index` "Lapangan" (🌱/map icon), `kartu` "Kartu", `rantai` "Rantai", `izin` "Izin". Style: `tabBarActiveTintColor: colors.cover`, header shown with `headerStyle: { backgroundColor: colors.cover }`, `headerTintColor: colors.onCover`, `headerTitle: 'JejakHijau'`, `sceneStyle/contentStyle` background `colors.paper`. Use `@expo/vector-icons` Ionicons for tab icons.
 - [ ] **Step 5: Stub screens** — each screen file renders a centered `<Text>` with its name on `colors.paper` background.
 - [ ] **Step 6: Verify** — `npx expo start`, check 4 tabs render with green header/cream body on device or just confirm bundling succeeds without errors.
 - [ ] **Step 7: Commit** — `git commit -m "feat: types, paspor theme tokens, fonts, 4-tab shell"`

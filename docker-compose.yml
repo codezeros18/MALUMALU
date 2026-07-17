@@ -1,4 +1,4 @@
-# WAHA (WhatsApp HTTP API) — self-host, prototipe notifikasi Paspor Petani.
+# WAHA (WhatsApp HTTP API) — self-host, prototipe notifikasi JejakHijau.
 #
 # PENTING (jujur, buat pitch/juri):
 # - WAHA nyambung lewat protokol WhatsApp Web (bukan WhatsApp Business API resmi).
@@ -16,14 +16,14 @@ services:
   waha:
     image: devlikeapro/waha:noweb
     platform: linux/amd64
-    container_name: paspor-petani-waha
+    container_name: jejakhijau-waha
     ports:
       - "3000:3000"
     environment:
       # Engine NOWEB lebih ringan & stabil di macOS (tanpa headless Chrome / browser disconnect).
       WHATSAPP_API_PORT: "3000"
       WAHA_SESSION: "default"
-      WAHA_API_KEY: "${WAHA_API_KEY:-paspor-petani-demo}"
+      WAHA_API_KEY: "${WAHA_API_KEY:-jejakhijau-demo}"
     volumes:
       # Tanpa ini, sesi WA hilang tiap container restart -> scan QR ulang terus.
       - waha-data:/app/.sessions

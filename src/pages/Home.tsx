@@ -4,15 +4,12 @@ import {
   AlertTriangle,
   ArrowRight,
   CheckCircle2,
-  FlaskConical,
   MapPin,
   Plus,
 } from 'lucide-react';
-import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
 import EmptyState from '../components/ui/EmptyState';
 import { listAllPlot, listSyncQueue, requeueForSync } from '../lib/db';
-import { seedDummyData, isDemoPlot } from '../data/dummyData';
 import { useAppContext } from '../context/AppContext';
 import type { Plot } from '../types';
 
@@ -79,10 +76,7 @@ export default function Home() {
 
   const [plots, setPlots] = useState<Plot[]>([]);
   const [queueAttempts, setQueueAttempts] = useState<Map<string, number>>(new Map());
-  const [seeding, setSeeding] = useState(false);
   const [syncing, setSyncing] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
-  const [messageIsError, setMessageIsError] = useState(false);
 
   const refreshPlots = useCallback(async () => {
     try {
@@ -116,41 +110,19 @@ export default function Home() {
     await triggerSync();
   };
 
-  const handleSeedDemo = async () => {
-    setSeeding(true);
-    setMessage(null);
-    try {
-      const result = await seedDummyData();
-      setMessageIsError(false);
-      if (result.seeded) {
-        setMessage(`${result.plots.length} data demo dimuat (Pangalengan, komoditas kopi).`);
-        await refreshPlots();
-      } else {
-        setMessage('DB sudah berisi data — data demo tidak dimuat ulang.');
-      }
-    } catch (err) {
-      setMessageIsError(true);
-      setMessage(err instanceof Error ? err.message : 'Gagal memuat data demo.');
-    } finally {
-      setSeeding(false);
-    }
-  };
-
   const stats = useMemo(() => {
     let synced = 0;
     let failed = 0;
-    let demo = 0;
     for (const plot of plots) {
       const attempts = queueAttempts.get(plot.id) ?? 0;
       if (attempts > 0 || plot.syncStatus === 'conflict') failed += 1;
       else if (plot.syncStatus === 'synced') synced += 1;
-      if (isDemoPlot(plot.id)) demo += 1;
     }
-    return { synced, failed, demo };
+    return { synced, failed };
   }, [plots, queueAttempts]);
 
   return (
-    <div className="space-y-6 max-w-5xl">
+    <div className="space-y-6">
       <div>
         <h1 className="text-lg font-semibold text-slate-900">Ringkasan Agen</h1>
         <p className="text-sm text-slate-500 mt-0.5">
@@ -158,7 +130,7 @@ export default function Home() {
         </p>
       </div>
 
-      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid sm:grid-cols-1 lg:grid-cols-3 gap-4">
         <KpiCard icon={MapPin} label="Total Plot" value={plots.length} />
         <KpiCard icon={CheckCircle2} label="Tersinkron" value={stats.synced} tone="green" />
         <KpiCard
@@ -167,7 +139,6 @@ export default function Home() {
           value={stats.failed}
           tone={stats.failed > 0 ? 'red' : 'default'}
         />
-        <KpiCard icon={FlaskConical} label="Data Demo" value={stats.demo} />
       </div>
 
       <Link
@@ -189,9 +160,6 @@ export default function Home() {
       </Link>
 
       <div className="flex flex-wrap items-center gap-2">
-        <Button variant="secondary" size="sm" onClick={handleSeedDemo} disabled={seeding}>
-          {seeding ? 'Memuat…' : 'Muat data demo (3 petani contoh Pangalengan)'}
-        </Button>
         <button
           type="button"
           onClick={handleSyncNow}
@@ -205,24 +173,12 @@ export default function Home() {
         </button>
       </div>
 
-      {message && (
-        <div
-          className={`rounded-md border px-3 py-2 text-sm ${
-            messageIsError
-              ? 'bg-red-50 border-red-300 text-red-700'
-              : 'bg-brand-50 border-brand-400 text-brand-800'
-          }`}
-        >
-          {message}
-        </div>
-      )}
-
       <div>
         <h2 className="text-sm font-semibold text-slate-700 mb-2">
           Plot tersimpan ({plots.length})
         </h2>
         {plots.length === 0 ? (
-          <EmptyState message="Belum ada plot tersimpan — tandai plot baru atau muat data demo untuk mulai." />
+          <EmptyState message="Belum ada plot tersimpan — tandai plot baru untuk mulai." />
         ) : (
           <ul className="space-y-1">
             {plots.map((plot) => (
@@ -236,7 +192,6 @@ export default function Home() {
                     {plot.gpsAccuracyM ? ` · akurasi ${Math.round(plot.gpsAccuracyM)}m` : ''}
                   </span>
                   <span className="flex items-center gap-1 shrink-0">
-                    {isDemoPlot(plot.id) && <Badge tone="demo">DATA DEMO</Badge>}
                     <SyncBadge
                       status={plot.syncStatus}
                       attempts={queueAttempts.get(plot.id) ?? 0}

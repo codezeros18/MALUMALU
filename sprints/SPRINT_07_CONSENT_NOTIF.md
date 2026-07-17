@@ -24,7 +24,7 @@ Membangun kedaulatan data: petani memberi/menarik izin akses per kartu; setiap a
 ## >>> PROMPT UNTUK CLAUDE CODE >>>
 
 ```
-Kita mulai SPRINT 7 — Consent & Notif untuk Paspor Petani v2 (aku role Fullstack).
+Kita mulai SPRINT 7 — Consent & Notif untuk JejakHijau v2 (aku role Fullstack).
 Acuan: docs/03_MVP_SCOPE.md (F7) + tipe ConsentRecord, AccessLog, NotifItem di src/types/index.ts. Simpan via src/lib/db.ts. CATATAN: notif = simulasi berbasis log + alert di layar (in-app), bukan push notification produksi.
 
 Lakukan:

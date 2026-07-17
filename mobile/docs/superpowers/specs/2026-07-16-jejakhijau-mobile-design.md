@@ -1,9 +1,9 @@
-# Paspor Petani Mobile — Design Spec
+# JejakHijau Mobile — Design Spec
 
 **Date:** 2026-07-16
 **Status:** Approved by Kenny
 **Deadline:** Hackathon demo in < 12 hours
-**Source blueprint:** https://github.com/codezeros18/MALUMALU (planning/prompt pack for the website "Paspor Petani v2")
+**Source blueprint:** https://github.com/codezeros18/MALUMALU (planning/prompt pack for the website "JejakHijau v2")
 
 ---
 

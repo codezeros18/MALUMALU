@@ -24,7 +24,7 @@ Membangun lapisan penyimpanan offline (IndexedDB via `idb`) untuk semua entitas,
 ## >>> PROMPT UNTUK CLAUDE CODE >>>
 
 ```
-Kita mulai SPRINT 2 — Data Layer untuk Paspor Petani v2.
+Kita mulai SPRINT 2 — Data Layer untuk JejakHijau v2.
 Acuan: docs/02_TECH_ARCHITECTURE.md (data model + konvensi). Gunakan library `idb`.
 
 Lakukan:

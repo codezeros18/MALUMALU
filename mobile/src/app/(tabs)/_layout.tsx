@@ -15,7 +15,7 @@ export default function TabLayout() {
       <Tabs
       screenOptions={{
         headerShown: true,
-        headerTitle: 'Paspor Petani',
+        headerTitle: 'JejakHijau',
         headerStyle: { backgroundColor: colors.cover },
         headerTintColor: colors.onCover,
         headerTitleStyle: { fontFamily: fonts.display, fontSize: 20 },

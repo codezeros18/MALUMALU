@@ -82,7 +82,7 @@ export default function PassportCard({ petani, plot, kartu }: PassportCardProps)
       <div className="bg-gradient-to-br from-brand-400 to-brand-800 text-white px-5 py-5">
         <div className="flex items-center justify-between">
           <span className="text-[11px] font-semibold tracking-wide uppercase text-white/70">
-            Paspor Petani
+            JejakHijau
           </span>
           <span className="text-xs font-semibold bg-white/20 px-3 py-1 rounded-full">
             {TIER_LABEL[kartu.tier]}
@@ -129,6 +129,7 @@ export default function PassportCard({ petani, plot, kartu }: PassportCardProps)
             <Map3D
               center={{ lat: plot.lat, lng: plot.lng }}
               zoom={13}
+              pitch={0}
               markers={
                 plot.boundary && plot.boundary.length >= 3
                   ? []

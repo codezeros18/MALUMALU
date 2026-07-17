@@ -200,7 +200,7 @@ Fix bug yang di-flag reviewer (semua sudah dikonfirmasi ADA):
       HITUNG. Kode & test (`aggregateDaily`) sudah benar & tetap PASS — "memperbaikinya"
       ke 61.500 justru akan MEMASUKKAN bug ke kode yang sudah benar. Komentar test yang
       salah tulis "=61500" sudah diperbaiki jadi penjelasan yang akurat.
-- [x] 22.2 Deep-link scheme dari env (`bot.ts`: `process.env.EXPO_PUBLIC_STATUS_SCHEME || 'pasporpetani://status'`) + test env-override (reset-modules)
+- [x] 22.2 Deep-link scheme dari env (`bot.ts`: `process.env.EXPO_PUBLIC_STATUS_SCHEME || 'jejakhijau://status'`) + test env-override (reset-modules)
 - [x] ~~`fromMe` ketat~~ — sudah benar sebelumnya, DIPERKUAT jadi `=== true` eksplisit (bukan cuma truthy JS) + test nilai non-boolean
 - [x] 22.3 `parseInboundWebhook`: abaikan group `@g.us` (`from.endsWith('@g.us')` → null, sebelum sempat di-strip jadi "nomor telepon" palsu) — balasan otomatis terarah benar karena pesan grup sekarang tidak diproses sama sekali
 - [x] 22.4 `readBody` (dipindah ke `webhookParser.ts` supaya testable): limit 100KB + `PayloadTooLargeError` → wahaWebhookServer balas HTTP 413. **Bug ditemukan & diperbaiki saat verifikasi end-to-end**: implementasi awal pakai `req.destroy()` yang mematikan socket SEBELUM 413 sempat terkirim (klien cuma lihat connection reset) — diganti `req.pause()`, dikonfirmasi ulang lewat request HTTP asli ke server yang benar-benar berjalan

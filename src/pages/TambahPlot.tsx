@@ -84,7 +84,7 @@ export default function TambahPlot() {
   const areaHa = drawingPoints.length >= 3 ? computeAreaHa(drawingPoints) : 0;
 
   return (
-    <div className="max-w-5xl">
+    <div>
       <PageHeader
         backTo="/agen"
         backLabel="Kembali ke Ringkasan"

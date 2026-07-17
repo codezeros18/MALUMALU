@@ -1,4 +1,4 @@
-# Skrip Demo — Paspor Petani (6 langkah, ±3 menit)
+# Skrip Demo — JejakHijau (6 langkah, ±3 menit)
 
 > Latihan minimal 2× sebelum demo. Semua langkah bekerja **tanpa internet** —
 > offline adalah fiturnya, bukan keterbatasan.

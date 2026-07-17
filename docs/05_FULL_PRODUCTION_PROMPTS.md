@@ -36,7 +36,7 @@ yang sudah jalan offline.
 ### >>> PROMPT UNTUK CLAUDE CODE >>>
 
 ```
-Kita mulai SPRINT 9 — Supabase Setup & Schema untuk fase full-production Paspor Petani v2.
+Kita mulai SPRINT 9 — Supabase Setup & Schema untuk fase full-production JejakHijau v2.
 Acuan: docs/04_FULL_PRODUCTION_BLUEPRINT.md (bagian 1 "Arsitektur Sync" dan bagian 2
 "Skema Database Supabase"). Baca juga docs/06_PROGRESS_LOG.md untuk paham state repo
 saat ini sebelum mulai. JANGAN ubah alur offline Agen yang sudah ada (Home.tsx,

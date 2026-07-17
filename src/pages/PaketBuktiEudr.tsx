@@ -144,7 +144,7 @@ export default function PaketBuktiEudr() {
   const completeness = getDocumentCompleteness(documents);
 
   return (
-    <div className="max-w-3xl space-y-4">
+    <div className="space-y-4">
       <div className="no-print flex items-center justify-between">
         <Link
           to="/eksportir/terdekat"

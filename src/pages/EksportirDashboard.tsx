@@ -158,7 +158,7 @@ export default function EksportirDashboard() {
   }
 
   return (
-    <div className="space-y-6 max-w-6xl">
+    <div className="space-y-6">
       <div>
         <h1 className="text-lg font-semibold text-slate-900">Dashboard Eksportir</h1>
         <p className="text-sm text-slate-500 mt-0.5">

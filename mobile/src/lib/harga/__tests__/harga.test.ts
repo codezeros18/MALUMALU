@@ -192,6 +192,6 @@ describe('STATUS_LINK_SCHEME (dari env EXPO_PUBLIC_STATUS_SCHEME, bukan hardcode
     delete process.env.EXPO_PUBLIC_STATUS_SCHEME;
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const reloaded = require('../bot');
-    expect(reloaded.STATUS_LINK_SCHEME).toBe('pasporpetani://status');
+    expect(reloaded.STATUS_LINK_SCHEME).toBe('jejakhijau://status');
   });
 });

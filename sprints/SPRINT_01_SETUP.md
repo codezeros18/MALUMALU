@@ -25,12 +25,12 @@ Menyiapkan fondasi proyek: scaffold Vite React TS, semua dependency, Tailwind, s
 ## >>> PROMPT UNTUK CLAUDE CODE (copy semua di bawah) >>>
 
 ```
-Kita mulai SPRINT 1 — Setup & Foundation untuk proyek Paspor Petani v2.
+Kita mulai SPRINT 1 — Setup & Foundation untuk proyek JejakHijau v2.
 Ikuti docs/02_TECH_ARCHITECTURE.md sebagai acuan stack & struktur folder.
 
 Lakukan berurutan:
 
-1. Scaffold proyek Vite React TypeScript di folder ini (root = paspor-petani). Jika folder sudah ada isinya, sesuaikan tanpa menimpa file blueprint.
+1. Scaffold proyek Vite React TypeScript di folder ini (root = jejakhijau). Jika folder sudah ada isinya, sesuaikan tanpa menimpa file blueprint.
 
 2. Install dependency berikut:
    - runtime: leaflet, react-leaflet, @turf/turf, geotiff, idb, crypto-js, nanoid, react-router-dom
@@ -47,9 +47,9 @@ Lakukan berurutan:
 
 6. Setup React Router dengan 3 route: "/" (Home), "/petani" (PetaniList), "/plot/:id" (PlotDetail). Buat komponen halaman placeholder sederhana untuk masing-masing.
 
-7. Setup PWA dasar: konfigurasi vite-plugin-pwa di vite.config.ts (registerType autoUpdate, manifest dengan name "Paspor Petani", short_name "PasporTani", theme_color hijau #1F5C3A, display standalone). Buat public/manifest.json bila perlu. (Service worker caching detail dikerjakan di Sprint 8, cukup fondasinya dulu.)
+7. Setup PWA dasar: konfigurasi vite-plugin-pwa di vite.config.ts (registerType autoUpdate, manifest dengan name "JejakHijau", short_name "JejakHijau", theme_color hijau #1F5C3A, display standalone). Buat public/manifest.json bila perlu. (Service worker caching detail dikerjakan di Sprint 8, cukup fondasinya dulu.)
 
-8. Buat App.tsx yang merender router + layout dasar (header "Paspor Petani" + area konten). Pastikan `npm run dev` jalan tanpa error.
+8. Buat App.tsx yang merender router + layout dasar (header "JejakHijau" + area konten). Pastikan `npm run dev` jalan tanpa error.
 
 9. Setup Tailwind design token dasar: warna utama hijau (#1F5C3A, #2E7D4F), font sans. Buat header sederhana yang enak dilihat.
 
@@ -67,7 +67,7 @@ Setelah selesai:
 ---
 
 ## ✔️ Definition of Done
-- `npm run dev` jalan tanpa error, tampil header "Paspor Petani".
+- `npm run dev` jalan tanpa error, tampil header "JejakHijau".
 - Struktur folder sesuai arsitektur; `src/types/index.ts` berisi SEMUA tipe.
 - 3 route jalan (Home/PetaniList/PlotDetail).
 - PWA manifest ter-load (cek di devtools > Application).

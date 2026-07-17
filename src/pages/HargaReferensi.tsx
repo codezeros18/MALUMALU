@@ -373,7 +373,7 @@ export default function HargaReferensi() {
   }, [isAgen, refreshOwn]);
 
   return (
-    <div className="max-w-4xl">
+    <div>
       <PageHeader
         backTo={isAgen ? '/agen' : '/eksportir'}
         backLabel={isAgen ? 'Kembali ke Ringkasan' : 'Kembali ke Dashboard'}

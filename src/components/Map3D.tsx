@@ -55,6 +55,10 @@ interface Map3DProps {
   onPick?: (lat: number, lng: number) => void;
   offlineHint?: string;
   className?: string;
+  // Kemiringan kamera 3D — default 50 cocok untuk peta besar (tagging plot). Peta kecil
+  // (mis. thumbnail paspor, tinggi ~160px) butuh pitch lebih landai supaya near-clipping
+  // plane tidak "menembus" lereng gunung di sekitar Pangalengan yang curam.
+  pitch?: number;
 }
 
 export default function Map3D({
@@ -65,6 +69,7 @@ export default function Map3D({
   onPick,
   offlineHint,
   className,
+  pitch = 50,
 }: Map3DProps) {
   const isOnline = useOnlineStatus();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -84,7 +89,7 @@ export default function Map3D({
       style: STYLE_URL,
       center: [center.lng, center.lat],
       zoom,
-      pitch: 50,
+      pitch,
       bearing: -17,
       maxPitch: 75,
     });

@@ -25,7 +25,7 @@ Membuat app benar-benar **offline-first** (service worker), memoles UI + men-dis
 ## >>> PROMPT UNTUK CLAUDE CODE (FS) >>>
 
 ```
-Kita mulai SPRINT 8 — Offline, Polish, Deploy untuk Paspor Petani v2 (aku role Fullstack).
+Kita mulai SPRINT 8 — Offline, Polish, Deploy untuk JejakHijau v2 (aku role Fullstack).
 Acuan: docs/03_MVP_SCOPE.md (F8) + Definition of MVP Done. Gunakan vite-plugin-pwa (Workbox).
 
 Lakukan:
@@ -68,7 +68,7 @@ Setelah selesai:
 ## >>> PROMPT TAMBAHAN UNTUK 🟩 AI ENGINEER (bila raster offline belum sempurna) >>>
 
 ```
-Aku AI Engineer, bantu Sprint 8 bagian caching raster offline untuk Paspor Petani v2.
+Aku AI Engineer, bantu Sprint 8 bagian caching raster offline untuk JejakHijau v2.
 Masalah: pastikan /rasters/pangalengan.json tersedia offline setelah pertama load, dan lib/raster.ts membacanya dengan benar dari cache.
 Lakukan:
 1. Verifikasi loadRaster() di src/lib/raster.ts memakai path absolut "/rasters/pangalengan.json" dan meng-cache hasil di memori.

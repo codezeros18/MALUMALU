@@ -1,17 +1,17 @@
 {
   "expo": {
-    "name": "Paspor Petani",
-    "slug": "paspor-petani",
+    "name": "JejakHijau",
+    "slug": "jejakhijau",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "pasporpetani",
+    "scheme": "jejakhijau",
     "userInterfaceStyle": "light",
     "ios": {
       "icon": "./assets/expo.icon"
     },
     "android": {
-      "package": "com.malumalu.pasporpetani",
+      "package": "com.malumalu.jejakhijau",
       "adaptiveIcon": {
         "backgroundColor": "#1F5C3A",
         "foregroundImage": "./assets/images/android-icon-foreground.png",

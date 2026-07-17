@@ -22,19 +22,14 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       manifest: {
-        name: 'Paspor Petani',
-        short_name: 'PasporTani',
-        description: 'Paspor data milik-petani — offline-first, deterministik, hash-chain.',
+        name: 'JejakHijau',
+        short_name: 'JejakHijau',
+        description: 'Jejak data milik-petani — offline-first, deterministik, hash-chain.',
         theme_color: '#1F5C3A',
         background_color: '#ffffff',
         display: 'standalone',
         start_url: '/',
         icons: [
-          {
-            src: '/favicon.svg',
-            sizes: 'any',
-            type: 'image/svg+xml',
-          },
           {
             src: '/icon-192.png',
             sizes: '192x192',

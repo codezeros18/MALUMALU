@@ -1,4 +1,4 @@
-# 🚀 START HERE — Paspor Petani v2 (Paket Eksekusi Claude Code)
+# 🚀 START HERE — JejakHijau v2 (Paket Eksekusi Claude Code)
 
 > Baca file ini **pertama kali**. Ini peta seluruh paket. Semua yang kamu butuh buat bangun MVP ada di sini.
 
@@ -6,7 +6,7 @@
 
 ## 📌 Apa Ini?
 
-Paket blueprint + prompt siap-eksekusi untuk membangun **Paspor Petani v2** (aplikasi PWA web, offline-first) dalam sprint 30 jam menggunakan **Claude Code di VS Code**.
+Paket blueprint + prompt siap-eksekusi untuk membangun **JejakHijau v2** (aplikasi PWA web, offline-first) dalam sprint 30 jam menggunakan **Claude Code di VS Code**.
 
 Semua file di sini dirancang supaya kamu tinggal: **download → buka di VS Code → copy-paste prompt per sprint → Claude Code eksekusi.**
 
@@ -29,7 +29,7 @@ Ada **2 role teknis** yang pakai Claude Code (dan 1 designer yang manual, tidak 
 ## 🗂️ Struktur File Paket Ini
 
 ```
-paspor-petani-blueprint/
+jejakhijau-blueprint/
 ├── 00_START_HERE.md              ← kamu di sini
 ├── docs/
 │   ├── 01_BLUEPRINT_FULL.md      ← ide lengkap dari awal sampai akhir
@@ -56,7 +56,7 @@ paspor-petani-blueprint/
 ## ▶️ Cara Pakai (Langkah demi Langkah)
 
 ### Langkah 0 — Persiapan (sekali saja)
-1. Download seluruh folder `paspor-petani-blueprint/`.
+1. Download seluruh folder `jejakhijau-blueprint/`.
 2. Buka folder ini di **VS Code**.
 3. Buka **Claude Code** di VS Code (kamu FS pakai 1 instance, AI Engineer pakai instance sendiri di mesinnya).
 4. Baca `docs/01_BLUEPRINT_FULL.md` dan `docs/02_TECH_ARCHITECTURE.md` sekali biar paham konteks.

@@ -1,4 +1,4 @@
-// BRIDGE STATUS PASPOR — menghubungkan bot harga dengan data Paspor Petani.
+// BRIDGE STATUS PASPOR — menghubungkan bot harga dengan data JejakHijau.
 // Di mobile app, ini membaca AsyncStorage (petani/plot/kartu). Di backend
 // terpisah, ganti implementasi ini dengan panggilan ke datastore platform.
 import { getKartus, getPetani, getPlots } from '../db';

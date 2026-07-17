@@ -76,7 +76,7 @@ export default function StatusScreen() {
         <Text style={styles.header}>{title}</Text>
         <View style={styles.card}>
           <Text style={styles.body}>
-            Nomor tidak terdaftar. Petani belum memiliki Paspor Petani.
+            Nomor tidak terdaftar. Petani belum memiliki kartu JejakHijau.
           </Text>
         </View>
       </View>

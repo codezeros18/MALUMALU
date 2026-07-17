@@ -38,7 +38,7 @@ Membangun mesin aturan deterministik yang mengubah data plot + hasil `cekDefores
 ## >>> PROMPT UNTUK CLAUDE CODE >>>
 
 ```
-Kita mulai SPRINT 5 — Rule Engine & Kartu untuk Paspor Petani v2 (aku role AI Engineer).
+Kita mulai SPRINT 5 — Rule Engine & Kartu untuk JejakHijau v2 (aku role AI Engineer).
 Acuan: docs/02_TECH_ARCHITECTURE.md + docs/03_MVP_SCOPE.md (F5). Tipe dari src/types/index.ts. Aku hanya menyentuh src/lib/ruleEngine.ts (dan file test kecilku).
 
 Lakukan:

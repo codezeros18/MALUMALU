@@ -1,4 +1,4 @@
-# 🎯 MVP SCOPE — Paspor Petani v2
+# 🎯 MVP SCOPE — JejakHijau v2
 
 > Batas tegas: apa yang dibangun di MVP (8 sprint) vs yang ditunda. Baca ini supaya nggak over-scope. Prioritas mutlak: **MVP jalan offline & demoable dulu.**
 

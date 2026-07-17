@@ -1,4 +1,4 @@
-# 📘 BLUEPRINT LENGKAP — Paspor Petani v2
+# 📘 BLUEPRINT LENGKAP — JejakHijau v2
 
 > Ide dari awal sampai akhir. Ini konteks utuh supaya Claude Code (dan siapa pun) paham APA yang dibangun dan KENAPA. File ini dibaca saat kickoff.
 
@@ -6,7 +6,7 @@
 
 ## 1. Satu Kalimat
 
-**Paspor Petani** adalah aplikasi (PWA web, offline-first) untuk **petugas koperasi/penyuluh** yang mengubah kebun petani berlahan kecil menjadi **identitas data milik petani** yang: terlindungi dari penyalahgunaan (notifikasi akses), membuka akses program domestik (KUR, pupuk subsidi), dan menyiapkan kesiapan ekspor (ketertelusuran) — semuanya **tanpa internet**, dengan inti **deterministik** dan **jejak anti-palsu (hash-chain)**.
+**JejakHijau** adalah aplikasi (PWA web, offline-first) untuk **petugas koperasi/penyuluh** yang mengubah kebun petani berlahan kecil menjadi **identitas data milik petani** yang: terlindungi dari penyalahgunaan (notifikasi akses), membuka akses program domestik (KUR, pupuk subsidi), dan menyiapkan kesiapan ekspor (ketertelusuran) — semuanya **tanpa internet**, dengan inti **deterministik** dan **jejak anti-palsu (hash-chain)**.
 
 ---
 
@@ -20,9 +20,9 @@ Petani berlahan kecil "tidak terlihat" oleh sistem yang menentukan akses mereka 
 
 ## 3. Fokus Track (Agriculture GH7.0)
 
-Dari 5 challenge question Agriculture, Paspor Petani fokus KUAT ke **2**:
+Dari 5 challenge question Agriculture, JejakHijau fokus KUAT ke **2**:
 
-- **Challenge #4 — Financial Inclusion (HERO):** KUR Pertanian butuh surat keterangan usaha + lokasi terverifikasi + survei bank. Paspor Petani menyediakan profil kebun terverifikasi → akses kredit lebih cepat.
+- **Challenge #4 — Financial Inclusion (HERO):** KUR Pertanian butuh surat keterangan usaha + lokasi terverifikasi + survei bank. JejakHijau menyediakan profil kebun terverifikasi → akses kredit lebih cepat.
 - **Challenge #3 — Rural-Urban Bridge:** data milik petani + tertelusur → pembeli/pengekspor percaya asal → petani dapat akses pasar & premium.
 
 **Di-reframe (bukan hero):** Challenge #5 (sustainability) → "audit-trail sebagai bukti kepatuhan", bukan monitoring aktif.

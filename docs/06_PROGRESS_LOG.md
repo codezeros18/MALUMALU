@@ -1,4 +1,4 @@
-# 📖 PROGRESS LOG — Paspor Petani v2 (Sprint 0–22)
+# 📖 PROGRESS LOG — JejakHijau v2 (Sprint 0–22)
 
 > Dokumentasi naratif dari semua yang sudah dikerjakan. Tujuannya: supaya sesi Claude
 > Code manapun (baru, reset, atau dilanjutkan orang lain) bisa paham state repo saat ini
@@ -658,7 +658,7 @@ test) dijalankan penuh — **semua PASS**.
 | Bug yang di-flag reviewer | Status | Bukti |
 |---|---|---|
 | Rata-rata berbobot (61.250 vs 61.500) | **SUDAH DIFIX** | `aggregateDaily` di `aggregate.ts:76` menghitung `Σ(price·txn)/Σ(txn)` — matematis benar = 61250. Test `harga.test.ts:54` assert `toBe(61250)` dan **PASS**. (Komentar test baris 53 punya typo aritmatika "=61500" — kosmetik saja, TIDAK memengaruhi kode/assertion yang sudah benar) |
-| Deep-link scheme hardcode | **MASIH ADA** | `bot.ts:9` — `STATUS_LINK_SCHEME = 'pasporpetani://status'` hardcode literal, TIDAK baca `process.env.EXPO_PUBLIC_STATUS_SCHEME` walau env var itu sudah didokumentasikan di `.env.example:16` |
+| Deep-link scheme hardcode | **MASIH ADA** | `bot.ts:9` — `STATUS_LINK_SCHEME = 'jejakhijau://status'` hardcode literal, TIDAK baca `process.env.EXPO_PUBLIC_STATUS_SCHEME` walau env var itu sudah didokumentasikan di `.env.example:16` |
 | `parseInboundWebhook` — cek `fromMe` | **SUDAH DIFIX** | `webhookParser.ts:20` — `if (fromMe) return null` |
 | `parseInboundWebhook` — abaikan group `@g.us` | **MASIH ADA (bug)** | Tidak ada pengecekan `@g.us` eksplisit. `webhookParser.ts:23` — `from.replace(/@.*/, '')` justru MEN-STRIP suffix grup lalu memperlakukan JID grup sebagai "nomor telepon", bukan menolak pesannya |
 | `readBody` — limit ukuran payload | **MASIH ADA (bug)** | `wahaWebhookServer.ts:12-19` — `raw += chunk` tanpa batas, tidak ada respons `413` sama sekali |
@@ -965,7 +965,7 @@ assertion) diperbaiki jadi penjelasan yang akurat, tidak lebih.
 **Dibangun** (5 dari 6 item lain, semua nyata dikonfirmasi audit):
 
 1. **Deep-link scheme dari env** (`mobile/src/lib/harga/bot.ts`) — `STATUS_LINK_SCHEME
-   = process.env.EXPO_PUBLIC_STATUS_SCHEME || 'pasporpetani://status'`, bukan hardcode
+   = process.env.EXPO_PUBLIC_STATUS_SCHEME || 'jejakhijau://status'`, bukan hardcode
    literal lagi. Test baru pakai `jest.resetModules()` + `require()` ulang untuk
    membuktikan override env benar-benar terbaca (bukan cuma nilai default kebetulan
    sama).
