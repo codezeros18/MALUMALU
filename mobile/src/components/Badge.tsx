@@ -7,7 +7,7 @@ const VARIANT_STYLES: Record<Variant, { bg: string; fg: string }> = {
   ok: { bg: colors.okBg, fg: colors.ok },
   warn: { bg: colors.warnBg, fg: colors.warn },
   alert: { bg: colors.alertBg, fg: colors.alert },
-  neutral: { bg: colors.paper, fg: colors.inkMuted },
+  neutral: { bg: colors.neutralBg, fg: colors.neutral },
 };
 
 interface BadgeProps {
@@ -35,8 +35,10 @@ const styles = StyleSheet.create({
   badge: {
     borderRadius: 999,
     paddingHorizontal: 10,
-    paddingVertical: 3,
+    paddingVertical: 4,
     alignSelf: 'flex-start',
+    minHeight: 22,
+    justifyContent: 'center',
   },
   label: {
     fontFamily: fonts.uiBold,

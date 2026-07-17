@@ -7,7 +7,7 @@ import { PlotForm } from '../../components/PlotForm';
 import { seedDummyData } from '../../data/dummyData';
 import { useOnlineStatus } from '../../hooks/useOnlineStatus';
 import { clearAllData, getKartus, getPetani, getPlots } from '../../lib/db';
-import { colors, fonts, spacing } from '../../theme/tokens';
+import { colors, fonts, radius, spacing } from '../../theme/tokens';
 import type { Kartu, Petani, Plot } from '../../types';
 
 export default function LapanganScreen() {
@@ -99,7 +99,7 @@ export default function LapanganScreen() {
     >
       <View style={styles.headerRow}>
         <Text style={styles.title}>Tandai Plot Kebun</Text>
-        <Pressable onPress={() => setForceGrid(g => !g)} style={({ pressed }) => [styles.toggle, pressed && { opacity: 0.7 }]}>
+        <Pressable onPress={() => setForceGrid(g => !g)} style={({ pressed }) => [styles.toggle, pressed && styles.pressed]}>
           <Text style={styles.toggleText}>{useGrid ? 'Grid' : 'Peta'} ⇄</Text>
         </Pressable>
       </View>
@@ -136,10 +136,10 @@ export default function LapanganScreen() {
       )}
 
       <View style={styles.demoRow}>
-        <Pressable style={({ pressed }) => [styles.demoBtn, pressed && { opacity: 0.7 }]} onPress={onSeed}>
+        <Pressable style={({ pressed }) => [styles.demoBtn, pressed && styles.pressed]} onPress={onSeed}>
           <Text style={styles.demoBtnText}>Muat Data Demo</Text>
         </Pressable>
-        <Pressable style={({ pressed }) => [styles.resetBtn, pressed && { opacity: 0.7 }]} onPress={onReset}>
+        <Pressable style={({ pressed }) => [styles.resetBtn, pressed && styles.pressed]} onPress={onReset}>
           <Text style={styles.resetBtnText}>Hapus Semua Data</Text>
         </Pressable>
       </View>
@@ -155,18 +155,20 @@ const styles = StyleSheet.create({
   title: { fontFamily: fonts.display, fontSize: 22, color: colors.cover },
   toggle: {
     borderWidth: 1,
-    borderColor: colors.line,
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    borderColor: colors.lineStrong,
+    borderRadius: radius.pill,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
     backgroundColor: colors.card,
+    minHeight: 36,
+    justifyContent: 'center',
   },
   toggleText: { fontFamily: fonts.uiBold, fontSize: 12, color: colors.cover },
   plotList: {
     backgroundColor: colors.card,
-    borderRadius: 12,
+    borderRadius: radius.card,
     borderWidth: 1,
-    borderColor: colors.line,
+    borderColor: colors.lineStrong,
     padding: spacing.md,
   },
   plotListTitle: { fontFamily: fonts.uiBold, fontSize: 13, color: colors.ink, marginBottom: 6 },
@@ -182,7 +184,7 @@ const styles = StyleSheet.create({
     flex: 1,
     borderWidth: 1,
     borderColor: colors.cover,
-    borderRadius: 10,
+    borderRadius: radius.input,
     minHeight: 48,
     alignItems: 'center',
     justifyContent: 'center',
@@ -192,10 +194,11 @@ const styles = StyleSheet.create({
     flex: 1,
     borderWidth: 1,
     borderColor: colors.alert,
-    borderRadius: 10,
+    borderRadius: radius.input,
     minHeight: 48,
     alignItems: 'center',
     justifyContent: 'center',
   },
   resetBtnText: { fontFamily: fonts.uiBold, fontSize: 14, color: colors.alert },
+  pressed: { opacity: 0.6, transform: [{ translateY: 1 }] },
 });

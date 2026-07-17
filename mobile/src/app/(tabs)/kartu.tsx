@@ -1,11 +1,28 @@
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Animated, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { KartuCard } from '../../components/KartuCard';
 import { overrideKartu } from '../../lib/consent';
 import { getKartus, getPetani, getPlots } from '../../lib/db';
-import { colors, fonts, spacing } from '../../theme/tokens';
+import { colors, fonts, motion, radius, spacing } from '../../theme/tokens';
 import type { Kartu, Petani, Plot } from '../../types';
+
+function CardEntrance({ index, children }: { index: number; children: React.ReactNode }) {
+  const opacity = useState(() => new Animated.Value(0))[0];
+  const translate = useState(() => new Animated.Value(motion.rise))[0];
+  useFocusEffect(
+    useCallback(() => {
+      const delay = index * motion.stagger;
+      Animated.parallel([
+        Animated.timing(opacity, { toValue: 1, duration: motion.dur, delay, useNativeDriver: true }),
+        Animated.timing(translate, { toValue: 0, duration: motion.dur, delay, useNativeDriver: true }),
+      ]).start();
+    }, [index, opacity, translate]),
+  );
+  return (
+    <Animated.View style={{ opacity, transform: [{ translateY: translate }] }}>{children}</Animated.View>
+  );
+}
 
 export default function KartuScreen() {
   const [kartus, setKartus] = useState<Kartu[]>([]);
@@ -47,20 +64,22 @@ export default function KartuScreen() {
         data={kartus}
         keyExtractor={k => k.id}
         contentContainerStyle={styles.list}
-        renderItem={({ item }) => (
-          <KartuCard
-            kartu={item}
-            petani={petani.find(p => p.id === item.petaniId)}
-            plot={plots.find(p => p.id === item.plotId)}
-            footer={
-              <Pressable
-                style={({ pressed }) => [styles.overrideBtn, pressed && { opacity: 0.7 }]}
-                onPress={() => onOverride(item)}
-              >
-                <Text style={styles.overrideBtnText}>Override Manual (petugas)</Text>
-              </Pressable>
-            }
-          />
+        renderItem={({ item, index }) => (
+          <CardEntrance index={index}>
+            <KartuCard
+              kartu={item}
+              petani={petani.find(p => p.id === item.petaniId)}
+              plot={plots.find(p => p.id === item.plotId)}
+              footer={
+                <Pressable
+                  style={({ pressed }) => [styles.overrideBtn, pressed && styles.pressed]}
+                  onPress={() => onOverride(item)}
+                >
+                  <Text style={styles.overrideBtnText}>Override Manual (petugas)</Text>
+                </Pressable>
+              }
+            />
+          </CardEntrance>
         )}
         ListEmptyComponent={
           <Text style={styles.empty}>
@@ -86,11 +105,12 @@ const styles = StyleSheet.create({
   overrideBtn: {
     borderWidth: 1,
     borderColor: colors.warn,
-    borderRadius: 10,
+    borderRadius: radius.pill,
     minHeight: 44,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: spacing.sm,
   },
   overrideBtnText: { fontFamily: fonts.uiBold, fontSize: 13, color: colors.warn },
+  pressed: { opacity: 0.6 },
 });

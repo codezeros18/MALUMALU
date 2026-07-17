@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { getCurrentPosition } from '../lib/gps';
 import { prosesPlotBaru } from '../lib/prosesPlot';
-import { colors, fonts, spacing } from '../theme/tokens';
+import { colors, fonts, radius, spacing } from '../theme/tokens';
 import type { Kartu } from '../types';
 
 interface PlotFormProps {
@@ -119,9 +119,9 @@ export function PlotForm({ coord, accuracyM, onCoordFromGps, onSaved }: PlotForm
 const styles = StyleSheet.create({
   form: {
     backgroundColor: colors.card,
-    borderRadius: 12,
+    borderRadius: radius.card,
     borderWidth: 1,
-    borderColor: colors.line,
+    borderColor: colors.lineStrong,
     padding: spacing.md,
     gap: 6,
   },
@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
   input: {
     borderWidth: 1,
     borderColor: colors.line,
-    borderRadius: 8,
+    borderRadius: radius.input,
     paddingHorizontal: 12,
     minHeight: 46,
     fontFamily: fonts.ui,
@@ -143,7 +143,7 @@ const styles = StyleSheet.create({
   gpsBtn: {
     borderWidth: 1,
     borderColor: colors.cover,
-    borderRadius: 8,
+    borderRadius: radius.input,
     minHeight: 46,
     paddingHorizontal: 14,
     alignItems: 'center',
@@ -152,20 +152,22 @@ const styles = StyleSheet.create({
   gpsBtnText: { fontFamily: fonts.uiBold, fontSize: 13, color: colors.cover },
   warnBox: {
     backgroundColor: colors.warnBg,
-    borderRadius: 8,
+    borderRadius: radius.input,
     padding: spacing.sm,
     marginTop: 6,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.warn,
   },
   warnText: { fontFamily: fonts.uiMedium, fontSize: 12, color: colors.warn },
   saveBtn: {
     backgroundColor: colors.action,
-    borderRadius: 10,
+    borderRadius: radius.input,
     minHeight: 52,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: spacing.sm,
   },
   saveBtnText: { fontFamily: fonts.uiBold, fontSize: 16, color: colors.onCover },
-  pressed: { opacity: 0.7 },
+  pressed: { opacity: 0.6, transform: [{ translateY: 1 }] },
   disabled: { opacity: 0.4 },
 });

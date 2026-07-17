@@ -18,12 +18,14 @@ export default function TabLayout() {
         headerTitle: 'Paspor Petani',
         headerStyle: { backgroundColor: colors.cover },
         headerTintColor: colors.onCover,
-        headerTitleStyle: { fontFamily: fonts.display, fontSize: 20 },
+        headerTitleStyle: { fontFamily: fonts.display, fontSize: 21, color: colors.onCover },
+        headerTitleAlign: 'left',
         headerRight: () => <OfflineIndicator />,
         tabBarActiveTintColor: colors.cover,
         tabBarInactiveTintColor: colors.inkMuted,
         tabBarLabelStyle: { fontFamily: fonts.uiMedium, fontSize: 11 },
-        tabBarStyle: { backgroundColor: colors.card, borderTopColor: colors.line },
+        tabBarItemStyle: { minHeight: 52 },
+        tabBarStyle: { backgroundColor: colors.card, borderTopColor: colors.lineStrong, borderTopWidth: 1 },
         sceneStyle: { backgroundColor: colors.paper },
       }}
     >

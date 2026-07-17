@@ -1,18 +1,48 @@
 import { useFocusEffect } from 'expo-router';
 import { sha256 } from 'js-sha256';
-import { useCallback, useState } from 'react';
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import { Animated, FlatList, Pressable, StyleSheet, Text, View, useAnimatedValue } from 'react-native';
 import { getChain, getChainBackup, setChain, setChainBackup } from '../lib/db';
 import { verifyChain, type VerifyResult } from '../lib/hashchain';
-import { colors, fonts, spacing } from '../theme/tokens';
+import { colors, fonts, radius, spacing } from '../theme/tokens';
 import type { HashChainEntry } from '../types';
 
 const short = (h: string) => `${h.slice(0, 16)}…`;
+
+function EntryRow({ item, bad, animate }: { item: HashChainEntry; bad: boolean; animate: boolean }) {
+  const shake = useAnimatedValue(0);
+  useEffect(() => {
+    if (bad && animate) {
+      Animated.sequence([
+        Animated.timing(shake, { toValue: 1, duration: 60, useNativeDriver: true }),
+        Animated.timing(shake, { toValue: -1, duration: 60, useNativeDriver: true }),
+        Animated.timing(shake, { toValue: 0, duration: 60, useNativeDriver: true }),
+      ]).start();
+    }
+  }, [bad, animate, shake]);
+  return (
+    <Animated.View
+      style={[
+        styles.entry,
+        bad && styles.entryBad,
+        { transform: [{ translateX: shake.interpolate({ inputRange: [-1, 0, 1], outputRange: [-3, 0, 3] }) }] },
+      ]}
+    >
+      <Text style={styles.entryTitle}>
+        #{item.index} · {item.timestamp}
+      </Text>
+      <Text style={styles.mono}>data  {short(item.dataHash)}</Text>
+      <Text style={styles.mono}>prev  {short(item.previousHash)}</Text>
+      <Text style={styles.mono}>hash  {short(item.hash)}</Text>
+    </Animated.View>
+  );
+}
 
 export function HashChainViewer() {
   const [chain, setChainState] = useState<HashChainEntry[]>([]);
   const [result, setResult] = useState<VerifyResult | null>(null);
   const [tampered, setTampered] = useState(false);
+  const [animate, setAnimate] = useState(false);
 
   const reload = useCallback(async (verify = false) => {
     const c = await getChain();
@@ -40,6 +70,7 @@ export function HashChainViewer() {
     const bad = c.map((e, i) => (i === mid ? { ...e, dataHash: sha256('data-diubah-diam-diam') } : e));
     await setChain(bad);
     setTampered(true);
+    setAnimate(true);
     await reload(true);
   };
 
@@ -48,6 +79,7 @@ export function HashChainViewer() {
     if (backup.length === 0) return;
     await setChain(backup);
     setTampered(false);
+    setAnimate(false);
     await reload(true);
   };
 
@@ -107,16 +139,7 @@ export function HashChainViewer() {
         contentContainerStyle={{ paddingBottom: spacing.xl }}
         renderItem={({ item }) => {
           const bad = brokenAt !== null && item.index >= brokenAt;
-          return (
-            <View style={[styles.entry, bad && { backgroundColor: colors.alertBg, borderColor: colors.alert }]}>
-              <Text style={styles.entryTitle}>
-                #{item.index} · {item.timestamp}
-              </Text>
-              <Text style={styles.mono}>data  {short(item.dataHash)}</Text>
-              <Text style={styles.mono}>prev  {short(item.previousHash)}</Text>
-              <Text style={styles.mono}>hash  {short(item.hash)}</Text>
-            </View>
-          );
+          return <EntryRow item={item} bad={bad} animate={animate} />;
         }}
         ListEmptyComponent={
           <Text style={styles.empty}>Rantai kosong. Simpan plot atau muat data demo dulu.</Text>
@@ -134,7 +157,7 @@ const styles = StyleSheet.create({
   btn: {
     flex: 1,
     minHeight: 48,
-    borderRadius: 10,
+    borderRadius: radius.input,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: spacing.sm,
@@ -143,19 +166,24 @@ const styles = StyleSheet.create({
   btnPrimaryText: { fontFamily: fonts.uiBold, fontSize: 14, color: colors.onCover },
   btnOutline: { borderWidth: 1, borderColor: colors.cover },
   btnOutlineText: { fontFamily: fonts.uiBold, fontSize: 14, color: colors.cover },
-  pressed: { opacity: 0.7 },
+  pressed: { opacity: 0.6, transform: [{ translateY: 1 }] },
   disabled: { opacity: 0.4 },
-  banner: { borderRadius: 10, padding: spacing.sm, marginTop: spacing.md, borderWidth: 1 },
-  bannerOk: { backgroundColor: colors.okBg, borderColor: colors.ok },
-  bannerBad: { backgroundColor: colors.alertBg, borderColor: colors.alert },
+  banner: { borderRadius: radius.input, padding: spacing.sm, marginTop: spacing.md, borderWidth: 1 },
+  bannerOk: { backgroundColor: colors.okBg, borderColor: colors.ok, borderLeftWidth: 4 },
+  bannerBad: { backgroundColor: colors.alertBg, borderColor: colors.alert, borderLeftWidth: 4 },
   bannerText: { fontFamily: fonts.uiBold, fontSize: 15, textAlign: 'center' },
   entry: {
     backgroundColor: colors.card,
     borderColor: colors.line,
     borderWidth: 1,
-    borderRadius: 10,
+    borderRadius: radius.input,
     padding: spacing.sm,
     marginTop: spacing.sm,
+  },
+  entryBad: {
+    backgroundColor: colors.alertBg,
+    borderColor: colors.alert,
+    borderLeftWidth: 4,
   },
   entryTitle: { fontFamily: fonts.uiBold, fontSize: 12, color: colors.ink, marginBottom: 4 },
   mono: { fontFamily: fonts.mono, fontSize: 11, color: colors.inkMuted },

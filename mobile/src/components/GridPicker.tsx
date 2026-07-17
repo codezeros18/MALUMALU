@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import raster from '../data/pangalengan.json';
-import { colors, fonts } from '../theme/tokens';
+import { colors, fonts, radius } from '../theme/tokens';
 import type { PickerProps } from './MapPicker';
 
 const { bbox, rows, cols, cells } = raster;
@@ -93,15 +93,15 @@ export function GridPicker({ plots, selected, onPick }: PickerProps) {
 const styles = StyleSheet.create({
   grid: {
     height: 300,
-    backgroundColor: '#EDE7D6',
-    borderRadius: 12,
+    backgroundColor: colors.paper,
+    borderRadius: radius.card,
     borderWidth: 1,
     borderColor: colors.line,
     overflow: 'hidden',
   },
   lineH: { position: 'absolute', left: 0, right: 0, height: StyleSheet.hairlineWidth, backgroundColor: colors.line },
   lineV: { position: 'absolute', top: 0, bottom: 0, width: StyleSheet.hairlineWidth, backgroundColor: colors.line },
-  riskCell: { position: 'absolute', backgroundColor: 'rgba(179,38,30,0.18)' },
+  riskCell: { position: 'absolute', backgroundColor: colors.alertBg },
   dot: {
     position: 'absolute',
     width: 12,
