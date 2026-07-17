@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { FileText } from 'lucide-react';
 import KartuCard from '../components/KartuCard';
@@ -6,12 +6,20 @@ import HashChainViewer from '../components/HashChainViewer';
 import ConsentPanel from '../components/ConsentPanel';
 import DocumentUpload from '../components/DocumentUpload';
 import MapView from '../components/MapView';
+import type { Map3DHandle } from '../components/Map3D';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Checkbox from '../components/ui/Checkbox';
 import PageHeader from '../components/ui/PageHeader';
 import SectionCard from '../components/ui/SectionCard';
-import { getPlot, getPetani, getKartuByPlot, listSyncQueue, requeueForSync } from '../lib/db';
+import {
+  getPlot,
+  getPetani,
+  getKartuByPlot,
+  listSyncQueue,
+  requeueForSync,
+  setPlotBoundarySnapshot,
+} from '../lib/db';
 import { commitKartu } from '../lib/hashchain';
 import { generateKartu } from '../lib/ruleEngine';
 import { cekDeforestasi } from '../lib/geospatial';
@@ -21,6 +29,7 @@ import type { Plot, Petani, Kartu, PetaniDocument } from '../types';
 export default function PlotDetail() {
   const { id } = useParams();
   const { syncVersion, triggerSync } = useAppContext();
+  const mapRef = useRef<Map3DHandle>(null);
   const [plot, setPlot] = useState<Plot | null>(null);
   const [petani, setPetani] = useState<Petani | null>(null);
   const [kartu, setKartu] = useState<Kartu | null>(null);
@@ -29,6 +38,8 @@ export default function PlotDetail() {
   const [stdbDocUploaded, setStdbDocUploaded] = useState(false);
   const [klaimKepemilikan, setKlaimKepemilikan] = useState(true);
   const [creating, setCreating] = useState(false);
+  const [capturingSnapshot, setCapturingSnapshot] = useState(false);
+  const [snapshotError, setSnapshotError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -74,6 +85,27 @@ export default function PlotDetail() {
       await requeueForSync('kartu', kartu.id);
     }
     await triggerSync();
+  };
+
+  // Backfill foto batas kebun untuk plot LAMA (dibuat sebelum fitur boundarySnapshot
+  // ada) — pakai peta yang sudah tampil di halaman ini, bukan alur TambahPlot.
+  const handleCaptureSnapshot = async () => {
+    if (!plot) return;
+    setCapturingSnapshot(true);
+    setSnapshotError(null);
+    try {
+      const snap = await mapRef.current?.getSnapshot();
+      if (!snap) {
+        setSnapshotError('Gagal mengambil foto — pastikan online & peta sudah selesai dimuat, lalu coba lagi.');
+        return;
+      }
+      const updated = await setPlotBoundarySnapshot(plot.id, snap);
+      setPlot(updated);
+    } catch (err) {
+      setSnapshotError(err instanceof Error ? err.message : 'Gagal mengambil foto batas kebun.');
+    } finally {
+      setCapturingSnapshot(false);
+    }
   };
 
   const handleBuatKartu = async () => {
@@ -130,8 +162,30 @@ export default function PlotDetail() {
                   : '—'}
               </p>
               <div className="mt-3">
-                <MapView plots={[plot]} onPickLocation={() => {}} className="h-56" />
+                <MapView ref={mapRef} plots={[plot]} onPickLocation={() => {}} className="h-56" />
               </div>
+              {plot.boundarySnapshot ? (
+                <p className="text-xs text-slate-400 mt-2">
+                  Foto batas kebun sudah ada — dipakai di Paspor Petani supaya tidak perlu
+                  memuat peta 3D di device petani.
+                </p>
+              ) : (
+                <div className="mt-2 flex items-center gap-2">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={handleCaptureSnapshot}
+                    disabled={capturingSnapshot}
+                  >
+                    {capturingSnapshot ? 'Mengambil foto…' : 'Ambil Foto Batas Kebun'}
+                  </Button>
+                  <p className="text-[11px] text-slate-400">
+                    Plot ini dibuat sebelum fitur foto ada — Paspor Petani masih memakai peta
+                    3D live sampai foto ini diambil.
+                  </p>
+                </div>
+              )}
+              {snapshotError && <p className="text-xs text-red-600 mt-1">{snapshotError}</p>}
             </>
           )}
         </SectionCard>

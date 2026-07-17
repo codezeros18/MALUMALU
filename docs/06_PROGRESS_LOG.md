@@ -1461,3 +1461,35 @@ alter table plot add column if not exists boundary_snapshot text;
 Sama seperti field EUDR sebelumnya: tanpa SQL ini, foto tetap tersimpan & tampil penuh
 secara LOKAL, hanya sinkron ke Supabase yang akan gagal (retry otomatis lalu berhenti)
 untuk kolom yang belum ada sampai SQL ini dijalankan.
+
+### Susulan — Backfill foto untuk plot LAMA (`PlotDetail.tsx`)
+
+User melaporkan kartu "Vassel" (data uji nyata, dibuat sebelum fitur ini ada) masih
+menampilkan peta 3D live yang bisa digeser/di-zoom — perilaku fallback yang memang
+disengaja (plot lama tidak punya `boundarySnapshot`), tapi tanpa cara memperbaikinya
+selain menggambar ulang seluruh poligon dari nol lewat alur Tambah Plot.
+
+**Dibangun**: `src/lib/db.ts` — `setPlotBoundarySnapshot(id, snapshot)`, fungsi kecil
+khusus (bukan `updatePlot` generik — itu di luar cakupan permintaan ini) yang menambal
+`boundarySnapshot` ke plot yang sudah ada + `enqueueSync`. `src/pages/PlotDetail.tsx` —
+tombol "Ambil Foto Batas Kebun" muncul otomatis di bawah peta kalau
+`plot.boundary.length >= 3 && !plot.boundarySnapshot` (peta yang sama yang sudah tampil
+di halaman itu dipakai sebagai sumber `getSnapshot()`, tidak perlu Agen menggambar ulang
+apa pun) — begitu berhasil, tombol hilang berganti keterangan "Foto batas kebun sudah
+ada". Kalau gagal (offline/dll), pesan error tampil dan tombol tetap ada untuk dicoba
+lagi.
+
+**Catatan penting untuk "Vassel" spesifik**: karena `PetaniList.tsx`/`Home.tsx` di Agen
+cuma baca IndexedDB LOKAL device itu (bukan gabungan lintas-device seperti
+`EksportirDashboard.tsx`), tombol backfill ini hanya bisa dipakai dari **device/browser
+yang memang punya plot itu di IndexedDB lokalnya** (biasanya device Agen yang aslinya
+input data tsb). Kalau "Vassel" dibuat dari sesi/browser lain yang datanya sudah tidak
+ada lagi secara lokal, foto tidak bisa di-backfill dari device manapun sampai
+`PetaniList.tsx` diupgrade untuk gabung lokal+remote (perbaikan yang sama yang sudah
+direkomendasikan di rencana fitur CRUD/audit-trail sebelumnya, belum diimplementasikan).
+
+**Verifikasi (Playwright)**: plot baru dibuat (otomatis dapat foto) → foto DIHAPUS
+manual langsung dari IndexedDB (simulasi plot lama) → reload → tombol "Ambil Foto Batas
+Kebun" muncul → diklik → foto berhasil ditangkap dari peta yang sudah tampil di halaman
+→ pesan "Foto batas kebun sudah ada" muncul, tombol hilang. `tsc -b --noEmit` + `npm run
+build` bersih.

@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Printer } from 'lucide-react';
-import QRCode from 'react-qr-code';
 import { supabaseBackend, fromSupabaseRow } from '../lib/sync';
 import { isAuthorized } from '../lib/consent';
 import { getDocumentCompleteness } from '../lib/ruleEngine';
@@ -241,16 +240,6 @@ export default function PaketBuktiEudr() {
       <HashChainViewer entries={agentHashEntries} readOnly />
 
       <KartuCard kartu={kartu} readOnly />
-
-      <Card className="flex items-center justify-between gap-4">
-        <div className="min-w-0">
-          <p className="text-xs text-slate-400">Kode Verifikasi</p>
-          <p className="font-mono text-xs text-slate-600 truncate">{kartu.id}</p>
-        </div>
-        <div className="shrink-0 bg-white p-1.5 rounded-lg border border-slate-100">
-          <QRCode value={kartu.id} size={72} />
-        </div>
-      </Card>
     </div>
   );
 }

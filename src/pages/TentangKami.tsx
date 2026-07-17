@@ -1,3 +1,5 @@
+import { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 
@@ -128,6 +130,18 @@ const DIFFERENTIATORS = [
 ];
 
 export default function TentangKami() {
+  const location = useLocation();
+
+  useEffect(() => {
+    if (!location.hash) return;
+    // Halaman ini dirender client-side, jadi scroll-ke-hash bawaan browser tidak
+    // berjalan (elemen belum ada di DOM saat browser mencoba lompat saat load) --
+    // scroll manual di sini setelah mount, baik untuk navigasi dari halaman lain
+    // maupun klik Navbar saat sudah berada di "/".
+    const el = document.getElementById(location.hash.slice(1));
+    el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, [location.hash]);
+
   return (
     <div className="min-h-screen flex flex-col bg-white">
       <Navbar />

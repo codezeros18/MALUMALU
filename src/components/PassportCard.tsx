@@ -1,4 +1,3 @@
-import QRCode from 'react-qr-code';
 import { AlertTriangle, CheckCircle2, Clock, FileWarning } from 'lucide-react';
 import Map3D from './Map3D';
 import type { Kartu, Petani, Plot } from '../types';
@@ -171,18 +170,6 @@ export default function PassportCard({ petani, plot, kartu }: PassportCardProps)
           </div>
         </div>
 
-        <div className="flex items-center justify-between gap-4 border-t border-slate-100 pt-4">
-          <div className="min-w-0">
-            <p className="text-xs text-slate-400">Kode Verifikasi</p>
-            <p className="font-mono text-xs text-slate-600 truncate">{kartu.id}</p>
-            <p className="text-[10px] text-slate-400 mt-1 max-w-[220px]">
-              Tunjukkan kode QR ini ke petugas/pembeli untuk verifikasi manual.
-            </p>
-          </div>
-          <div className="shrink-0 bg-white p-1.5 rounded-lg border border-slate-100">
-            <QRCode value={kartu.id} size={72} />
-          </div>
-        </div>
       </div>
     </div>
   );

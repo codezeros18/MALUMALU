@@ -437,6 +437,23 @@ export async function listAllPlot(): Promise<Plot[]> {
   }
 }
 
+// Backfill foto batas kebun untuk plot LAMA (dibuat sebelum fitur boundarySnapshot
+// ada) — dipanggil dari tombol "Ambil Foto Batas Kebun" di PlotDetail.tsx, yang
+// menangkap dari peta 3D yang sudah tampil di halaman itu (bukan alur TambahPlot).
+export async function setPlotBoundarySnapshot(id: string, snapshot: string): Promise<Plot> {
+  try {
+    const db = await getDB();
+    const existing = await db.get('plot', id);
+    if (!existing) throw new Error(`Plot ${id} tidak ditemukan`);
+    const updated: Plot = { ...existing, boundarySnapshot: snapshot, updatedAt: Date.now(), syncStatus: 'local' };
+    await db.put('plot', updated);
+    await enqueueSync('plot', updated.id, 'update', updated);
+    return updated;
+  } catch (err) {
+    throw dbError('setPlotBoundarySnapshot', err);
+  }
+}
+
 // ===== KARTU =====
 
 export async function addKartu(input: Omit<Kartu, 'id' | 'createdAt'>): Promise<Kartu> {
