@@ -1,17 +1,16 @@
-import type { ComponentPropsWithoutRef, ElementType } from 'react';
+import React from 'react';
 
-type CardProps<T extends ElementType> = {
-  as?: T;
-  className?: string;
-} & Omit<ComponentPropsWithoutRef<T>, 'as' | 'className'>;
+export interface CardProps extends React.ComponentPropsWithoutRef<'div'> {
+  as?: any;
+}
 
-// Polymorphic supaya bisa dipakai sebagai <form> (mis. PlotForm) tanpa kehilangan
-// styling card standar (bg-white rounded-lg border border-slate-200 p-4).
-export default function Card<T extends ElementType = 'div'>({
-  as,
-  className = '',
-  ...rest
-}: CardProps<T>) {
-  const Component = as ?? 'div';
-  return <Component className={`bg-white rounded-lg border border-slate-200 p-4 ${className}`} {...rest} />;
+export default function Card({ children, className = '', as: Component = 'div', ...props }: CardProps) {
+  return (
+    <Component
+      className={`bg-white border border-slate-200 rounded-xl p-4 shadow-sm ${className}`}
+      {...props}
+    >
+      {children}
+    </Component>
+  );
 }

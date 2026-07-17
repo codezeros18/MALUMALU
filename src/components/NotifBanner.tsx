@@ -1,59 +1,55 @@
-import { useCallback, useEffect, useState } from 'react';
-import { listNotif, markNotifRead } from '../lib/db';
 import { useAppContext } from '../context/AppContext';
-import type { NotifItem } from '../types';
-
-const SEVERITY_STYLE: Record<NotifItem['severity'], string> = {
-  info: 'bg-slate-800 text-white',
-  warning: 'bg-amber-500 text-white',
-  alert: 'bg-red-600 text-white',
-};
+import { Bell, X, ShieldAlert, CheckCircle, Info, AlertTriangle } from 'lucide-react';
 
 export default function NotifBanner() {
-  const { notifVersion } = useAppContext();
-  const [notifs, setNotifs] = useState<NotifItem[]>([]);
+  const { notifications, clearNotifications } = useAppContext();
+  const unreadNotifs = notifications.filter(n => !n.read);
 
-  const refresh = useCallback(async () => {
-    try {
-      const all = await listNotif();
-      setNotifs(all.filter((n) => !n.read));
-    } catch (err) {
-      console.error('[NotifBanner] gagal memuat notif', err);
-    }
-  }, []);
+  if (unreadNotifs.length === 0) return null;
 
-  useEffect(() => {
-    refresh();
-  }, [refresh, notifVersion]);
+  // Show only the latest unread notification to keep the UI clean
+  const latestNotif = unreadNotifs[0];
 
-  const handleDismiss = async (id: string) => {
-    try {
-      await markNotifRead(id);
-      await refresh();
-    } catch (err) {
-      console.error('[NotifBanner] gagal menandai notif terbaca', err);
-    }
+  const iconStyles = {
+    info: <Info className="text-blue-500 shrink-0" size={18} />,
+    success: <CheckCircle className="text-emerald-500 shrink-0" size={18} />,
+    warning: <AlertTriangle className="text-amber-500 shrink-0" size={18} />,
+    alert: <ShieldAlert className="text-rose-500 shrink-0" size={18} />,
   };
 
-  if (notifs.length === 0) return null;
+  const bgStyles = {
+    info: 'bg-blue-50/95 border-blue-200/50 text-blue-900',
+    success: 'bg-emerald-50/95 border-emerald-200/50 text-emerald-900',
+    warning: 'bg-amber-50/95 border-amber-200/50 text-amber-900',
+    alert: 'bg-rose-50/95 border-rose-200/50 text-rose-900',
+  };
 
   return (
-    <div className="no-print fixed top-0 inset-x-0 z-[2000] flex flex-col gap-2 p-2 pointer-events-none">
-      {notifs.map((n) => (
-        <div
-          key={n.id}
-          className={`pointer-events-auto max-w-lg mx-auto w-full rounded-md shadow-lg px-4 py-3 flex items-start justify-between gap-3 ${SEVERITY_STYLE[n.severity]}`}
-        >
-          <span className="text-sm">{n.message}</span>
-          <button
-            type="button"
-            onClick={() => handleDismiss(n.id)}
-            className="text-xs underline opacity-80 hover:opacity-100 shrink-0"
-          >
-            Tandai terbaca
-          </button>
+    <div className="fixed top-18 right-4 left-4 md:left-auto md:w-[380px] z-[2000] pointer-events-none animate-fade-in">
+      <div className={`pointer-events-auto border rounded-xl shadow-xl p-4 flex gap-3 backdrop-blur-md transition-all duration-300 ${bgStyles[latestNotif.type]}`}>
+        {iconStyles[latestNotif.type]}
+        <div className="flex-1 space-y-1">
+          <div className="flex justify-between items-start">
+            <span className="text-xs font-bold uppercase tracking-wider opacity-80">
+              Notifikasi Sistem
+            </span>
+            <span className="text-[10px] font-mono opacity-60">
+              {latestNotif.timestamp}
+            </span>
+          </div>
+          <p className="text-xs font-medium leading-normal">
+            {latestNotif.message}
+          </p>
+          <div className="pt-1.5 flex justify-end">
+            <button
+              onClick={clearNotifications}
+              className="text-[10px] font-bold uppercase tracking-wider hover:opacity-80 transition-opacity"
+            >
+              Hapus Semua Notif
+            </button>
+          </div>
         </div>
-      ))}
+      </div>
     </div>
   );
 }

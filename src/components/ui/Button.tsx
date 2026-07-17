@@ -1,38 +1,42 @@
-import type { ButtonHTMLAttributes } from 'react';
+import React from 'react';
 
-type ButtonVariant = 'primary' | 'secondary' | 'danger';
-type ButtonSize = 'sm' | 'md';
-
-interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: ButtonVariant;
-  size?: ButtonSize;
+export interface ButtonProps extends React.ComponentPropsWithoutRef<'button'> {
+  variant?: 'primary' | 'secondary' | 'danger';
+  size?: 'sm' | 'md' | 'lg';
   fullWidth?: boolean;
 }
 
-const VARIANT_CLASSES: Record<ButtonVariant, string> = {
-  primary: 'bg-brand-800 text-white',
-  secondary: 'bg-slate-100 text-slate-700 border border-slate-200',
-  danger: 'bg-red-600 text-white',
-};
-
-const SIZE_CLASSES: Record<ButtonSize, string> = {
-  sm: 'text-xs px-3 py-1.5',
-  md: 'text-sm px-4 py-2',
-};
-
 export default function Button({
+  children,
   variant = 'primary',
   size = 'md',
   fullWidth = false,
-  type = 'button',
   className = '',
-  ...rest
+  ...props
 }: ButtonProps) {
+  const baseStyle =
+    'inline-flex items-center justify-center font-semibold rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 disabled:opacity-50 disabled:pointer-events-none cursor-pointer';
+
+  const variants = {
+    primary: 'bg-brand-800 text-white hover:bg-brand-800/90 focus:ring-brand-500',
+    secondary: 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200 focus:ring-slate-500',
+    danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
+  };
+
+  const sizes = {
+    sm: 'px-3 py-1.5 text-xs',
+    md: 'px-4 py-2 text-sm',
+    lg: 'px-5 py-3 text-base',
+  };
+
+  const widthStyle = fullWidth ? 'w-full' : '';
+
   return (
     <button
-      type={type}
-      className={`rounded-md font-medium disabled:opacity-50 ${VARIANT_CLASSES[variant]} ${SIZE_CLASSES[size]} ${fullWidth ? 'w-full' : ''} ${className}`}
-      {...rest}
-    />
+      className={`${baseStyle} ${variants[variant]} ${sizes[size]} ${widthStyle} ${className}`}
+      {...props}
+    >
+      {children}
+    </button>
   );
 }

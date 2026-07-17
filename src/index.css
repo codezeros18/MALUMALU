@@ -1,20 +1,30 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import "tailwindcss";
 
-:root {
-  color-scheme: light;
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Space Grotesk", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  
+  --color-brand-50: #f0fdf4;
+  --color-brand-55: #ecfdf5;
+  --color-brand-100: #dcfce7;
+  --color-brand-200: #bbf7d0;
+  --color-brand-400: #22c55e;
+  --color-brand-500: #16a34a;
+  --color-brand-800: #15803d; /* deep agricultural forest green */
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  margin: 0;
-  font-family: 'Plus Jakarta Sans', 'Segoe UI', system-ui, Roboto, sans-serif;
+  font-family: var(--font-sans);
+  background-color: #fafbfa;
 }
 
-/* Print stylesheet (Sprint 14 — Petani Portal "Unduh sebagai PDF"): sembunyikan
-   chrome UI (header, nav, banner, tombol), sisakan konten kartu/hash-chain/consent. */
-@media print {
-  .no-print {
-    display: none !important;
-  }
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
 }
+

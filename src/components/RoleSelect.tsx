@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import type { Role } from '../context/AppContext';
+import type { Role } from '../types';
 
 interface RoleOption {
   role: Role;
@@ -48,7 +48,7 @@ export default function RoleSelect({ value, onChange }: RoleSelectProps) {
         onClick={() => setOpen((v) => !v)}
         aria-haspopup="listbox"
         aria-expanded={open}
-        className="w-full flex items-center justify-between gap-3 bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 text-left hover:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-brand-400 transition-colors"
+        className="w-full flex items-center justify-between gap-3 bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 text-left hover:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-brand-400 transition-colors cursor-pointer"
       >
         <span>
           <span className="block text-sm font-semibold text-slate-800">{selected.label}</span>
@@ -75,7 +75,7 @@ export default function RoleSelect({ value, onChange }: RoleSelectProps) {
                   onChange(option.role);
                   setOpen(false);
                 }}
-                className={`w-full flex items-center justify-between gap-3 px-4 py-3 text-left transition-colors ${
+                className={`w-full flex items-center justify-between gap-3 px-4 py-3 text-left transition-colors cursor-pointer ${
                   option.role === value ? 'bg-brand-50' : 'hover:bg-slate-50'
                 }`}
               >

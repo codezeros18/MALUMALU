@@ -7,7 +7,7 @@ export default function Footer() {
         <a href="#" className="underline hover:text-slate-700 transition-colors">
           Kebijakan Privasi
         </a>
-        <span>Copyright@ Paspor Petani {year}</span>
+        <span>Copyright @ Paspor Petani {year}</span>
       </div>
     </footer>
   );

@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
-import { useAppContext, type Role } from '../context/AppContext';
+import { useAppContext } from '../context/AppContext';
+import type { Role } from '../types';
 
 interface RequireRoleProps {
   role: Role;

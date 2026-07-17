@@ -144,7 +144,7 @@ export default function Map3D({ center, zoom, markers, onPick, offlineHint, clas
       {!isOnline && (
         <>
           <div className="absolute inset-x-0 top-0 z-10 flex justify-center pt-2 pointer-events-none">
-            <span className="bg-amber-100 text-amber-900 text-xs px-2 py-1 rounded shadow">
+            <span className="bg-amber-100 text-amber-900 text-[10px] sm:text-xs px-2 py-1 rounded shadow-sm">
               {offlineHint ?? 'Mode offline: peta 3D tidak tersedia, tap koordinat tetap berfungsi.'}
             </span>
           </div>

@@ -1,0 +1,6 @@
+{
+  "name": "Paspor Petani",
+  "description": "Platform identitas data & ketertelusuran untuk petani skala kecil Indonesia, beroperasi penuh offline.",
+  "requestFramePermissions": ["geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

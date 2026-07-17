@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAppContext, type Role } from '../context/AppContext';
+import { useAppContext } from '../context/AppContext';
+import type { Role } from '../types';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import RoleSelect from '../components/RoleSelect';
@@ -43,7 +44,7 @@ export default function Login() {
 
             <button
               type="submit"
-              className="w-full flex items-center justify-between gap-2 px-5 py-3.5 rounded-lg text-sm font-bold text-white bg-gradient-to-r from-brand-400 to-brand-800 hover:opacity-90 transition-opacity"
+              className="w-full flex items-center justify-between gap-2 px-5 py-3.5 rounded-lg text-sm font-bold text-white bg-gradient-to-r from-brand-400 to-brand-800 hover:opacity-90 transition-opacity cursor-pointer"
             >
               Masuk ke Akun Anda
               <span

@@ -1,6 +1,5 @@
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import Home from './pages/Home';
-import TambahPlot from './pages/TambahPlot';
 import PetaniList from './pages/PetaniList';
 import PlotDetail from './pages/PlotDetail';
 import Login from './pages/Login';
@@ -38,14 +37,6 @@ function AppShell() {
         element={
           <RequireRole role="agen">
             <Home />
-          </RequireRole>
-        }
-      />
-      <Route
-        path="/agen/tambah"
-        element={
-          <RequireRole role="agen">
-            <TambahPlot />
           </RequireRole>
         }
       />
@@ -95,7 +86,7 @@ function AppShell() {
   return (
     <>
       <NotifBanner />
-      {currentRole === 'agen' || currentRole === 'eksportir' ? (
+      {currentRole ? (
         <DashboardShell currentRole={currentRole} onGantiRole={handleGantiRole}>
           {routes}
         </DashboardShell>

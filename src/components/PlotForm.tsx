@@ -19,8 +19,6 @@ interface PlotFormProps {
   onUseGps: () => void;
   onSubmit: (values: PlotFormValues) => void | Promise<void>;
   submitting: boolean;
-  /** Render tanpa Card pembungkus — dipakai saat parent (mis. SectionCard) sudah menyediakan card-nya sendiri. */
-  bare?: boolean;
 }
 
 const LOW_ACCURACY_THRESHOLD_M = 20;
@@ -33,7 +31,6 @@ export default function PlotForm({
   onUseGps,
   onSubmit,
   submitting,
-  bare = false,
 }: PlotFormProps) {
   const [nama, setNama] = useState('');
   const [desa, setDesa] = useState('');
@@ -60,20 +57,20 @@ export default function PlotForm({
     setEmail('');
   };
 
-  const fields = (
-    <>
+  return (
+    <Card as="form" onSubmit={handleSubmit} className="space-y-3">
       <div>
-        <p className="text-sm font-medium text-slate-700">Koordinat plot</p>
+        <p className="text-sm font-semibold text-slate-700">Koordinat plot</p>
         {position ? (
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-slate-600 font-mono mt-0.5">
             {position.lat.toFixed(5)}, {position.lng.toFixed(5)}
             {accuracyM !== null && ` · akurasi ${Math.round(accuracyM)}m`}
           </p>
         ) : (
-          <p className="text-sm text-slate-400">Belum ada koordinat — tap peta atau pakai GPS.</p>
+          <p className="text-sm text-slate-400 mt-0.5">Belum ada koordinat — tap peta atau pakai GPS.</p>
         )}
         {accuracyM !== null && accuracyM > LOW_ACCURACY_THRESHOLD_M && (
-          <p className="text-xs text-amber-700 mt-1">
+          <p className="text-xs text-amber-700 mt-1 leading-normal">
             Akurasi rendah di bawah kanopi — penandaan bersifat point-primary, GPS bisa meleset
             3–11m.
           </p>
@@ -87,79 +84,65 @@ export default function PlotForm({
         >
           {gpsLoading ? 'Mengambil lokasi…' : 'Pakai GPS'}
         </Button>
-        {gpsError && <p className="text-xs text-red-600 mt-1">{gpsError}</p>}
+        {gpsError && <p className="text-xs text-red-600 mt-1 leading-normal">{gpsError}</p>}
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-slate-700">Nama petani *</label>
+        <label className="block text-xs font-semibold text-slate-500 mb-1">Nama petani *</label>
         <Input
           value={nama}
           onChange={(e) => setNama(e.target.value)}
           required
-          className="mt-1 w-full text-base"
+          className="w-full text-base"
           placeholder="Nama lengkap"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-slate-700">Desa</label>
+        <label className="block text-xs font-semibold text-slate-500 mb-1">Desa</label>
         <Input
           value={desa}
           onChange={(e) => setDesa(e.target.value)}
-          className="mt-1 w-full text-base"
+          className="w-full text-base"
           placeholder="Opsional"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-slate-700">Komoditas</label>
+        <label className="block text-xs font-semibold text-slate-500 mb-1">Komoditas</label>
         <Input
           value={komoditas}
           onChange={(e) => setKomoditas(e.target.value)}
-          className="mt-1 w-full text-base"
+          className="w-full text-base"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-slate-700">Telepon</label>
+        <label className="block text-xs font-semibold text-slate-500 mb-1">Telepon</label>
         <Input
           value={telepon}
           onChange={(e) => setTelepon(e.target.value)}
-          className="mt-1 w-full text-base"
+          className="w-full text-base"
           placeholder="Opsional"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-slate-700">
+        <label className="block text-xs font-semibold text-slate-500 mb-1">
           Email petani (opsional, untuk akses portal)
         </label>
         <Input
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="mt-1 w-full text-base"
+          className="w-full text-base"
           placeholder="Opsional — dipakai petani untuk lihat data sendiri di Portal Petani"
         />
       </div>
 
-      <Button type="submit" disabled={!canSubmit} fullWidth size="md" className="py-3 text-base font-semibold">
+      <Button type="submit" disabled={!canSubmit} fullWidth size="md" className="py-3 text-base font-bold mt-2">
         {submitting ? 'Menyimpan…' : 'Simpan Plot'}
       </Button>
-    </>
-  );
-
-  if (bare) {
-    return (
-      <form onSubmit={handleSubmit} className="space-y-3">
-        {fields}
-      </form>
-    );
-  }
-
-  return (
-    <Card as="form" onSubmit={handleSubmit} className="space-y-3">
-      {fields}
     </Card>
   );
 }

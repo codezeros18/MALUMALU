@@ -7,13 +7,13 @@ import {
   ChevronRight,
   Home,
   IdCard,
-  LayoutDashboard,
   LogOut,
+  MapPin,
   Navigation,
   Search,
   Users,
 } from 'lucide-react';
-import type { Role } from '../context/AppContext';
+import type { Role } from '../types';
 import OfflineIndicator from './OfflineIndicator';
 
 interface NavItem {
@@ -33,20 +33,12 @@ const ROLE_LABEL: Record<Role, string> = {
   eksportir: 'Eksportir',
 };
 
-// Rute anak yang belum tentu punya item sidebar sendiri (mis. halaman "create"/"detail"
-// yang diakses lewat tombol, bukan link sidebar) — breadcrumb tetap perlu label yang
-// tepat, bukan cuma nama grup sidebar terdekat.
-const EXTRA_CRUMBS: { test: RegExp; label: string }[] = [
-  { test: /^\/agen\/tambah$/, label: 'Tambah Plot' },
-  { test: /^\/agen\/plot\//, label: 'Detail Plot' },
-];
-
 const NAV_BY_ROLE: Record<Role, NavGroup[]> = {
   agen: [
     {
       heading: 'Lapangan',
       items: [
-        { label: 'Ringkasan', to: '/agen', icon: LayoutDashboard },
+        { label: 'Peta & Plot', to: '/agen', icon: MapPin },
         { label: 'Data Petani', to: '/agen/petani', icon: Users },
       ],
     },
@@ -91,7 +83,7 @@ function ProfileMenu({ role, onLogout }: { role: Role; onLogout: () => void }) {
         onClick={() => setOpen((v) => !v)}
         aria-haspopup="menu"
         aria-expanded={open}
-        className="w-8 h-8 rounded-full bg-brand-800 text-white grid place-items-center text-xs font-semibold hover:opacity-90 transition-opacity"
+        className="w-8 h-8 rounded-full bg-brand-800 text-white grid place-items-center text-xs font-semibold hover:opacity-90 transition-opacity cursor-pointer"
       >
         {ROLE_LABEL[role].slice(0, 1)}
       </button>
@@ -112,7 +104,7 @@ function ProfileMenu({ role, onLogout }: { role: Role; onLogout: () => void }) {
               setOpen(false);
               onLogout();
             }}
-            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors cursor-pointer text-left"
           >
             <LogOut size={15} />
             Keluar
@@ -146,18 +138,15 @@ export default function DashboardShell({ currentRole, onGantiRole, children }: D
     return () => document.removeEventListener('keydown', handler);
   }, []);
 
-  const allItems = groups.flatMap((g) => g.items);
-  const matchedItem = allItems
-    .filter((item) => location.pathname === item.to || location.pathname.startsWith(`${item.to}/`))
-    .sort((a, b) => b.to.length - a.to.length)[0];
-  const extraCrumb = EXTRA_CRUMBS.find((c) => c.test.test(location.pathname));
-  const activeLabel = extraCrumb?.label ?? matchedItem?.label ?? ROLE_LABEL[currentRole];
+  const activeLabel =
+    groups.flatMap((g) => g.items).find((item) => item.to === location.pathname)?.label ??
+    ROLE_LABEL[currentRole];
 
   const toggleGroup = (heading: string) =>
     setCollapsedGroups((prev) => ({ ...prev, [heading]: !prev[heading] }));
 
   return (
-    <div className="font-dashboard min-h-screen flex flex-col bg-white text-slate-900">
+    <div className="font-sans min-h-screen flex flex-col bg-white text-slate-900">
       <div className="h-14 flex border-b border-slate-200 shrink-0">
         <div className="w-60 shrink-0 flex items-center gap-2 px-5 border-r border-slate-200">
           <Link to="/" className="flex items-center gap-2 min-w-0">
@@ -222,7 +211,7 @@ export default function DashboardShell({ currentRole, onGantiRole, children }: D
                   <button
                     type="button"
                     onClick={() => toggleGroup(group.heading)}
-                    className="w-full flex items-center justify-between px-2 mb-1 text-[11px] font-semibold text-slate-400 uppercase tracking-wide"
+                    className="w-full flex items-center justify-between px-2 mb-1 text-[11px] font-semibold text-slate-400 uppercase tracking-wide cursor-pointer"
                   >
                     {group.heading}
                     {collapsed ? <ChevronRight size={12} /> : <ChevronDown size={12} />}
@@ -230,7 +219,7 @@ export default function DashboardShell({ currentRole, onGantiRole, children }: D
                   {!collapsed && (
                     <div className="space-y-0.5">
                       {group.items.map((item) => {
-                        const active = item.to === matchedItem?.to;
+                        const active = location.pathname === item.to;
                         const Icon = item.icon;
                         return (
                           <Link
