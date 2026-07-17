@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
-import { colors, fonts } from '../theme/tokens';
+import { colors, fonts, radius } from '../theme/tokens';
 import type { Plot } from '../types';
 
 export interface PickerProps {
@@ -44,14 +44,14 @@ export function MapPicker({ plots, selected, onPick }: PickerProps) {
 }
 
 const styles = StyleSheet.create({
-  wrap: { borderRadius: 12, overflow: 'hidden', borderWidth: 1, borderColor: colors.line },
+  wrap: { borderRadius: radius.card, overflow: 'hidden', borderWidth: 1, borderColor: colors.line },
   map: { height: 300, width: '100%' },
   hint: {
     position: 'absolute',
     top: 8,
     alignSelf: 'center',
-    backgroundColor: 'rgba(31,92,58,0.85)',
-    borderRadius: 999,
+    backgroundColor: colors.cover,
+    borderRadius: radius.pill,
     paddingHorizontal: 12,
     paddingVertical: 4,
   },

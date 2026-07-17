@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getNotifs, markNotifRead } from '../lib/db';
-import { colors, fonts, spacing } from '../theme/tokens';
+import { colors, fonts, radius, spacing } from '../theme/tokens';
 import type { NotifItem } from '../types';
 
 const POLL_MS = 3000;
@@ -36,8 +36,9 @@ export function NotifBanner() {
 
   return (
     <View style={[styles.banner, { paddingTop: insets.top + spacing.sm }]}>
-      <Text style={styles.pesan}>🚨 {notif.pesan}</Text>
-      <Pressable onPress={onRead} style={({ pressed }) => [styles.readBtn, pressed && { opacity: 0.7 }]}>
+      <View style={styles.rule} />
+      <Text style={styles.pesan}>{notif.pesan}</Text>
+      <Pressable onPress={onRead} style={({ pressed }) => [styles.readBtn, pressed && styles.pressed]}>
         <Text style={styles.readBtnText}>Tandai dibaca</Text>
       </Pressable>
     </View>
@@ -46,22 +47,27 @@ export function NotifBanner() {
 
 const styles = StyleSheet.create({
   banner: {
-    backgroundColor: colors.alert,
+    backgroundColor: colors.alertBg,
     paddingHorizontal: spacing.md,
     paddingBottom: spacing.sm,
+    paddingVertical: spacing.sm,
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.alert,
   },
-  pesan: { flex: 1, fontFamily: fonts.uiBold, fontSize: 13, color: colors.onCover, lineHeight: 18 },
+  rule: { width: 4, alignSelf: 'stretch', backgroundColor: colors.alert, borderRadius: 2 },
+  pesan: { flex: 1, fontFamily: fonts.uiBold, fontSize: 13, color: colors.alert, lineHeight: 18 },
   readBtn: {
     borderWidth: 1,
-    borderColor: colors.onCover,
-    borderRadius: 999,
+    borderColor: colors.alert,
+    borderRadius: radius.pill,
     paddingHorizontal: 12,
     paddingVertical: 6,
-    minHeight: 32,
+    minHeight: 36,
     justifyContent: 'center',
   },
-  readBtnText: { fontFamily: fonts.uiBold, fontSize: 12, color: colors.onCover },
+  readBtnText: { fontFamily: fonts.uiBold, fontSize: 12, color: colors.alert },
+  pressed: { opacity: 0.6 },
 });

@@ -1,13 +1,13 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
-import { colors, fonts, spacing } from '../theme/tokens';
+import { colors, fonts, radius, spacing } from '../theme/tokens';
 
 export function OfflineIndicator() {
   const online = useOnlineStatus();
   return (
     <View style={[styles.chip, online ? styles.online : styles.offline]}>
       <Text style={[styles.text, online ? styles.textOnline : styles.textOffline]}>
-        {online ? '🟢 Online' : '🔴 Offline (mode lapangan)'}
+        {online ? 'Online' : 'Offline · mode lapangan'}
       </Text>
     </View>
   );
@@ -15,14 +15,16 @@ export function OfflineIndicator() {
 
 const styles = StyleSheet.create({
   chip: {
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    borderRadius: radius.pill,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
     marginRight: spacing.md,
+    minHeight: 28,
+    justifyContent: 'center',
   },
-  online: { backgroundColor: 'rgba(247, 243, 232, 0.15)' },
+  online: { backgroundColor: colors.okBg },
   offline: { backgroundColor: colors.alertBg },
-  text: { fontFamily: fonts.uiBold, fontSize: 11 },
-  textOnline: { color: colors.onCover },
+  text: { fontFamily: fonts.uiBold, fontSize: 11, letterSpacing: 0.3 },
+  textOnline: { color: colors.ok },
   textOffline: { color: colors.alert },
 });

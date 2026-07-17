@@ -3,7 +3,7 @@ import { useCallback, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { setConsent, simulateAccess } from '../../lib/consent';
 import { getAccessLogs, getConsents, getKartus, getPetani } from '../../lib/db';
-import { colors, fonts, spacing } from '../../theme/tokens';
+import { colors, fonts, radius, spacing } from '../../theme/tokens';
 import type { AccessLog, ConsentRecord, Kartu, Petani } from '../../types';
 
 const PIHAK_LIST = ['Koperasi', 'Dinas Pertanian', 'Eksportir X'];
@@ -88,7 +88,7 @@ export default function IzinScreen() {
             <Pressable
               key={k.id}
               onPress={() => setSelectedId(k.id)}
-              style={({ pressed }) => [styles.chip, active && styles.chipActive, pressed && { opacity: 0.7 }]}
+              style={({ pressed }) => [styles.chip, active && styles.chipActive, pressed && styles.pressed]}
             >
               <Text style={[styles.chipText, active && styles.chipTextActive]}>{namaOf(k)}</Text>
             </Pressable>
@@ -113,10 +113,10 @@ export default function IzinScreen() {
       </View>
 
       <View style={styles.btnRow}>
-        <Pressable style={({ pressed }) => [styles.okBtn, pressed && { opacity: 0.7 }]} onPress={onAksesBerizin}>
+        <Pressable style={({ pressed }) => [styles.okBtn, pressed && styles.pressed]} onPress={onAksesBerizin}>
           <Text style={styles.okBtnText}>Simulasi Akses Berizin</Text>
         </Pressable>
-        <Pressable style={({ pressed }) => [styles.alertBtn, pressed && { opacity: 0.7 }]} onPress={onAksesTakBerizin}>
+        <Pressable style={({ pressed }) => [styles.alertBtn, pressed && styles.pressed]} onPress={onAksesTakBerizin}>
           <Text style={styles.alertBtnText}>🚨 Simulasi Akses Tak-Berizin</Text>
         </Pressable>
       </View>
@@ -151,20 +151,22 @@ const styles = StyleSheet.create({
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   chip: {
     borderWidth: 1,
-    borderColor: colors.line,
-    borderRadius: 999,
+    borderColor: colors.lineStrong,
+    borderRadius: radius.pill,
     paddingHorizontal: 14,
-    paddingVertical: 8,
+    paddingVertical: 9,
     backgroundColor: colors.card,
+    minHeight: 40,
+    justifyContent: 'center',
   },
   chipActive: { backgroundColor: colors.cover, borderColor: colors.cover },
   chipText: { fontFamily: fonts.uiBold, fontSize: 13, color: colors.ink },
   chipTextActive: { color: colors.onCover },
   panel: {
     backgroundColor: colors.card,
-    borderRadius: 12,
+    borderRadius: radius.card,
     borderWidth: 1,
-    borderColor: colors.line,
+    borderColor: colors.lineStrong,
     padding: spacing.md,
   },
   panelTitle: { fontFamily: fonts.uiBold, fontSize: 14, color: colors.ink },
@@ -183,7 +185,7 @@ const styles = StyleSheet.create({
   btnRow: { gap: spacing.sm },
   okBtn: {
     backgroundColor: colors.action,
-    borderRadius: 10,
+    borderRadius: radius.input,
     minHeight: 48,
     alignItems: 'center',
     justifyContent: 'center',
@@ -192,7 +194,7 @@ const styles = StyleSheet.create({
   alertBtn: {
     borderWidth: 1,
     borderColor: colors.alert,
-    borderRadius: 10,
+    borderRadius: radius.input,
     minHeight: 48,
     alignItems: 'center',
     justifyContent: 'center',
@@ -210,4 +212,5 @@ const styles = StyleSheet.create({
   logTime: { fontFamily: fonts.mono, fontSize: 11, color: colors.inkMuted },
   logPihak: { fontFamily: fonts.uiMedium, fontSize: 13, color: colors.ink, flex: 1 },
   logStatus: { fontFamily: fonts.uiBold, fontSize: 12 },
+  pressed: { opacity: 0.6, transform: [{ translateY: 1 }] },
 });
