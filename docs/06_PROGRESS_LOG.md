@@ -308,7 +308,7 @@ PDF via `@media print`). Sprint 15 polish + hardening + full regression rehearsa
   manual "Coba lagi" via `requeueForSync()`.
 - **Routing UX** (koreksi user pasca-Sprint-15): `/` awalnya langsung ke Login — user
   minta Beranda tampil sebagai landing page (`TentangKami.tsx`, company profile
-  bergaya Tera/`brako-web.vercel.app`), Login dipindah ke `/masuk`, tombol "Mulai"
+  bergaya landing page SaaS modern), Login dipindah ke `/masuk`, tombol "Mulai"
   dihapus (hanya "Masuk").
 
 **Verifikasi nyata**: setiap sprint diverifikasi Playwright + Chrome headless (bukan

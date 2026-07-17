@@ -52,7 +52,7 @@ Leaflet map center Pangalengan, tap → tangkap koordinat (atau pakai GPS tombol
 `consent.ts`: grant/revoke izin akses per kartu, catat AccessLog. Akses tak-terotorisasi → buat NotifItem (severity alert). `ConsentPanel.tsx` (kelola izin), `NotifBanner.tsx` (tampil notif), tombol override manual pada kartu.
 
 ### F8 — Offline, Polish, Deploy
-`vite-plugin-pwa` (Workbox) service worker → app + raster ter-cache, jalan offline. `OfflineIndicator.tsx`. Isi `dummyData.ts` (profil Pangalengan/brako, berlabel dummy). Polish Tailwind. Deploy Vercel. Rehearsal demo (uji matikan wifi).
+`vite-plugin-pwa` (Workbox) service worker → app + raster ter-cache, jalan offline. `OfflineIndicator.tsx`. Isi `dummyData.ts` (profil Pangalengan, berlabel dummy — fitur ini kemudian dihapus, lihat progress log). Polish Tailwind. Deploy Vercel. Rehearsal demo (uji matikan wifi).
 
 ---
 

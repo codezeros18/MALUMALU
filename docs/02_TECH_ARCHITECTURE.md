@@ -79,9 +79,6 @@ jejakhijau/
 │   │   ├── Home.tsx
 │   │   ├── PetaniList.tsx
 │   │   └── PlotDetail.tsx
-│   │
-│   └── data/
-│       └── dummyData.ts             # data demo (profil brako/Pangalengan, berlabel dummy)
 ├── scripts/
 │   └── preprocess-raster.md         # 🟩 AI — cara crop & konversi JRC (dijelaskan di Sprint 3)
 ├── index.html

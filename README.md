@@ -31,8 +31,8 @@ The whole flow is six steps. An extension officer runs it on a phone in a field 
 
 ```mermaid
 flowchart TD
-    A["<b>1 · Tag the garden</b><br/>Officer taps the spot on a map, or presses GPS.<br/>One coordinate. A few seconds."]
-    B["<b>2 · Check it, offline</b><br/>The phone compares that point against a forest map<br/>already stored on the device. No internet needed."]
+    A["<b>1 · Tag the garden</b><br/>Officer walks the corners, taps the map, or types coordinates.<br/>A polygon boundary (3+ points) — minutes, not one guess."]
+    B["<b>2 · Check it, offline</b><br/>The phone samples that boundary against a forest map<br/>already stored on the device. No internet needed."]
     C["<b>3 · Issue the passport card</b><br/>A rule engine decides the tier and writes down<br/>every reason for its decision."]
     D["<b>4 · Seal it</b><br/>The card is sealed into a chain of cryptographic codes.<br/>Change one character later and the chain visibly breaks."]
     E["<b>5 · The farmer holds the keys</b><br/>A bank or exporter sees the data only with permission.<br/>Anyone who tries without it triggers an alert."]
@@ -52,7 +52,7 @@ flowchart TD
 
 | Tier | Needs | Unlocks |
 |---|---|---|
-| **Lokal** (the majority) | Identity + GPS point + ownership claim | KUR credit, subsidised fertiliser, government programmes, and identity protection |
+| **Lokal** (the majority) | Identity + garden boundary + ownership claim | KUR credit, subsidised fertiliser, government programmes, and identity protection |
 | **Export-Ready** (premium) | + STDB permit + deforestation check + verification chain | Export traceability readiness, access to price premiums |
 
 ---
@@ -92,7 +92,7 @@ npm run dev          # → http://localhost:5173
 
 1. Open `/` — the landing page. Click **Masuk** ("enter"), pick the **Agen** (field officer) role.
 2. **Turn your network off.** Everything below still works — this is the point.
-3. **Tambah Plot** → tap a point on the Pangalengan map → save.
+3. **Tambah Plot** → tap/GPS/type at least 3 corners of the garden on the Pangalengan map → "Selesai Poligon" → save.
 4. Upload the three required documents (KTP, land ownership proof, STDB) → the badge flips to *Berkas Lengkap*.
 5. Create the card → read the tier and the reasons behind it.
 6. Open the **hash chain** → *Verifikasi Rantai* → intact. Hit **Simulasi Ubah Data** → the chain breaks at the exact tampered entry. Restore → intact again.
@@ -122,15 +122,16 @@ We would rather you learn our limits from us than find them yourself.
 | Supabase sync (outbox pattern, retry cutoff, conflict flagging) | ✅ **Real** — Playwright-verified against the live REST API |
 | Nearest-verified-farmer search | ✅ **Real** — Turf.js distance, consent-gated |
 | Deforestation map accuracy | ⚠️ **~91%, 18% commission error** — disclosed in-product, drives the audit-not-block rule |
-| Plot geometry | ⚠️ **Point-based, not polygon** — GPS drifts 3–11 m under canopy; precise polygons would be false precision |
+| Plot geometry | ✅ **Real — polygon-primary** — single-point mode was removed; every new plot is a walked/tapped/typed boundary (3+ points, GPS/map-tap/manual coordinate entry), area and per-polygon deforestation risk (`getPolygonRisk`) computed from it. GPS still drifts 3–11 m per vertex under canopy — boundaries are a field estimate, not survey-grade |
+| Risk mitigation guidance | ✅ **Real** — when a plot's risk is "sedang"/"tinggi", concrete mitigation actions (ground-truthing, buffer restoration, reforestation) surface automatically, with an officer-editable audit note |
+| EUDR evidence packet | ✅ **Real** — exporters can generate a consent-gated "Paket Bukti Uji Tuntas" (geolocation + production period + document completeness + hash-chain integrity), explicitly labelled as supporting evidence, not an official DDS submission |
 | Document files | ⚠️ **Hash + metadata only** — no Supabase Storage upload yet |
 | Document verification | ⚠️ **Manual** — no OCR; `verified` is set by a human |
 | Authentication | ⚠️ **Demo role-selector** — not real Supabase Auth |
-| Row-level security | 🔴 **`demo_allow_all`** — permissive for the demo. Must be tightened before production |
-| Cross-device consent checks | ⚠️ **Reads local IndexedDB** — correct in the single-browser demo; needs to move to Supabase for real multi-device use |
+| Row-level security | 🔴 **Mixed** — `hashchain`/`access_log`/`petani_document` are append-only (UPDATE/DELETE blocked at the database level); `petani`/`plot`/`kartu`/`transaksi`/`consent` remain `demo_allow_all` — real per-role RLS needs actual Supabase Auth first (`auth.uid()` is always null today) |
+| Cross-device consent checks | ✅ **Real** — `isAuthorized()` checks Supabase first and falls back to local IndexedDB only when offline |
 | WhatsApp alerts (WAHA) | ⚠️ **WhatsApp Web protocol** — ban risk at scale. Production needs the official Business API |
 | e-STDB government integration | ⚠️ **Mocked and labelled** as such |
-| brako.id / Pangalengan suppliers | ⚠️ **Access and trial interest — not a signed contract** |
 | Rupiah impact figures | ⚠️ **Labelled scenarios, not promises** |
 
 **Technology is roughly 40% of this problem.** The other 60% is incentives, regulation, and payment rails — outside what any hackathon build can claim.
@@ -285,8 +286,9 @@ Written in Indonesian, kept as a genuine engineering record rather than a tidied
 | `docs/02_TECH_ARCHITECTURE.md` | Architecture, data model, conventions |
 | `docs/03_MVP_SCOPE.md` | What we built and what we deliberately cut |
 | `docs/04_FULL_PRODUCTION_BLUEPRINT.md` | Post-MVP production design |
-| `docs/06_PROGRESS_LOG.md` | **17 sprints, including every bug and wrong turn** |
+| `docs/06_PROGRESS_LOG.md` | **22+ sprints and post-sprint fixes, including every bug and wrong turn** |
 | `docs/07_DOKUMEN_VERIFIKASI_BLUEPRINT.md` | Document verification design |
+| `docs/09_UPGRADE_BLUEPRINT.md` | Post-MVP upgrade sprints: polygon risk score, real reference pricing, RLS hardening, WA bot hardening |
 
 If you only read one, read the progress log. It records the mistakes too.
 

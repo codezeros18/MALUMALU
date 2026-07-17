@@ -9,7 +9,7 @@
 ---
 
 ## 🎯 Tujuan
-Membuat app benar-benar **offline-first** (service worker), memoles UI + men-disclose keterbatasan, mengisi data demo (profil Pangalengan/brako berlabel dummy), deploy ke Vercel, dan rehearsal demo 6-langkah. Ini sprint penutup MVP.
+Membuat app benar-benar **offline-first** (service worker), memoles UI + men-disclose keterbatasan, mengisi data demo (profil Pangalengan berlabel dummy), deploy ke Vercel, dan rehearsal demo 6-langkah. Ini sprint penutup MVP.
 
 ## ✅ Task
 - [ ] 8.1 `vite-plugin-pwa` (Workbox) cache app + raster

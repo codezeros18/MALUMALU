@@ -45,7 +45,7 @@ Dari 5 challenge question Agriculture, JejakHijau fokus KUAT ke **2**:
 
 ## 5. Siapa yang Membayar (Payer)
 
-**Pengekspor/agen**, BUKAN petani miskin. Pengekspor menghadapi tekanan pembeli + kewajiban ketertelusuran → butuh pemasoknya tercatat & tertelusur → hemat biaya verifikasi manual. Bukti nyata: relasi tim ke usaha ekspor kopi (brako.id) + pemasok petani di Pangalengan (status: akses + minat uji coba, **bukan kontrak**).
+**Pengekspor/agen**, BUKAN petani miskin. Pengekspor menghadapi tekanan pembeli + kewajiban ketertelusuran → butuh pemasoknya tercatat & tertelusur → hemat biaya verifikasi manual.
 
 ---
 
