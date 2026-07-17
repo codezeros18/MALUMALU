@@ -10,6 +10,7 @@ import {
   LogOut,
   Navigation,
   Search,
+  TrendingUp,
   Users,
 } from 'lucide-react';
 import type { Role } from '../context/AppContext';
@@ -47,6 +48,7 @@ const NAV_BY_ROLE: Record<Role, NavGroup[]> = {
       items: [
         { label: 'Ringkasan', to: '/agen', icon: LayoutDashboard },
         { label: 'Data Petani', to: '/agen/petani', icon: Users },
+        { label: 'Harga Referensi', to: '/agen/harga', icon: TrendingUp },
       ],
     },
   ],
@@ -62,6 +64,7 @@ const NAV_BY_ROLE: Record<Role, NavGroup[]> = {
       items: [
         { label: 'Dashboard', to: '/eksportir', icon: BarChart3 },
         { label: 'Petani Terdekat', to: '/eksportir/terdekat', icon: Navigation },
+        { label: 'Harga Referensi', to: '/eksportir/harga', icon: TrendingUp },
       ],
     },
   ],

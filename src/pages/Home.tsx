@@ -11,13 +11,38 @@ import {
 import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
 import EmptyState from '../components/ui/EmptyState';
-import { listAllPlot, listSyncQueue } from '../lib/db';
+import { listAllPlot, listSyncQueue, requeueForSync } from '../lib/db';
 import { seedDummyData, isDemoPlot } from '../data/dummyData';
 import { useAppContext } from '../context/AppContext';
 import type { Plot } from '../types';
 
-function SyncBadge({ status, attempts }: { status?: Plot['syncStatus']; attempts: number }) {
-  if (attempts > 0 || status === 'conflict') return <Badge tone="alert">Gagal sinkron</Badge>;
+function SyncBadge({
+  status,
+  attempts,
+  onRetry,
+}: {
+  status?: Plot['syncStatus'];
+  attempts: number;
+  onRetry: () => void;
+}) {
+  if (attempts > 0 || status === 'conflict') {
+    return (
+      <span className="inline-flex items-center gap-1">
+        <Badge tone="alert">Gagal sinkron</Badge>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onRetry();
+          }}
+          className="text-[10px] text-brand-800 font-medium hover:underline"
+        >
+          Coba lagi
+        </button>
+      </span>
+    );
+  }
   if (status === 'synced') return <Badge tone="synced">Tersinkron</Badge>;
   return <Badge tone="pending">Tersimpan lokal</Badge>;
 }
@@ -84,6 +109,11 @@ export default function Home() {
     } finally {
       setSyncing(false);
     }
+  };
+
+  const handleRetryPlot = async (plotId: string) => {
+    await requeueForSync('plot', plotId);
+    await triggerSync();
   };
 
   const handleSeedDemo = async () => {
@@ -207,7 +237,11 @@ export default function Home() {
                   </span>
                   <span className="flex items-center gap-1 shrink-0">
                     {isDemoPlot(plot.id) && <Badge tone="demo">DATA DEMO</Badge>}
-                    <SyncBadge status={plot.syncStatus} attempts={queueAttempts.get(plot.id) ?? 0} />
+                    <SyncBadge
+                      status={plot.syncStatus}
+                      attempts={queueAttempts.get(plot.id) ?? 0}
+                      onRetry={() => handleRetryPlot(plot.id)}
+                    />
                   </span>
                 </Link>
               </li>

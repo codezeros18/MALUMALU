@@ -3,6 +3,7 @@ import Card from './ui/Card';
 import Button from './ui/Button';
 import Input from './ui/Input';
 import Select from './ui/Select';
+import { KOMODITAS_OPTIONS, KOMODITAS_LAINNYA } from '../lib/komoditas';
 
 export interface PlotFormValues {
   nama: string;
@@ -22,51 +23,12 @@ interface PlotFormProps {
   submitting: boolean;
   /** Render tanpa Card pembungkus — dipakai saat parent (mis. SectionCard) sudah menyediakan card-nya sendiri. */
   bare?: boolean;
+  /** Sembunyikan tombol "Pakai GPS" titik-tunggal — dipakai mode Poligon, yang punya
+   * alur GPS per-sudutnya sendiri lewat PolygonDrawer, bukan satu titik lewat sini. */
+  hideGpsButton?: boolean;
 }
 
 const LOW_ACCURACY_THRESHOLD_M = 20;
-
-// Daftar komoditas pertanian/perkebunan Indonesia yang umum — supaya Agen tinggal
-// pilih, bukan ketik manual tiap kali. "kopi" jadi default & urutan pertama karena
-// fokus utama produk (integrasi notifikasi WhatsApp tim lain juga berpusat ke kopi).
-// "Lainnya" tetap disediakan sebagai jalan keluar kalau komoditasnya di luar daftar.
-const KOMODITAS_OPTIONS = [
-  'kopi',
-  'kakao',
-  'kelapa sawit',
-  'kelapa',
-  'karet',
-  'teh',
-  'tebu',
-  'cengkeh',
-  'lada',
-  'pala',
-  'vanili',
-  'kayu manis',
-  'padi',
-  'jagung',
-  'kedelai',
-  'singkong',
-  'ubi jalar',
-  'kentang',
-  'cabai',
-  'bawang merah',
-  'bawang putih',
-  'tomat',
-  'kacang tanah',
-  'pisang',
-  'mangga',
-  'durian',
-  'alpukat',
-  'manggis',
-  'rambutan',
-  'nanas',
-  'jeruk',
-  'tembakau',
-  'kapas',
-  'sagu',
-];
-const KOMODITAS_LAINNYA = '__lainnya__';
 
 export default function PlotForm({
   position,
@@ -77,6 +39,7 @@ export default function PlotForm({
   onSubmit,
   submitting,
   bare = false,
+  hideGpsButton = false,
 }: PlotFormProps) {
   const [nama, setNama] = useState('');
   const [desa, setDesa] = useState('');
@@ -126,16 +89,20 @@ export default function PlotForm({
             3–11m.
           </p>
         )}
-        <Button
-          type="button"
-          onClick={onUseGps}
-          disabled={gpsLoading}
-          fullWidth
-          className="mt-2"
-        >
-          {gpsLoading ? 'Mengambil lokasi…' : 'Pakai GPS'}
-        </Button>
-        {gpsError && <p className="text-xs text-red-600 mt-1">{gpsError}</p>}
+        {!hideGpsButton && (
+          <>
+            <Button
+              type="button"
+              onClick={onUseGps}
+              disabled={gpsLoading}
+              fullWidth
+              className="mt-2"
+            >
+              {gpsLoading ? 'Mengambil lokasi…' : 'Pakai GPS'}
+            </Button>
+            {gpsError && <p className="text-xs text-red-600 mt-1">{gpsError}</p>}
+          </>
+        )}
       </div>
 
       <div>

@@ -5,6 +5,7 @@ import KartuCard from '../components/KartuCard';
 import HashChainViewer from '../components/HashChainViewer';
 import ConsentPanel from '../components/ConsentPanel';
 import DocumentUpload from '../components/DocumentUpload';
+import MapView from '../components/MapView';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Checkbox from '../components/ui/Checkbox';
@@ -115,6 +116,21 @@ export default function PlotDetail() {
             {plot.gpsAccuracyM ? ` · akurasi ${Math.round(plot.gpsAccuracyM)}m` : ''}
           </p>
           <p className="text-sm text-slate-600 mt-1">Komoditas: {plot.komoditas}</p>
+          {plot.boundary && plot.boundary.length >= 3 && (
+            <>
+              <p className="text-sm text-slate-600 mt-1">
+                Luas kebun (dari poligon):{' '}
+                {plot.luasEstimasiHa !== undefined
+                  ? plot.luasEstimasiHa < 1
+                    ? `${Math.round(plot.luasEstimasiHa * 10000)} m²`
+                    : `${plot.luasEstimasiHa.toFixed(2)} ha`
+                  : '—'}
+              </p>
+              <div className="mt-3">
+                <MapView plots={[plot]} onPickLocation={() => {}} className="h-56" />
+              </div>
+            </>
+          )}
         </SectionCard>
       )}
 

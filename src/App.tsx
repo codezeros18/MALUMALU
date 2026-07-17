@@ -18,6 +18,7 @@ const PlotDetail = lazy(() => import('./pages/PlotDetail'));
 const EksportirDashboard = lazy(() => import('./pages/EksportirDashboard'));
 const PetaniTerdekat = lazy(() => import('./pages/PetaniTerdekat'));
 const PetaniPortal = lazy(() => import('./pages/PetaniPortal'));
+const HargaReferensi = lazy(() => import('./pages/HargaReferensi'));
 
 function AppShell() {
   const { currentRole, setRole } = useAppContext();
@@ -73,6 +74,14 @@ function AppShell() {
           }
         />
         <Route
+          path="/agen/harga"
+          element={
+            <RequireRole role="agen">
+              <HargaReferensi />
+            </RequireRole>
+          }
+        />
+        <Route
           path="/petani"
           element={
             <RequireRole role="petani">
@@ -93,6 +102,14 @@ function AppShell() {
           element={
             <RequireRole role="eksportir">
               <PetaniTerdekat />
+            </RequireRole>
+          }
+        />
+        <Route
+          path="/eksportir/harga"
+          element={
+            <RequireRole role="eksportir">
+              <HargaReferensi />
             </RequireRole>
           }
         />

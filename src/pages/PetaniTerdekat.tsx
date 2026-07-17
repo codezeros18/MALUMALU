@@ -101,7 +101,7 @@ export default function PetaniTerdekat() {
         ...prev,
         [kartu.id]: result.authorized
           ? 'Akses diizinkan — kontak dapat dihubungi.'
-          : 'Akses ditolak — belum ada izin dari petani, notif terkirim.',
+          : 'Akses ditolak — petani belum memberi izin ke "Eksportir". Izin diberikan lewat Agen: buka Detail Plot petani ini → panel Consent & Akses → pilih/isi "Eksportir" → Beri Izin. Notif percobaan akses ini sudah terkirim ke petani.',
       }));
     } catch (err) {
       setContactResult((prev) => ({
@@ -184,7 +184,7 @@ export default function PetaniTerdekat() {
                   {contactingId === n.kartu.id ? 'Menghubungi…' : 'Hubungi'}
                 </Button>
                 {contactResult[n.kartu.id] && (
-                  <p className="text-[11px] text-slate-500 mt-1 max-w-[220px]">
+                  <p className="text-[11px] text-slate-500 mt-1 max-w-[280px] text-left">
                     {contactResult[n.kartu.id]}
                   </p>
                 )}

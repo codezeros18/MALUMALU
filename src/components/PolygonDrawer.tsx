@@ -1,7 +1,10 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useGeolocation } from '../hooks/useGeolocation';
 import { computeAreaHa, MIN_POLYGON_POINTS, type LatLng } from '../lib/polygon';
+import { getPolygonRisk, type PolygonRiskResult } from '../lib/geospatial';
 import Button from './ui/Button';
+import Badge from './ui/Badge';
+import type { BadgeTone } from './ui/Badge';
 
 interface PolygonDrawerProps {
   points: LatLng[];
@@ -26,6 +29,8 @@ export default function PolygonDrawer({
 }: PolygonDrawerProps) {
   const { position: gpsPosition, loading: gpsLoading, error: gpsError, request: requestGps } =
     useGeolocation();
+  const [risk, setRisk] = useState<PolygonRiskResult | null>(null);
+  const [riskLoading, setRiskLoading] = useState(false);
 
   useEffect(() => {
     if (gpsPosition) onAddPoint({ lat: gpsPosition.lat, lng: gpsPosition.lng });
@@ -34,8 +39,44 @@ export default function PolygonDrawer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gpsPosition]);
 
+  // Skor risiko deforestasi (Sprint 19) — sinyal ADITIF di samping luas, dihitung ulang
+  // tiap titik berubah. TIDAK menyentuh cekDeforestasi()/tentukanTier() yang sudah ada;
+  // ini murni tambahan visual untuk poligon yang sedang digambar.
+  useEffect(() => {
+    if (points.length < MIN_POLYGON_POINTS) {
+      setRisk(null);
+      return;
+    }
+    let cancelled = false;
+    setRiskLoading(true);
+    getPolygonRisk(points)
+      .then((result) => {
+        if (!cancelled) setRisk(result);
+      })
+      .catch(() => {
+        if (!cancelled) setRisk(null);
+      })
+      .finally(() => {
+        if (!cancelled) setRiskLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [points]);
+
   const canFinish = points.length >= MIN_POLYGON_POINTS && !disabled;
   const areaHa = points.length >= MIN_POLYGON_POINTS ? computeAreaHa(points) : 0;
+
+  const RISK_TONE: Record<PolygonRiskResult['risk'], BadgeTone> = {
+    rendah: 'aman',
+    sedang: 'perlu-audit',
+    tinggi: 'berisiko',
+  };
+  const RISK_LABEL: Record<PolygonRiskResult['risk'], string> = {
+    rendah: 'Risiko Rendah',
+    sedang: 'Risiko Sedang — Perlu Audit',
+    tinggi: 'Risiko Tinggi — Perlu Audit',
+  };
 
   return (
     <div className="space-y-3">
@@ -62,9 +103,26 @@ export default function PolygonDrawer({
       )}
 
       {points.length >= MIN_POLYGON_POINTS && (
-        <p className="text-xs text-brand-800 font-medium">
-          Estimasi luas: {areaHa < 1 ? `${Math.round(areaHa * 10000)} m²` : `${areaHa.toFixed(2)} ha`}
-        </p>
+        <div className="space-y-1.5">
+          <p className="text-xs text-brand-800 font-medium">
+            Estimasi luas: {areaHa < 1 ? `${Math.round(areaHa * 10000)} m²` : `${areaHa.toFixed(2)} ha`}
+          </p>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-slate-500">Skor risiko deforestasi:</span>
+            {riskLoading && <span className="text-xs text-slate-400">Menghitung…</span>}
+            {!riskLoading && risk && (
+              <Badge tone={RISK_TONE[risk.risk]}>
+                {RISK_LABEL[risk.risk]} ({risk.forestOverlapPct.toFixed(0)}% area hutan)
+              </Badge>
+            )}
+          </div>
+          {!riskLoading && risk && (
+            <p className="text-[11px] text-slate-400 leading-relaxed">
+              Batas kebun digambar via tap peta/GPS (bukan jalur GPS kontinu resmi). {risk.catatanError}{' '}
+              Skor ini indikator awal, bukan vonis — tetap perlu audit manual.
+            </p>
+          )}
+        </div>
       )}
 
       <div className="flex flex-wrap gap-2">

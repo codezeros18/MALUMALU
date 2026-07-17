@@ -50,7 +50,8 @@ describe('aggregateDaily', () => {
     ];
     const ref = aggregateDaily(sources, 'kopi', 'Pangalengan', '', '2026-07-17');
     expect(ref).not.toBeNull();
-    // (58000*4 + 61000*3 + 64000*5) / 12 = 61500
+    // (58000*4 + 61000*3 + 64000*5) / 12 = 61250 (matematis benar — lihat Audit
+    // Sprint 18, docs/06_PROGRESS_LOG.md: rumus ini SUDAH BENAR, bukan bug)
     expect(ref!.avg).toBe(61250);
     expect(ref!.low).toBe(58000);
     expect(ref!.high).toBe(64000);
@@ -65,6 +66,22 @@ describe('aggregateDaily', () => {
   it('returns null when only external sources with zero txn exist', () => {
     const ref = aggregateDaily([src({ kind: 'eksternal', txnCount: 0 })], 'kopi', 'Pangalengan', '', '2026-07-17');
     expect(ref).toBeNull();
+  });
+
+  it('filters by komoditas AND wilayah, not just grade (Sprint 22 fix)', () => {
+    const sources = [
+      src({ komoditas: 'kopi', wilayah: 'Pangalengan', pricePerKg: 60000, txnCount: 2 }),
+      // Wilayah lain — harus DIKELUARKAN meski grade cocok. Sebelum fix, aggregateDaily
+      // sendiri (dipanggil langsung tanpa lewat filterSources()) akan ikut memasukkan
+      // baris ini dan mencemari rata-rata.
+      src({ komoditas: 'kopi', wilayah: 'Bandung', pricePerKg: 40000, txnCount: 10 }),
+      // Komoditas lain — juga harus DIKELUARKAN.
+      src({ komoditas: 'sawit', wilayah: 'Pangalengan', pricePerKg: 2000, txnCount: 10 }),
+    ];
+    const ref = aggregateDaily(sources, 'kopi', 'Pangalengan', '', '2026-07-17');
+    expect(ref).not.toBeNull();
+    expect(ref!.avg).toBe(60000);
+    expect(ref!.txnCount).toBe(2);
   });
 });
 
@@ -151,5 +168,30 @@ describe('handlePriceMessage', () => {
 describe('todayIso', () => {
   it('returns YYYY-MM-DD', () => {
     expect(todayIso(new Date('2026-07-17T09:00:00Z'))).toBe('2026-07-17');
+  });
+});
+
+describe('STATUS_LINK_SCHEME (dari env EXPO_PUBLIC_STATUS_SCHEME, bukan hardcode)', () => {
+  const ORIGINAL = process.env.EXPO_PUBLIC_STATUS_SCHEME;
+
+  afterEach(() => {
+    if (ORIGINAL === undefined) delete process.env.EXPO_PUBLIC_STATUS_SCHEME;
+    else process.env.EXPO_PUBLIC_STATUS_SCHEME = ORIGINAL;
+  });
+
+  it('memakai nilai dari env kalau di-set', () => {
+    jest.resetModules();
+    process.env.EXPO_PUBLIC_STATUS_SCHEME = 'customscheme://cek-status';
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const reloaded = require('../bot');
+    expect(reloaded.STATUS_LINK_SCHEME).toBe('customscheme://cek-status');
+  });
+
+  it('fallback ke default kalau env tidak di-set', () => {
+    jest.resetModules();
+    delete process.env.EXPO_PUBLIC_STATUS_SCHEME;
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const reloaded = require('../bot');
+    expect(reloaded.STATUS_LINK_SCHEME).toBe('pasporpetani://status');
   });
 });

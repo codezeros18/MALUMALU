@@ -5,8 +5,10 @@ import { getReferencePrice, todayIso } from './aggregate';
 import { normalize } from './aggregate';
 import type { Komoditas, PriceSource, PriceReply, Wilayah } from './types';
 
-/** Skema deep-link status Paspor (dibuka di app mobile). */
-export const STATUS_LINK_SCHEME = 'pasporpetani://status';
+/** Skema deep-link status Paspor (dibuka di app mobile) — dari env EXPO_PUBLIC_STATUS_SCHEME
+ * (lihat .env.example), bukan hardcode, supaya build lain (mis. custom scheme/dev client)
+ * bisa override tanpa ubah kode. */
+export const STATUS_LINK_SCHEME = process.env.EXPO_PUBLIC_STATUS_SCHEME || 'pasporpetani://status';
 
 export interface PasporStatus {
   /** Dokumen lengkap = STDB + GPS tersedia. */

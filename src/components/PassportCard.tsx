@@ -111,11 +111,34 @@ export default function PassportCard({ petani, plot, kartu }: PassportCardProps)
 
         {plot && (
           <div>
-            <p className="text-xs text-slate-400 mb-1.5">Lokasi Kebun</p>
+            <p className="text-xs text-slate-400 mb-1.5">
+              Lokasi Kebun
+              {plot.boundary && plot.boundary.length >= 3 && (
+                <>
+                  {' '}
+                  · batas kebun (poligon,{' '}
+                  {plot.luasEstimasiHa
+                    ? plot.luasEstimasiHa < 1
+                      ? `${Math.round(plot.luasEstimasiHa * 10000)} m²`
+                      : `${plot.luasEstimasiHa.toFixed(2)} ha`
+                    : `${plot.boundary.length} titik`}
+                  )
+                </>
+              )}
+            </p>
             <Map3D
               center={{ lat: plot.lat, lng: plot.lng }}
               zoom={14}
-              markers={[{ id: plot.id, lat: plot.lat, lng: plot.lng, color: '#1F5C3A' }]}
+              markers={
+                plot.boundary && plot.boundary.length >= 3
+                  ? []
+                  : [{ id: plot.id, lat: plot.lat, lng: plot.lng, color: '#1F5C3A' }]
+              }
+              polygons={
+                plot.boundary && plot.boundary.length >= 3
+                  ? [{ id: plot.id, points: plot.boundary, color: '#1F5C3A' }]
+                  : []
+              }
               className="h-40"
               offlineHint="Peta tidak tersedia offline — koordinat tetap tercatat."
             />
