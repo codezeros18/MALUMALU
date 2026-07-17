@@ -13,6 +13,10 @@ export interface PlotInput {
   lat: number;
   lng: number;
   gpsAccuracyM?: number;
+  stdbExpired?: boolean;
+  duplicateId?: boolean;
+  luasHa?: number;
+  volumeKg?: number;
 }
 
 export async function prosesPlotBaru(input: PlotInput): Promise<Kartu> {
@@ -22,6 +26,8 @@ export async function prosesPlotBaru(input: PlotInput): Promise<Kartu> {
     nama: input.nama,
     desa: input.desa,
     telepon: input.telepon,
+    stdbExpired: input.stdbExpired,
+    duplicateId: input.duplicateId,
     createdAt: now,
   };
   const plot: Plot = {
@@ -31,6 +37,8 @@ export async function prosesPlotBaru(input: PlotInput): Promise<Kartu> {
     lng: input.lng,
     komoditas: input.komoditas,
     gpsAccuracyM: input.gpsAccuracyM,
+    luasHa: input.luasHa,
+    volumeKg: input.volumeKg,
     capturedAt: now,
   };
   const cek = cekDeforestasi(input.lat, input.lng);

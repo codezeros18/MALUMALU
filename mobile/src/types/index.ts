@@ -7,6 +7,9 @@ export interface Petani {
   nama: string;
   desa?: string;
   telepon?: string;
+  // Field risk (v3): dipakai ML risk scoring supplier.
+  stdbExpired?: boolean;
+  duplicateId?: boolean;
   createdAt: string;
 }
 
@@ -17,6 +20,8 @@ export interface Plot {
   lng: number;
   komoditas: string;
   gpsAccuracyM?: number;
+  luasHa?: number;
+  volumeKg?: number;
   capturedAt: string;
 }
 
@@ -45,6 +50,15 @@ export interface HashChainEntry {
   dataHash: string;
   previousHash: string;
   hash: string;
+}
+
+export type RiskLabel = 'low' | 'medium' | 'high';
+
+export interface RiskScore {
+  skor: number; // 0-100, makin tinggi = makin berisiko
+  label: RiskLabel;
+  faktor: string[]; // faktor penyumbang risiko (transparan)
+  demo: boolean; // true = dilatih data buatan, bukan produksi
 }
 
 export interface ConsentRecord {
