@@ -29,6 +29,18 @@ test('enqueueWa stores a pending message addressed to the officer', async () => 
   });
 });
 
+test('enqueueWa stores a pending message addressed to an explicit chatId, overriding the officer default', async () => {
+  await enqueueWa('Halo petani', '6281111111111@c.us');
+
+  const outbox = await getWaOutbox();
+  expect(outbox).toHaveLength(1);
+  expect(outbox[0]).toMatchObject({
+    chatId: '6281111111111@c.us',
+    text: 'Halo petani',
+    status: 'pending',
+  });
+});
+
 test('enqueueWa does not send immediately — offline stays offline', async () => {
   await enqueueWa('Halo');
   expect(sendTextMock).not.toHaveBeenCalled();

@@ -3,6 +3,8 @@ import { cekDeforestasi } from './geospatial';
 import { evaluateKartu } from './ruleEngine';
 import { commitEntry } from './hashchain';
 import { enqueueWa } from './waOutbox';
+import { toChatId } from './waha';
+import { STATUS_LINK_SCHEME } from './harga/bot';
 import type { Kartu, Petani, Plot } from '../types';
 
 export interface PlotInput {
@@ -62,5 +64,14 @@ export async function prosesPlotBaru(input: PlotInput): Promise<Kartu> {
       `Deforestasi: ${cek.status}\n` +
       `Koordinat: ${plot.lat.toFixed(5)}, ${plot.lng.toFixed(5)}`,
   );
+  if (petani.telepon) {
+    await enqueueWa(
+      `✅ *Paspor Petani Anda Sudah Dibuat*\n\n` +
+        `Halo *${petani.nama}*, data lahan ${plot.komoditas}${petani.desa ? ` di ${petani.desa}` : ''} sudah tercatat.\n` +
+        `Tier: ${kartu.tier === 'export_ready' ? 'EXPORT-READY' : 'LOKAL'}\n\n` +
+        `Cek status dokumen Anda:\n${STATUS_LINK_SCHEME}?telepon=${encodeURIComponent(petani.telepon)}`,
+      toChatId(petani.telepon),
+    );
+  }
   return kartu;
 }

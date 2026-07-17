@@ -53,10 +53,39 @@ test('a new kartu queues a WhatsApp message naming the farmer and tier', async (
     lng: 107.62,
     punyaSTDB: true,
   });
-  expect(enqueueWaMock).toHaveBeenCalledTimes(1);
+  expect(enqueueWaMock).toHaveBeenCalledTimes(2);
   const text = enqueueWaMock.mock.calls[0][0];
   expect(text).toMatch(/Bu Sari/);
   expect(text).toMatch(/EXPORT-READY/i);
+});
+
+test('a new kartu also queues a status-check WhatsApp message to the farmer herself', async () => {
+  await prosesPlotBaru({
+    nama: 'Bu Sari',
+    desa: 'Margamukti',
+    telepon: '0812',
+    komoditas: 'kopi',
+    lat: -7.15,
+    lng: 107.62,
+    punyaSTDB: true,
+  });
+  expect(enqueueWaMock).toHaveBeenCalledTimes(2);
+  const [text, chatId] = enqueueWaMock.mock.calls[1];
+  expect(chatId).toBe('62812@c.us');
+  expect(text).toMatch(/Bu Sari/);
+  expect(text).toMatch(/EXPORT-READY/i);
+  expect(text).toMatch(/telepon=0812/);
+});
+
+test('a new kartu without a phone number on file queues only the officer message', async () => {
+  await prosesPlotBaru({
+    nama: 'Tanpa Telepon',
+    komoditas: 'kopi',
+    lat: -7.15,
+    lng: 107.62,
+    punyaSTDB: true,
+  });
+  expect(enqueueWaMock).toHaveBeenCalledTimes(1);
 });
 
 test('two plots produce a linked 2-entry chain', async () => {
