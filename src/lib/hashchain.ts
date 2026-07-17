@@ -7,7 +7,6 @@ import {
   putKartu,
   enqueueSync,
   getDeviceAgentId,
-  putHashEntryRaw,
 } from './db';
 
 const GENESIS_HASH = 'GENESIS';
@@ -96,25 +95,6 @@ export async function verifyChain(providedEntries?: HashChainEntry[]): Promise<V
   }
 
   return { valid: true, brokenAtIndex: null };
-}
-
-// HANYA UNTUK DEMO: ubah payload entri tertentu tanpa menghitung ulang hash-nya —
-// dipakai tombol "Simulasi ubah data" di HashChainViewer untuk membuktikan
-// verifyChain() mendeteksi tamper (dataHash tersimpan jadi tidak cocok lagi dengan
-// payload yang sudah diubah).
-export async function simulateTamper(index: number, mutatedPayload: unknown): Promise<void> {
-  const entries = await listHashEntries();
-  const target = entries.find((entry) => entry.index === index);
-  if (!target) {
-    throw new Error(`Entri hash-chain index ${index} tidak ditemukan.`);
-  }
-  await putHashEntryRaw({ ...target, payload: mutatedPayload });
-}
-
-// HANYA UNTUK DEMO: kembalikan entri persis seperti sebelum di-tamper (dipakai tombol
-// "Reset demo" di HashChainViewer).
-export async function restoreEntry(entry: HashChainEntry): Promise<void> {
-  await putHashEntryRaw(entry);
 }
 
 // Commit Kartu (hasil generateKartu Sprint 5) ke hash-chain + simpan versi final ke DB.

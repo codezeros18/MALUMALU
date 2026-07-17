@@ -237,7 +237,7 @@ export default function PaketBuktiEudr() {
       </Card>
       <DocumentUpload petaniId={petani.id} readOnly />
 
-      <HashChainViewer entries={agentHashEntries} readOnly />
+      <HashChainViewer entries={agentHashEntries} />
 
       <KartuCard kartu={kartu} readOnly />
     </div>

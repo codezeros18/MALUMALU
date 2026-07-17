@@ -1493,3 +1493,30 @@ manual langsung dari IndexedDB (simulasi plot lama) → reload → tombol "Ambil
 Kebun" muncul → diklik → foto berhasil ditangkap dari peta yang sudah tampil di halaman
 → pesan "Foto batas kebun sudah ada" muncul, tombol hilang. `tsc -b --noEmit` + `npm run
 build` bersih.
+
+### Susulan lagi — Hapus tombol "Simulasi ubah data (demo)" / "Reset demo"
+
+User minta tombol simulasi tamper di `HashChainViewer.tsx` (yang barusan dipulihkan dari
+histori git di sesi ini karena hilang tak sengaja) dihapus lagi — kali ini permanen &
+disengaja, bukan regresi. Dihapus total, bukan disembunyikan:
+- `src/components/HashChainViewer.tsx` — tombol "Simulasi ubah data (demo)"/"Reset demo",
+  `handleTamper`/`handleResetDemo`, state `tamperedBackup`, dan prop `readOnly` (satu-satunya
+  fungsinya sebelumnya adalah menyembunyikan dua tombol ini — begitu tombolnya hilang,
+  propnya jadi tidak berguna, jadi ikut dihapus, bukan dibiarkan jadi dead prop).
+- `src/lib/hashchain.ts` — `simulateTamper()`/`restoreEntry()` dihapus (sudah tidak
+  dipanggil dari mana pun).
+- `src/lib/db.ts` — `putHashEntryRaw()` dihapus (satu-satunya pemanggilnya adalah dua
+  fungsi demo di atas).
+- 3 call site yang sebelumnya pass `readOnly` ke `HashChainViewer` (`EksportirDashboard.tsx`,
+  `PaketBuktiEudr.tsx`, `PetaniPortal.tsx`) — prop itu dibuang dari pemanggilan
+  `<HashChainViewer>` saja; `readOnly` di `<DocumentUpload>`/`<KartuCard>` pada baris yang
+  sama TIDAK disentuh (itu prop terpisah, masih berfungsi penuh untuk komponen lain).
+- `README.md` — klaim "Hit **Simulasi Ubah Data** → the chain breaks..." di bagian tour
+  dihapus; baris tabel "Tamper detection" diubah supaya tidak lagi mengklaim ada tombol
+  demo interaktif, tapi tetap jujur bahwa `verifyChain()` sendiri (deteksi mismatch hash
+  entry-per-entry) tetap sepenuhnya nyata/berfungsi — cuma jalur pemicunya (tombol UI)
+  yang dihapus, bukan mekanisme deteksinya.
+
+**Verifikasi**: `tsc -b --noEmit` + `npm run build` bersih. `Verifikasi Rantai` tetap
+berfungsi normal (dicoba manual di `/agen/plot/:id`) — cuma tombol simulasi & reset yang
+hilang dari UI, sisanya HashChainViewer tidak berubah.

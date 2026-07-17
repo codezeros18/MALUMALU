@@ -150,13 +150,13 @@ export default function TentangKami() {
         {/* ===== HERO ===== */}
         <section className="relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-b from-brand-50/60 via-white to-white pointer-events-none" />
-          <div className="relative max-w-4xl mx-auto px-6 pt-20 pb-24 text-center">
-            <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-slate-200 bg-white text-xs font-medium text-slate-600 shadow-sm">
+          <div className="relative max-w-4xl mx-auto px-5 sm:px-6 pt-14 pb-16 sm:pt-20 sm:pb-24 text-center">
+            <span className="inline-flex items-center gap-2 px-3.5 sm:px-4 py-1.5 rounded-full border border-slate-200 bg-white text-[11px] sm:text-xs font-medium text-slate-600 shadow-sm">
               <span aria-hidden>🌱</span>
               Dipercaya petugas koperasi &amp; penyuluh pertanian Indonesia
             </span>
 
-            <h1 className="mt-8 text-4xl sm:text-6xl font-extrabold tracking-tight text-slate-900 leading-[1.1]">
+            <h1 className="mt-6 sm:mt-8 text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 leading-[1.15] sm:leading-[1.1]">
               Ubah Kebun Jadi{' '}
               <span className="bg-gradient-to-r from-brand-400 to-brand-800 bg-clip-text text-transparent">
                 Identitas Data Milik Petani
@@ -164,23 +164,23 @@ export default function TentangKami() {
               .
             </h1>
 
-            <p className="mt-6 text-lg text-slate-500 max-w-2xl mx-auto">
+            <p className="mt-5 sm:mt-6 text-base sm:text-lg text-slate-500 max-w-2xl mx-auto">
               Alat bagi petugas koperasi dan penyuluh untuk melindungi identitas petani,
               membuka akses program domestik, dan menyiapkan kebun untuk pasar ekspor —
               semua bekerja tanpa internet.
             </p>
 
-            <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
+            <div className="mt-8 sm:mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
               <a
                 href="mailto:lint4ngboy@gmail.com"
-                className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full text-sm font-bold text-white bg-gradient-to-r from-brand-400 to-brand-800 hover:opacity-90 transition-opacity"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full text-sm font-bold text-white bg-gradient-to-r from-brand-400 to-brand-800 hover:opacity-90 transition-opacity"
               >
                 Hubungi Kami untuk Kemitraan
                 <span aria-hidden>↗</span>
               </a>
             </div>
 
-            <p className="mt-6 text-xs text-slate-400">
+            <p className="mt-6 text-xs text-slate-400 leading-relaxed px-2">
               Live dalam hitungan menit · Data selalu milik petani · Bekerja offline
             </p>
           </div>
@@ -188,14 +188,14 @@ export default function TentangKami() {
 
         {/* ===== MASALAH ===== */}
         <section className="border-t border-slate-100">
-          <div className="max-w-5xl mx-auto px-6 py-20">
+          <div className="max-w-5xl mx-auto px-5 sm:px-6 py-14 sm:py-20">
             <p className="text-xs font-semibold text-brand-800 tracking-wide uppercase">
               Latar Belakang
             </p>
-            <h2 className="mt-3 text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight max-w-2xl">
+            <h2 className="mt-3 text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight max-w-2xl leading-snug">
               Petani kecil sering tidak terbaca oleh sistem yang menentukan nasibnya.
             </h2>
-            <p className="mt-6 text-slate-600 max-w-2xl leading-relaxed">
+            <p className="mt-5 sm:mt-6 text-sm sm:text-base text-slate-600 max-w-2xl leading-relaxed">
               Tanpa dokumen resmi atas kebunnya, petani berlahan kecil sulit mengakses
               kredit usaha rakyat, pupuk bersubsidi, dan pasar premium. Yang lebih
               berbahaya: ketika data tentang mereka dikuasai pihak lain, mereka bisa
@@ -205,7 +205,7 @@ export default function TentangKami() {
               kepemilikan dan kendali petani atas datanya sendiri — bukan klaim bahwa
               JejakHijau dapat mencegahnya secara langsung.
             </p>
-            <p className="mt-4 text-slate-600 max-w-2xl leading-relaxed">
+            <p className="mt-4 text-sm sm:text-base text-slate-600 max-w-2xl leading-relaxed">
               Dari arah lain, regulasi antideforestasi Uni Eropa yang berlaku bertahap
               sejak 2025 mewajibkan data geolokasi kebun dan bukti bebas deforestasi hingga
               tingkat kebun — dan petani kopi kecil adalah mata rantai terlemah karena
@@ -216,22 +216,24 @@ export default function TentangKami() {
 
         {/* ===== SOLUSI / KILLER FLOW ===== */}
         <section id="cara-kerja" className="border-t border-slate-100 bg-white">
-          <div className="max-w-5xl mx-auto px-6 py-20">
+          <div className="max-w-5xl mx-auto px-5 sm:px-6 py-14 sm:py-20">
             <p className="text-xs font-semibold text-brand-800 tracking-wide uppercase">
               Cara Kerja
             </p>
-            <h2 className="mt-3 text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight max-w-2xl">
+            <h2 className="mt-3 text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight max-w-2xl leading-snug">
               Enam langkah, selesai dalam hitungan menit di lapangan.
             </h2>
 
-            <div className="mt-12 grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="mt-10 sm:mt-12 grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {KILLER_FLOW.map((item) => (
                 <div
                   key={item.step}
-                  className="bg-white rounded-2xl border border-slate-200 p-6 hover:border-brand-400 transition-colors"
+                  className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 hover:border-brand-400 hover:shadow-sm transition-all"
                 >
-                  <span className="text-xs font-bold text-brand-400">{item.step}</span>
-                  <h3 className="mt-2 text-base font-bold text-slate-900">{item.title}</h3>
+                  <span className="inline-grid place-items-center w-8 h-8 rounded-full bg-brand-50 text-brand-800 text-xs font-bold">
+                    {item.step}
+                  </span>
+                  <h3 className="mt-3 text-base font-bold text-slate-900">{item.title}</h3>
                   <p className="mt-2 text-sm text-slate-500 leading-relaxed">{item.desc}</p>
                 </div>
               ))}
@@ -241,23 +243,23 @@ export default function TentangKami() {
 
         {/* ===== FITUR PLATFORM (Eksportir & Agen) ===== */}
         <section id="fitur-platform" className="border-t border-slate-100 bg-white">
-          <div className="max-w-5xl mx-auto px-6 py-20">
+          <div className="max-w-5xl mx-auto px-5 sm:px-6 py-14 sm:py-20">
             <p className="text-xs font-semibold text-brand-800 tracking-wide uppercase">
               Fitur Platform
             </p>
-            <h2 className="mt-3 text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight max-w-2xl">
+            <h2 className="mt-3 text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight max-w-2xl leading-snug">
               Lebih dari satu kartu — dibangun untuk seluruh rantai pasok.
             </h2>
-            <p className="mt-6 text-slate-600 max-w-2xl leading-relaxed">
+            <p className="mt-5 sm:mt-6 text-sm sm:text-base text-slate-600 max-w-2xl leading-relaxed">
               Enam langkah di lapangan tadi baru titik awal. Begitu data tersinkron, agen,
               eksportir, dan petani sendiri mendapat alat masing-masing untuk memakainya.
             </p>
 
-            <div className="mt-12 grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="mt-10 sm:mt-12 grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {PLATFORM_FEATURES.map((f) => (
                 <div
                   key={f.title}
-                  className="rounded-2xl border border-slate-200 p-6 hover:border-brand-400 transition-colors"
+                  className="rounded-2xl border border-slate-200 p-5 sm:p-6 hover:border-brand-400 hover:shadow-sm transition-all"
                 >
                   <h3 className="text-base font-bold text-slate-900">{f.title}</h3>
                   <p className="mt-2 text-sm text-slate-500 leading-relaxed">{f.desc}</p>
@@ -269,32 +271,32 @@ export default function TentangKami() {
 
         {/* ===== MODEL NILAI BERTINGKAT ===== */}
         <section id="model-nilai" className="border-t border-slate-100 bg-white">
-          <div className="max-w-5xl mx-auto px-6 py-20">
+          <div className="max-w-5xl mx-auto px-5 sm:px-6 py-14 sm:py-20">
             <p className="text-xs font-semibold text-brand-800 tracking-wide uppercase">
               Model Nilai
             </p>
-            <h2 className="mt-3 text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight max-w-2xl">
+            <h2 className="mt-3 text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight max-w-2xl leading-snug">
               Relevan bagi seluruh petani — bukan cuma yang berorientasi ekspor.
             </h2>
 
-            <div className="mt-12 grid md:grid-cols-2 gap-6">
+            <div className="mt-10 sm:mt-12 grid md:grid-cols-2 gap-5 sm:gap-6">
               {TIERS.map((tier) => (
-                <div key={tier.name} className="rounded-2xl border border-slate-200 p-8">
+                <div key={tier.name} className="rounded-2xl border border-slate-200 p-6 sm:p-8">
                   <span className="inline-block px-3 py-1 rounded-full bg-brand-50 text-brand-800 text-xs font-bold">
                     {tier.name}
                   </span>
                   <p className="mt-4 text-xs font-semibold text-slate-400 uppercase tracking-wide">
                     Untuk
                   </p>
-                  <p className="mt-1 text-sm text-slate-700">{tier.audience}</p>
+                  <p className="mt-1 text-sm text-slate-700 leading-relaxed">{tier.audience}</p>
                   <p className="mt-4 text-xs font-semibold text-slate-400 uppercase tracking-wide">
                     Syarat minimal
                   </p>
-                  <p className="mt-1 text-sm text-slate-700">{tier.requirement}</p>
+                  <p className="mt-1 text-sm text-slate-700 leading-relaxed">{tier.requirement}</p>
                   <p className="mt-4 text-xs font-semibold text-slate-400 uppercase tracking-wide">
                     Yang dibuka
                   </p>
-                  <p className="mt-1 text-sm text-slate-700">{tier.unlocks}</p>
+                  <p className="mt-1 text-sm text-slate-700 leading-relaxed">{tier.unlocks}</p>
                 </div>
               ))}
             </div>
@@ -303,15 +305,15 @@ export default function TentangKami() {
 
         {/* ===== KEUNGGULAN ===== */}
         <section className="border-t border-slate-100 bg-white">
-          <div className="max-w-5xl mx-auto px-6 py-20">
+          <div className="max-w-5xl mx-auto px-5 sm:px-6 py-14 sm:py-20">
             <p className="text-xs font-semibold text-brand-800 tracking-wide uppercase">
               Kenapa Berbeda
             </p>
-            <h2 className="mt-3 text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight max-w-2xl">
+            <h2 className="mt-3 text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight max-w-2xl leading-snug">
               Sederhana dan jujur, bukan janji berlebihan.
             </h2>
 
-            <div className="mt-12 grid sm:grid-cols-2 gap-8">
+            <div className="mt-10 sm:mt-12 grid sm:grid-cols-2 gap-6 sm:gap-8">
               {DIFFERENTIATORS.map((d) => (
                 <div key={d.title} className="flex gap-4">
                   <span className="shrink-0 w-9 h-9 rounded-full bg-brand-800 text-white grid place-items-center text-sm font-bold">
@@ -329,22 +331,25 @@ export default function TentangKami() {
 
         {/* ===== RANTAI NILAI / SIAPA MEMBAYAR ===== */}
         <section id="model-bisnis" className="border-t border-slate-100 bg-white">
-          <div className="max-w-5xl mx-auto px-6 py-20">
+          <div className="max-w-5xl mx-auto px-5 sm:px-6 py-14 sm:py-20">
             <p className="text-xs font-semibold text-brand-800 tracking-wide uppercase">
               Model Bisnis
             </p>
-            <h2 className="mt-3 text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight max-w-2xl">
+            <h2 className="mt-3 text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight max-w-2xl leading-snug">
               Yang membayar bukan petani miskin — melainkan pihak yang paling
               berkepentingan.
             </h2>
-            <p className="mt-6 text-slate-600 max-w-2xl leading-relaxed">
+            <p className="mt-5 sm:mt-6 text-sm sm:text-base text-slate-600 max-w-2xl leading-relaxed">
               Pengekspor dan agen menghadapi tekanan kepatuhan ekspor dan butuh basis
               pemasok yang tercatat rapi — merekalah yang membayar. Petani hampir tidak
               membayar, namun memperoleh perlindungan, akses program, dan bagian dari
               premium.
             </p>
 
-            <div className="mt-10 overflow-x-auto">
+            {/* Tabel di layar md+, kartu bertumpuk di mobile -- tabel 3 kolom terlalu
+                sempit di layar kecil walau dibungkus overflow-x-auto (teks kolom
+                "Manfaat" tetap terpotong secara visual di bawah 640px). */}
+            <div className="mt-8 sm:mt-10 hidden md:block overflow-x-auto">
               <table className="w-full text-sm border-collapse">
                 <thead>
                   <tr className="text-left border-b border-slate-200">
@@ -370,27 +375,43 @@ export default function TentangKami() {
                 </tbody>
               </table>
             </div>
+
+            <div className="mt-8 md:hidden space-y-4">
+              {VALUE_CHAIN.map((row) => (
+                <div key={row.party} className="rounded-2xl border border-slate-200 p-5">
+                  <p className="font-semibold text-slate-900">{row.party}</p>
+                  <p className="mt-2 text-xs font-semibold text-slate-400 uppercase tracking-wide">
+                    Manfaat yang diperoleh
+                  </p>
+                  <p className="mt-1 text-sm text-slate-600 leading-relaxed">{row.benefit}</p>
+                  <p className="mt-3 text-xs font-semibold text-slate-400 uppercase tracking-wide">
+                    Peran pembiayaan
+                  </p>
+                  <p className="mt-1 text-sm text-slate-600 leading-relaxed">{row.pays}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </section>
 
         {/* ===== TEKNOLOGI ===== */}
         <section className="border-t border-slate-100 bg-white">
-          <div className="max-w-5xl mx-auto px-6 py-20">
+          <div className="max-w-5xl mx-auto px-5 sm:px-6 py-14 sm:py-20">
             <p className="text-xs font-semibold text-brand-800 tracking-wide uppercase">
               Teknologi
             </p>
-            <h2 className="mt-3 text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight max-w-2xl">
+            <h2 className="mt-3 text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight max-w-2xl leading-snug">
               Dibangun untuk lapangan, bukan cuma demo.
             </h2>
 
-            <div className="mt-12 grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="mt-10 sm:mt-12 grid sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
               {TECH_STACK.map((tech) => (
                 <div
                   key={tech.label}
                   className="bg-white rounded-xl border border-slate-200 px-5 py-4"
                 >
                   <p className="text-sm font-bold text-slate-900">{tech.label}</p>
-                  <p className="mt-1 text-xs text-slate-500">{tech.desc}</p>
+                  <p className="mt-1 text-xs text-slate-500 leading-relaxed">{tech.desc}</p>
                 </div>
               ))}
             </div>
@@ -399,21 +420,21 @@ export default function TentangKami() {
 
         {/* ===== VISI & DAMPAK ===== */}
         <section className="border-t border-slate-100">
-          <div className="max-w-4xl mx-auto px-6 py-20 text-center">
+          <div className="max-w-4xl mx-auto px-5 sm:px-6 py-14 sm:py-20 text-center">
             <p className="text-xs font-semibold text-brand-800 tracking-wide uppercase">
               Visi Kami
             </p>
-            <h2 className="mt-3 text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+            <h2 className="mt-3 text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight leading-snug">
               Kedaulatan data untuk setiap petani berlahan kecil di Indonesia.
             </h2>
-            <p className="mt-6 text-slate-600 leading-relaxed max-w-2xl mx-auto">
+            <p className="mt-5 sm:mt-6 text-sm sm:text-base text-slate-600 leading-relaxed max-w-2xl mx-auto">
               Dampak yang bisa langsung diukur: berkurangnya waktu pendaftaran,
               bertambahnya petani yang tercatat dan terlindungi, serta lahirnya data
               pemasok yang sebelumnya tidak ada. Dampak jangka panjang seperti terbukanya
               akses pasar premium kami nyatakan sebagai skenario yang kami perjuangkan —
               bukan kepastian yang sudah tercapai.
             </p>
-            <p className="mt-4 text-sm text-slate-400">
+            <p className="mt-4 text-xs sm:text-sm text-slate-400">
               Lokasi uji coba awal: sentra kopi Pangalengan, Kabupaten Bandung.
             </p>
           </div>
@@ -421,14 +442,14 @@ export default function TentangKami() {
 
         {/* ===== CTA PENUTUP ===== */}
         <section className="border-t border-slate-100 bg-gradient-to-b from-white to-brand-50/60">
-          <div className="max-w-3xl mx-auto px-6 py-20 text-center">
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+          <div className="max-w-3xl mx-auto px-5 sm:px-6 py-14 sm:py-20 text-center">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight leading-snug">
               Siap mengubah kebun jadi identitas data milik petani?
             </h2>
             <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
               <a
                 href="mailto:lint4ngboy@gmail.com"
-                className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full text-sm font-bold text-white bg-gradient-to-r from-brand-400 to-brand-800 hover:opacity-90 transition-opacity"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full text-sm font-bold text-white bg-gradient-to-r from-brand-400 to-brand-800 hover:opacity-90 transition-opacity"
               >
                 Hubungi Kami untuk Kemitraan
                 <span aria-hidden>↗</span>

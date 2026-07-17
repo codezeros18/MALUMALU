@@ -291,7 +291,7 @@ export default function EksportirDashboard() {
         {selectedRow && (
           <>
             <KartuCard kartu={selectedRow.kartu} readOnly />
-            <HashChainViewer entries={selectedAgentEntries} readOnly />
+            <HashChainViewer entries={selectedAgentEntries} />
           </>
         )}
       </Modal>

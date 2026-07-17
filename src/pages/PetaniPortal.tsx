@@ -160,7 +160,7 @@ export default function PetaniPortal() {
               {entries.map(({ kartu }) => (
                 <div key={kartu.id} className="space-y-4">
                   <KartuCard kartu={kartu} readOnly />
-                  <HashChainViewer refreshSignal={kartu.hashChainRef} readOnly />
+                  <HashChainViewer refreshSignal={kartu.hashChainRef} />
                   <ConsentPanel kartuId={kartu.id} mode="petani" />
                 </div>
               ))}

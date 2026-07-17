@@ -95,7 +95,7 @@ npm run dev          # → http://localhost:5173
 3. **Tambah Plot** → tap/GPS/type at least 3 corners of the garden on the Pangalengan map → "Selesai Poligon" → save.
 4. Upload the three required documents (KTP, land ownership proof, STDB) → the badge flips to *Berkas Lengkap*.
 5. Create the card → read the tier and the reasons behind it.
-6. Open the **hash chain** → *Verifikasi Rantai* → intact. Hit **Simulasi Ubah Data** → the chain breaks at the exact tampered entry. Restore → intact again.
+6. Open the **hash chain** → *Verifikasi Rantai* → intact, entry by entry.
 7. Grant consent to "Bank", then simulate an unauthorised access → an alert banner fires.
 8. Switch to the **Petani** role → the farmer sees their own card and can revoke that consent themselves.
 
@@ -118,7 +118,7 @@ We would rather you learn our limits from us than find them yourself.
 | | Status |
 |---|---|
 | Offline point-in-raster, rule engine, hash-chain, consent | ✅ **Real** — verified with the network off |
-| Tamper detection | ✅ **Real** — chain breaks at the edited entry, demo-able live |
+| Tamper detection | ✅ **Real** — `verifyChain()` recomputes every entry's hash and reports the exact index where a mismatch occurs; no interactive "simulate tamper" button in the UI anymore |
 | Supabase sync (outbox pattern, retry cutoff, conflict flagging) | ✅ **Real** — Playwright-verified against the live REST API |
 | Nearest-verified-farmer search | ✅ **Real** — Turf.js distance, consent-gated |
 | Deforestation map accuracy | ⚠️ **~91%, 18% commission error** — disclosed in-product, drives the audit-not-block rule |

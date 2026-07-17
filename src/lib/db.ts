@@ -557,18 +557,6 @@ export async function getLastHashEntry(): Promise<HashChainEntry | undefined> {
   }
 }
 
-// Overwrite entri hash-chain APA ADANYA (id dipertahankan) — dipakai hashchain.ts untuk
-// simulateTamper/restoreEntry (demo tamper-evidence). Tidak menghitung ulang hash apa pun.
-export async function putHashEntryRaw(entry: HashChainEntry): Promise<HashChainEntry> {
-  try {
-    const db = await getDB();
-    await db.put('hashchain', entry);
-    return entry;
-  } catch (err) {
-    throw dbError('putHashEntryRaw', err);
-  }
-}
-
 // ===== CONSENT =====
 
 export async function addConsent(

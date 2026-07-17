@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { verifyChain, simulateTamper, restoreEntry, type VerifyChainResult } from '../lib/hashchain';
+import { verifyChain, type VerifyChainResult } from '../lib/hashchain';
 import { listHashEntries } from '../lib/db';
 import Card from './ui/Card';
 import Button from './ui/Button';
@@ -12,18 +12,11 @@ interface HashChainViewerProps {
   // Kalau diisi, dipakai langsung tanpa fetch IndexedDB lokal — dipakai dashboard
   // Eksportir (Sprint 13) yang membaca rantai dari Supabase, bukan device ini.
   entries?: HashChainEntry[];
-  // Sembunyikan tombol simulasi tamper & reset demo (default false, /agen tidak berubah).
-  readOnly?: boolean;
 }
 
-export default function HashChainViewer({
-  refreshSignal,
-  entries: externalEntries,
-  readOnly = false,
-}: HashChainViewerProps) {
+export default function HashChainViewer({ refreshSignal, entries: externalEntries }: HashChainViewerProps) {
   const [entries, setEntries] = useState<HashChainEntry[]>(externalEntries ?? []);
   const [result, setResult] = useState<VerifyChainResult | null>(null);
-  const [tamperedBackup, setTamperedBackup] = useState<HashChainEntry | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -55,44 +48,6 @@ export default function HashChainViewer({
     }
   }, [externalEntries, entries]);
 
-  const handleTamper = async () => {
-    if (entries.length === 0) return;
-    setBusy(true);
-    setError(null);
-    try {
-      const last = entries[entries.length - 1];
-      setTamperedBackup(last);
-      const originalPayload = (last.payload ?? {}) as Record<string, unknown>;
-      const mutatedPayload = {
-        ...originalPayload,
-        __demoTamper: 'Data diam-diam diubah untuk simulasi (hash lama tidak diperbarui).',
-      };
-      await simulateTamper(last.index, mutatedPayload);
-      await refresh();
-      await handleVerify();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Gagal simulasi tamper.');
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const handleResetDemo = async () => {
-    if (!tamperedBackup) return;
-    setBusy(true);
-    setError(null);
-    try {
-      await restoreEntry(tamperedBackup);
-      setTamperedBackup(null);
-      await refresh();
-      await handleVerify();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Gagal reset demo.');
-    } finally {
-      setBusy(false);
-    }
-  };
-
   return (
     <Card className="space-y-3">
       <div className="flex items-center justify-between">
@@ -119,21 +74,9 @@ export default function HashChainViewer({
         </ul>
       )}
 
-      <div className="flex flex-wrap gap-2">
-        <Button onClick={handleVerify} disabled={busy}>
-          Verifikasi Rantai
-        </Button>
-        {!readOnly && (
-          <>
-            <Button variant="danger" onClick={handleTamper} disabled={busy || entries.length === 0}>
-              Simulasi ubah data (demo)
-            </Button>
-            <Button variant="secondary" onClick={handleResetDemo} disabled={busy || !tamperedBackup}>
-              Reset demo
-            </Button>
-          </>
-        )}
-      </div>
+      <Button onClick={handleVerify} disabled={busy}>
+        Verifikasi Rantai
+      </Button>
 
       {result && (
         <div
