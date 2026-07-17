@@ -146,7 +146,7 @@ export default function DashboardShell({ currentRole, onGantiRole, children }: D
     setCollapsedGroups((prev) => ({ ...prev, [heading]: !prev[heading] }));
 
   return (
-    <div className="font-dashboard min-h-screen flex flex-col bg-white text-slate-900">
+    <div className="font-dashboard h-screen flex flex-col bg-white text-slate-900 overflow-hidden">
       <div className="h-14 flex border-b border-slate-200 shrink-0">
         <div className="w-60 shrink-0 flex items-center gap-2 px-5 border-r border-slate-200">
           <div className="flex items-center gap-2 min-w-0">

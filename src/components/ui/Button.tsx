@@ -10,9 +10,9 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const VARIANT_CLASSES: Record<ButtonVariant, string> = {
-  primary: 'bg-brand-800 text-white',
-  secondary: 'bg-slate-100 text-slate-700 border border-slate-200',
-  danger: 'bg-red-600 text-white',
+  primary: 'bg-brand-800 text-white hover:bg-brand-800/90',
+  secondary: 'bg-slate-100 text-slate-700 border border-slate-200 hover:bg-slate-200',
+  danger: 'bg-red-600 text-white hover:bg-red-700',
 };
 
 const SIZE_CLASSES: Record<ButtonSize, string> = {
@@ -31,7 +31,7 @@ export default function Button({
   return (
     <button
       type={type}
-      className={`rounded-md font-medium disabled:opacity-50 ${VARIANT_CLASSES[variant]} ${SIZE_CLASSES[size]} ${fullWidth ? 'w-full' : ''} ${className}`}
+      className={`rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-brand-400 disabled:opacity-50 disabled:cursor-not-allowed ${VARIANT_CLASSES[variant]} ${SIZE_CLASSES[size]} ${fullWidth ? 'w-full' : ''} ${className}`}
       {...rest}
     />
   );

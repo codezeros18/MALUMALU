@@ -43,6 +43,13 @@ export interface Plot extends Syncable {
   // Format YYYY-MM-DD. Opsional supaya plot lama tanpa data ini tetap valid.
   periodeProduksiMulai?: string;
   periodeProduksiSelesai?: string;
+  // Screenshot statis dari peta 3D saat poligon baru selesai digambar (JPEG data URL,
+  // di-downscale ~480px lebar). Dipakai sebagai "foto bukti kebun" di Paspor Petani
+  // SEBAGAI GANTI peta 3D live — device petani yang lemah/koneksi lambat sering
+  // kesulitan render WebGL + tile jarak jauh tiap kali buka paspornya. Opsional: plot
+  // lama (sebelum fitur ini) atau capture yang gagal tetap valid tanpa field ini,
+  // fallback ke peta 3D live seperti sebelumnya.
+  boundarySnapshot?: string;
 }
 
 export type DeforestasiStatus = 'aman' | 'berisiko' | 'perlu-audit';

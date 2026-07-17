@@ -1,4 +1,3 @@
-import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 
@@ -32,6 +31,33 @@ const KILLER_FLOW = [
     step: '06',
     title: 'Koreksi manual',
     desc: 'Keputusan akhir tetap di tangan petugas — sistem membantu, bukan menggantikan penilaian manusia.',
+  },
+];
+
+const PLATFORM_FEATURES = [
+  {
+    title: 'Petani Terverifikasi Terdekat',
+    desc: 'Eksportir cukup tap satu titik (mis. lokasi gudang) untuk menemukan petani berkas-lengkap terdekat, terurut jarak — bukan tebakan, dan kontak hanya terbuka atas izin petani.',
+  },
+  {
+    title: 'Harga Referensi Wajar',
+    desc: 'Rata-rata harga tertimbang per komoditas dan tier, dihitung dari transaksi nyata — dengan jaminan minimum sampel supaya angka tidak ditampilkan dari data yang terlalu tipis untuk dipercaya.',
+  },
+  {
+    title: 'Paket Bukti Uji Tuntas EUDR',
+    desc: 'Satu klik menghasilkan paket bukti berisi geolokasi, periode produksi, kelengkapan dokumen, dan integritas rantai hash — dilabeli tegas sebagai bukti pendukung, bukan pengajuan DDS resmi.',
+  },
+  {
+    title: 'Notifikasi Real-Time ke Petani',
+    desc: 'Petani mendapat notifikasi langsung saat kartunya dibuat maupun saat ada percobaan akses tanpa izin — kendali dan kesadaran ada di tangan pemilik data, bukan cuma di sistem.',
+  },
+  {
+    title: 'Jejak Audit Anti-Ubah',
+    desc: 'Rantai hash, log akses, dan dokumen petani memakai kebijakan append-only di level database — UPDATE dan DELETE diblokir untuk semua pihak, termasuk operator platform sendiri.',
+  },
+  {
+    title: 'Sinkron Lintas-Perangkat',
+    desc: 'Pola outbox offline-first memastikan data yang direkam di lapangan sampai ke setiap perangkat (agen, eksportir, petani) begitu online — lengkap dengan retry otomatis dan penandaan konflik.',
   },
 ];
 
@@ -131,18 +157,12 @@ export default function TentangKami() {
             </p>
 
             <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link
-                to="/masuk"
-                className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full text-sm font-bold text-white bg-gradient-to-r from-brand-400 to-brand-800 hover:opacity-90 transition-opacity"
-              >
-                Coba Demo
-                <span aria-hidden>↗</span>
-              </Link>
               <a
                 href="mailto:lint4ngboy@gmail.com"
-                className="text-sm font-semibold text-slate-600 hover:text-slate-900 transition-colors"
+                className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full text-sm font-bold text-white bg-gradient-to-r from-brand-400 to-brand-800 hover:opacity-90 transition-opacity"
               >
-                atau Hubungi Kami untuk Kemitraan →
+                Hubungi Kami untuk Kemitraan
+                <span aria-hidden>↗</span>
               </a>
             </div>
 
@@ -181,7 +201,7 @@ export default function TentangKami() {
         </section>
 
         {/* ===== SOLUSI / KILLER FLOW ===== */}
-        <section className="border-t border-slate-100 bg-slate-50/60">
+        <section id="cara-kerja" className="border-t border-slate-100 bg-white">
           <div className="max-w-5xl mx-auto px-6 py-20">
             <p className="text-xs font-semibold text-brand-800 tracking-wide uppercase">
               Cara Kerja
@@ -205,8 +225,36 @@ export default function TentangKami() {
           </div>
         </section>
 
+        {/* ===== FITUR PLATFORM (Eksportir & Agen) ===== */}
+        <section id="fitur-platform" className="border-t border-slate-100 bg-white">
+          <div className="max-w-5xl mx-auto px-6 py-20">
+            <p className="text-xs font-semibold text-brand-800 tracking-wide uppercase">
+              Fitur Platform
+            </p>
+            <h2 className="mt-3 text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight max-w-2xl">
+              Lebih dari satu kartu — dibangun untuk seluruh rantai pasok.
+            </h2>
+            <p className="mt-6 text-slate-600 max-w-2xl leading-relaxed">
+              Enam langkah di lapangan tadi baru titik awal. Begitu data tersinkron, agen,
+              eksportir, dan petani sendiri mendapat alat masing-masing untuk memakainya.
+            </p>
+
+            <div className="mt-12 grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {PLATFORM_FEATURES.map((f) => (
+                <div
+                  key={f.title}
+                  className="rounded-2xl border border-slate-200 p-6 hover:border-brand-400 transition-colors"
+                >
+                  <h3 className="text-base font-bold text-slate-900">{f.title}</h3>
+                  <p className="mt-2 text-sm text-slate-500 leading-relaxed">{f.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
         {/* ===== MODEL NILAI BERTINGKAT ===== */}
-        <section className="border-t border-slate-100">
+        <section id="model-nilai" className="border-t border-slate-100 bg-white">
           <div className="max-w-5xl mx-auto px-6 py-20">
             <p className="text-xs font-semibold text-brand-800 tracking-wide uppercase">
               Model Nilai
@@ -240,7 +288,7 @@ export default function TentangKami() {
         </section>
 
         {/* ===== KEUNGGULAN ===== */}
-        <section className="border-t border-slate-100 bg-slate-50/60">
+        <section className="border-t border-slate-100 bg-white">
           <div className="max-w-5xl mx-auto px-6 py-20">
             <p className="text-xs font-semibold text-brand-800 tracking-wide uppercase">
               Kenapa Berbeda
@@ -266,7 +314,7 @@ export default function TentangKami() {
         </section>
 
         {/* ===== RANTAI NILAI / SIAPA MEMBAYAR ===== */}
-        <section className="border-t border-slate-100">
+        <section id="model-bisnis" className="border-t border-slate-100 bg-white">
           <div className="max-w-5xl mx-auto px-6 py-20">
             <p className="text-xs font-semibold text-brand-800 tracking-wide uppercase">
               Model Bisnis
@@ -312,7 +360,7 @@ export default function TentangKami() {
         </section>
 
         {/* ===== TEKNOLOGI ===== */}
-        <section className="border-t border-slate-100 bg-slate-50/60">
+        <section className="border-t border-slate-100 bg-white">
           <div className="max-w-5xl mx-auto px-6 py-20">
             <p className="text-xs font-semibold text-brand-800 tracking-wide uppercase">
               Teknologi
@@ -364,18 +412,12 @@ export default function TentangKami() {
               Siap mengubah kebun jadi identitas data milik petani?
             </h2>
             <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link
-                to="/masuk"
-                className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full text-sm font-bold text-white bg-gradient-to-r from-brand-400 to-brand-800 hover:opacity-90 transition-opacity"
-              >
-                Mulai Demo Sekarang
-                <span aria-hidden>↗</span>
-              </Link>
               <a
                 href="mailto:lint4ngboy@gmail.com"
-                className="inline-flex items-center px-6 py-3.5 rounded-full text-sm font-semibold text-slate-700 border border-slate-200 hover:border-brand-400 transition-colors"
+                className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full text-sm font-bold text-white bg-gradient-to-r from-brand-400 to-brand-800 hover:opacity-90 transition-opacity"
               >
-                Hubungi Kami
+                Hubungi Kami untuk Kemitraan
+                <span aria-hidden>↗</span>
               </a>
             </div>
           </div>

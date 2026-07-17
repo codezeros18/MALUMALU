@@ -5,6 +5,7 @@ import Select from '../components/ui/Select';
 import Input from '../components/ui/Input';
 import EmptyState from '../components/ui/EmptyState';
 import Modal from '../components/ui/Modal';
+import PageLoader from '../components/ui/PageLoader';
 import KartuCard from '../components/KartuCard';
 import HashChainViewer from '../components/HashChainViewer';
 import type {
@@ -146,7 +147,7 @@ export default function EksportirDashboard() {
     selectedRow?.kartu.agentId ? (hashEntriesByAgent.get(selectedRow.kartu.agentId) ?? []) : [];
 
   if (loading) {
-    return <p className="text-sm text-slate-500">Memuat data dari Supabase…</p>;
+    return <PageLoader />;
   }
 
   if (error) {

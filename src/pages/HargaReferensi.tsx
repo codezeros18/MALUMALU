@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { TrendingUp } from 'lucide-react';
+import { Plus, TrendingUp } from 'lucide-react';
 import { addTransaksi, listTransaksi } from '../lib/db';
 import { supabaseBackend, fromSupabaseRow } from '../lib/sync';
 import { getReferencePrice, MIN_TXN_COUNT, type ReferencePrice } from '../lib/harga/aggregate';
@@ -7,6 +7,7 @@ import { KOMODITAS_OPTIONS, KOMODITAS_LAINNYA } from '../lib/komoditas';
 import { useAppContext } from '../context/AppContext';
 import PageHeader from '../components/ui/PageHeader';
 import SectionCard from '../components/ui/SectionCard';
+import Modal from '../components/ui/Modal';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
@@ -81,10 +82,11 @@ function RekamTransaksiForm({
   };
 
   return (
-    <SectionCard
-      title="Rekam Transaksi"
-      description="Catat transaksi nyata yang terjadi di lapangan — jadi dasar harga referensi bersama, bukan angka sepihak."
-    >
+    <div className="space-y-3">
+      <p className="text-xs text-slate-500">
+        Catat transaksi nyata yang terjadi di lapangan — jadi dasar harga referensi bersama,
+        bukan angka sepihak.
+      </p>
       <div className="space-y-3">
         <div>
           <label className="block text-sm font-medium text-slate-700">Komoditas *</label>
@@ -174,13 +176,21 @@ function RekamTransaksiForm({
         {message && <p className="text-xs text-brand-800">{message}</p>}
         {error && <p className="text-xs text-red-600">{error}</p>}
       </div>
-    </SectionCard>
+    </div>
   );
 }
 
-function RiwayatTransaksi({ items }: { items: Transaksi[] }) {
+function RiwayatTransaksi({ items, onAdd }: { items: Transaksi[]; onAdd: () => void }) {
   return (
-    <SectionCard title={`Transaksi Tercatat di Perangkat Ini (${items.length})`}>
+    <SectionCard
+      title={`Transaksi Tercatat di Perangkat Ini (${items.length})`}
+      actions={
+        <Button size="sm" onClick={onAdd} className="inline-flex items-center gap-1.5">
+          <Plus size={14} />
+          Tambah Transaksi
+        </Button>
+      }
+    >
       {items.length === 0 ? (
         <EmptyState message="Belum ada transaksi tercatat di perangkat ini." />
       ) : (
@@ -359,6 +369,7 @@ export default function HargaReferensi() {
   const { currentRole } = useAppContext();
   const isAgen = currentRole === 'agen';
   const [ownTransaksi, setOwnTransaksi] = useState<Transaksi[]>([]);
+  const [showRekamModal, setShowRekamModal] = useState(false);
 
   const refreshOwn = useCallback(async () => {
     try {
@@ -384,10 +395,7 @@ export default function HargaReferensi() {
 
       <div className="space-y-6">
         {isAgen && (
-          <div className="grid lg:grid-cols-2 gap-6">
-            <RekamTransaksiForm onRecorded={refreshOwn} wilayahSuggestions={uniqueWilayah(ownTransaksi)} />
-            <RiwayatTransaksi items={ownTransaksi} />
-          </div>
+          <RiwayatTransaksi items={ownTransaksi} onAdd={() => setShowRekamModal(true)} />
         )}
 
         <CekHargaReferensi />
@@ -400,6 +408,18 @@ export default function HargaReferensi() {
           </Card>
         )}
       </div>
+
+      {isAgen && (
+        <Modal open={showRekamModal} onClose={() => setShowRekamModal(false)} title="Rekam Transaksi">
+          <RekamTransaksiForm
+            onRecorded={() => {
+              refreshOwn();
+              setShowRekamModal(false);
+            }}
+            wilayahSuggestions={uniqueWilayah(ownTransaksi)}
+          />
+        </Modal>
+      )}
     </div>
   );
 }

@@ -1380,3 +1380,84 @@ plot/kartu ke Supabase akan gagal dengan error "column does not exist" dari Post
 `MAX_AUTO_RETRY_ATTEMPTS` yang sudah ada). Data tetap aman tersimpan LOKAL di IndexedDB
 selama itu. **Jalankan SQL di atas dulu sebelum data baru mulai direkam**, supaya tidak
 ada plot/kartu yang menumpuk gagal sinkron di antrean.
+
+---
+
+## Perbaikan Pasca-Sprint-22 (lanjutan lagi) — Foto Bukti Kebun (ganti Peta 3D Live di Paspor)
+
+**Masalah dilaporkan user**: `PassportCard.tsx` (kartu yang dilihat petani di Portal
+Petani) me-render `Map3D` (MapLibre GL + terrain 3D + tile jarak jauh) secara LIVE
+setiap kali dibuka. Untuk device petani yang lemah/koneksi lambat, render WebGL + fetch
+ulang tile tiap buka paspor bisa berat/lambat/gagal — padahal poligon batas kebun itu
+sudah pernah digambar & dirender sempurna sekali oleh Agen saat pendataan.
+
+**Solusi**: tangkap **screenshot statis** dari peta 3D persis saat poligon baru selesai
+digambar (masih di device Agen, saat koneksi & device biasanya lebih baik), simpan
+sebagai foto, lalu Paspor Petani menampilkan FOTO itu (elemen `<img>` biasa, murah
+untuk device apa pun) alih-alih me-render ulang MapLibre setiap kali dibuka.
+
+**Dibangun**:
+
+1. **`src/components/Map3D.tsx`** — dikonversi ke `forwardRef` + `useImperativeHandle`
+   mengekspor `getSnapshot(): Promise<string|null>`. Detail teknis penting:
+   - `canvasContextAttributes: { preserveDrawingBuffer: true }` ditambahkan ke
+     konstruktor `maplibregl.Map` — WAJIB, tanpa ini `getCanvas().toDataURL()` sering
+     balikin canvas kosong karena WebGL default membersihkan drawing buffer tiap frame.
+   - `getSnapshot()` menunggu event `'idle'` (+ `triggerRepaint()` untuk memastikan
+     event itu benar-benar terpicu) sebelum membaca canvas — supaya tidak menangkap
+     frame kosong/setengah-render saat tile/terrain masih loading.
+   - Canvas asli (bisa 2-3x lebih besar dari device pixel ratio) di-downscale ke maks
+     480px lebar via canvas sementara sebelum `toDataURL('image/jpeg', 0.6)` — hasil
+     akhir ~20-35KB per foto, cukup kecil untuk IndexedDB & kolom Postgres `text`.
+2. **`src/components/MapView.tsx`** — diteruskan jadi `forwardRef` juga (pure pass-through
+   ke `Map3D`) supaya `TambahPlot.tsx` bisa panggil `getSnapshot()` lewat satu ref.
+3. **`src/pages/TambahPlot.tsx`** — `handleFinishPolygon` sekarang `async`: begitu Agen
+   klik "Selesai Poligon" (poligon sudah pasti ≥3 titik & sudah ter-render di peta),
+   langsung panggil `mapRef.current.getSnapshot()`. State baru `capturingSnapshot`
+   ditambahkan **bukan cuma kosmetik** — awalnya foto gagal ~50% waktu di uji Playwright
+   karena race condition nyata: `setPolygonFinished(true)` (sinkron) bikin teks "Poligon
+   selesai" langsung muncul, TAPI `getSnapshot()` (async, nunggu event `'idle'`) belum
+   tentu selesai — Agen yang cepat isi form & klik "Simpan Plot" bisa submit SEBELUM
+   foto selesai ditangkap, foto diam-diam hilang tanpa peringatan apa pun. Fix:
+   `capturingSnapshot` ditampilkan sebagai teks "· Mengambil foto bukti…" DAN dipakai
+   men-disable tombol "Simpan Plot" (`submitting={saving || capturingSnapshot}`) —
+   race-nya beneran ditutup, bukan cuma disembunyikan.
+4. **`src/types/index.ts`** — `Plot.boundarySnapshot?: string` (JPEG data URL). Opsional
+   — plot lama atau capture yang gagal (offline/canvas kosong/dll) tetap valid, jatuh ke
+   perilaku lama.
+5. **`src/lib/sync.ts`** — `boundary_snapshot` ditambahkan ke `ALLOWED_COLUMNS.plot`.
+6. **`src/components/PassportCard.tsx`** — kalau `plot.boundarySnapshot` ada, tampilkan
+   `<img>` (dengan disclosure kecil "Foto batas kebun — diambil otomatis saat
+   pendataan, bukan peta live") **menggantikan** `<Map3D>`. Kalau tidak ada (plot lama,
+   atau capture gagal), fallback ke `<Map3D>` live seperti sebelumnya — regresi nol.
+
+**Ditemukan & diperbaiki sekalian (regresi tak terkait, dari proses editing paralel di
+luar sesi ini)**: saat verifikasi ulang lewat `tsc -b`, ditemukan 2 bug pre-existing yang
+memblokir build:
+- **`HashChainViewer.tsx` kehilangan seluruh fitur `readOnly` + simulasi tamper**
+  (tombol "Simulasi ubah data (demo)"/"Reset demo" beserta `simulateTamper`/
+  `restoreEntry` di `lib/hashchain.ts`) — hilang total dari kode, padahal README
+  mendokumentasikan ini sebagai fitur nyata yang bisa didemokan live. Dipulihkan
+  persis dari histori git (`git show <commit>:path`), digabung dengan perbaikan
+  `EmptyState` yang sudah lebih baru di versi saat ini.
+- **`HargaReferensi.tsx`** sempat punya JSX tidak seimbang (`<div>` ditutup `</SectionCard>`)
+  dari refactor "Tambah Transaksi via Modal" yang sedang berjalan paralel (bukan dari
+  sesi ini) — selesai terwiring sendiri sebelum verifikasi akhir, tidak perlu campur tangan.
+
+**Verifikasi (Playwright, build+preview)**: plot poligon dibuat manual-coordinate → foto
+ditangkap (26KB JPEG base64 dikonfirmasi) → kartu dibuat → ganti role ke Petani → cari
+via email → Portal menampilkan `<img alt="Foto batas kebun">` dengan `src` data URL JPEG
+valid, BUKAN `<canvas>` MapLibre. Test terpisah mengonfirmasi `simulateTamper`/
+`restoreEntry` pulih 100%: Verifikasi Rantai → utuh → Simulasi ubah data → rusak
+terdeteksi di entri yang tepat → Reset demo → utuh lagi. `tsc -b --noEmit` + `npm run
+build` bersih.
+
+**SQL yang perlu dijalankan user secara manual di Supabase**:
+
+```sql
+alter table plot add column if not exists boundary_snapshot text;
+```
+
+Sama seperti field EUDR sebelumnya: tanpa SQL ini, foto tetap tersimpan & tampil penuh
+secara LOKAL, hanya sinkron ke Supabase yang akan gagal (retry otomatis lalu berhenti)
+untuk kolom yang belum ada sampai SQL ini dijalankan.

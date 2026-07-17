@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
 import type { MouseEvent as ReactMouseEvent } from 'react';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
@@ -47,6 +47,17 @@ function toFeatureCollection(polygons: Map3DPolygon[]) {
   };
 }
 
+export interface Map3DHandle {
+  /**
+   * Ambil screenshot canvas peta saat ini sebagai JPEG data URL (di-downscale ke
+   * maksimal 480px lebar supaya ukurannya kecil untuk disimpan di IndexedDB/Supabase).
+   * Nunggu event 'idle' dulu (render+tile terakhir selesai) supaya tidak menangkap
+   * frame kosong/setengah-render — perlu preserveDrawingBuffer:true di konstruktor
+   * peta, kalau tidak toDataURL() bisa balikin canvas kosong.
+   */
+  getSnapshot: () => Promise<string | null>;
+}
+
 interface Map3DProps {
   center: { lat: number; lng: number };
   zoom: number;
@@ -61,16 +72,10 @@ interface Map3DProps {
   pitch?: number;
 }
 
-export default function Map3D({
-  center,
-  zoom,
-  markers,
-  polygons = [],
-  onPick,
-  offlineHint,
-  className,
-  pitch = 50,
-}: Map3DProps) {
+const Map3D = forwardRef<Map3DHandle, Map3DProps>(function Map3D(
+  { center, zoom, markers, polygons = [], onPick, offlineHint, className, pitch = 50 },
+  ref,
+) {
   const isOnline = useOnlineStatus();
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
@@ -92,6 +97,10 @@ export default function Map3D({
       pitch,
       bearing: -17,
       maxPitch: 75,
+      // Wajib true supaya getCanvas().toDataURL() (dipakai getSnapshot(), lihat
+      // useImperativeHandle di bawah) tidak balikin canvas kosong — WebGL default-nya
+      // membersihkan drawing buffer segera setelah tiap frame untuk hemat memori.
+      canvasContextAttributes: { preserveDrawingBuffer: true },
     });
     mapRef.current = map;
 
@@ -195,6 +204,39 @@ export default function Map3D({
     source?.setData(toFeatureCollection(polygons));
   }, [polygons, isOnline]);
 
+  useImperativeHandle(ref, () => ({
+    getSnapshot: () =>
+      new Promise<string | null>((resolve) => {
+        const map = mapRef.current;
+        if (!map || !isOnline) {
+          resolve(null);
+          return;
+        }
+        const capture = () => {
+          try {
+            const source = map.getCanvas();
+            // Downscale ke maks 480px lebar — canvas WebGL asli bisa 2-3x lebih besar
+            // (devicePixelRatio), tidak perlu resolusi penuh untuk sekadar foto bukti.
+            const scale = Math.min(1, 480 / source.width);
+            const out = document.createElement('canvas');
+            out.width = Math.round(source.width * scale);
+            out.height = Math.round(source.height * scale);
+            const ctx = out.getContext('2d');
+            if (!ctx) {
+              resolve(null);
+              return;
+            }
+            ctx.drawImage(source, 0, 0, out.width, out.height);
+            resolve(out.toDataURL('image/jpeg', 0.6));
+          } catch {
+            resolve(null);
+          }
+        };
+        map.once('idle', capture);
+        map.triggerRepaint();
+      }),
+  }));
+
   const handleOfflineClick = (e: ReactMouseEvent<HTMLDivElement>) => {
     if (!onPick || !containerRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
@@ -227,4 +269,6 @@ export default function Map3D({
       <div ref={containerRef} className={`w-full h-full ${isOnline ? '' : 'hidden'}`} />
     </div>
   );
-}
+});
+
+export default Map3D;

@@ -63,6 +63,7 @@ const ALLOWED_COLUMNS: Record<SyncEntityType, string[]> = {
     'boundary',
     'periode_produksi_mulai',
     'periode_produksi_selesai',
+    'boundary_snapshot',
   ],
   kartu: [
     'id',

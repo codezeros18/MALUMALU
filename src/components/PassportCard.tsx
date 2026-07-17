@@ -126,23 +126,37 @@ export default function PassportCard({ petani, plot, kartu }: PassportCardProps)
                 </>
               )}
             </p>
-            <Map3D
-              center={{ lat: plot.lat, lng: plot.lng }}
-              zoom={13}
-              pitch={0}
-              markers={
-                plot.boundary && plot.boundary.length >= 3
-                  ? []
-                  : [{ id: plot.id, lat: plot.lat, lng: plot.lng, color: '#1F5C3A' }]
-              }
-              polygons={
-                plot.boundary && plot.boundary.length >= 3
-                  ? [{ id: plot.id, points: plot.boundary, color: '#1F5C3A' }]
-                  : []
-              }
-              className="h-40"
-              offlineHint="Peta tidak tersedia offline — koordinat tetap tercatat."
-            />
+            {plot.boundarySnapshot ? (
+              <div>
+                <img
+                  src={plot.boundarySnapshot}
+                  alt="Foto batas kebun"
+                  className="h-40 w-full object-cover rounded-lg border border-slate-200"
+                />
+                <p className="text-[10px] text-slate-400 mt-1">
+                  Foto batas kebun — diambil otomatis saat pendataan, bukan peta live. Data
+                  koordinat tetap tersimpan lengkap di balik foto ini.
+                </p>
+              </div>
+            ) : (
+              <Map3D
+                center={{ lat: plot.lat, lng: plot.lng }}
+                zoom={13}
+                pitch={0}
+                markers={
+                  plot.boundary && plot.boundary.length >= 3
+                    ? []
+                    : [{ id: plot.id, lat: plot.lat, lng: plot.lng, color: '#1F5C3A' }]
+                }
+                polygons={
+                  plot.boundary && plot.boundary.length >= 3
+                    ? [{ id: plot.id, points: plot.boundary, color: '#1F5C3A' }]
+                    : []
+                }
+                className="h-40"
+                offlineHint="Peta tidak tersedia offline — koordinat tetap tercatat."
+              />
+            )}
           </div>
         )}
 

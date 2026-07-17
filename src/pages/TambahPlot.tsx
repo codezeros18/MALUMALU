@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Plus } from 'lucide-react';
 import MapView from '../components/MapView';
+import type { Map3DHandle } from '../components/Map3D';
 import PlotForm, { type PlotFormValues } from '../components/PlotForm';
 import PolygonDrawer from '../components/PolygonDrawer';
 import PageHeader from '../components/ui/PageHeader';
@@ -18,9 +19,12 @@ const TIPS = [
 ];
 
 export default function TambahPlot() {
+  const mapRef = useRef<Map3DHandle>(null);
   const [picked, setPicked] = useState<LatLng | null>(null);
   const [drawingPoints, setDrawingPoints] = useState<LatLng[]>([]);
   const [polygonFinished, setPolygonFinished] = useState(false);
+  const [boundarySnapshot, setBoundarySnapshot] = useState<string | null>(null);
+  const [capturingSnapshot, setCapturingSnapshot] = useState(false);
   const [plots, setPlots] = useState<Plot[]>([]);
   const [saving, setSaving] = useState(false);
   const [savedMessage, setSavedMessage] = useState<string | null>(null);
@@ -34,6 +38,7 @@ export default function TambahPlot() {
     setDrawingPoints([]);
     setPolygonFinished(false);
     setPicked(null);
+    setBoundarySnapshot(null);
   };
 
   const handlePickLocation = (lat: number, lng: number) => {
@@ -41,9 +46,23 @@ export default function TambahPlot() {
     setDrawingPoints((prev) => [...prev, { lat, lng }]);
   };
 
-  const handleFinishPolygon = () => {
+  const handleFinishPolygon = async () => {
     setPicked(computeCentroid(drawingPoints));
     setPolygonFinished(true);
+    // Foto batas kebun — diambil sekarang selagi peta 3D masih menampilkan poligon
+    // yang baru selesai. Kalau gagal (offline/canvas kosong/dll), tetap lanjut tanpa
+    // foto — Paspor Petani otomatis jatuh ke peta 3D live seperti sebelumnya.
+    // capturingSnapshot dibuat terlihat (bukan diam-diam di background) karena ini
+    // async — tanpa indikator, Agen bisa keburu klik "Simpan Plot" sebelum tangkapan
+    // fotonya selesai, dan foto bukti diam-diam hilang tanpa ada yang sadar.
+    setCapturingSnapshot(true);
+    try {
+      setBoundarySnapshot((await mapRef.current?.getSnapshot()) ?? null);
+    } catch {
+      setBoundarySnapshot(null);
+    } finally {
+      setCapturingSnapshot(false);
+    }
   };
 
   const handleSubmit = async (values: PlotFormValues) => {
@@ -68,6 +87,7 @@ export default function TambahPlot() {
         luasEstimasiHa: computeAreaHa(drawingPoints),
         periodeProduksiMulai: values.periodeProduksiMulai || undefined,
         periodeProduksiSelesai: values.periodeProduksiSelesai || undefined,
+        boundarySnapshot: boundarySnapshot ?? undefined,
       });
       setItem('active-petani-id', petani.id);
       setItem('active-plot-id', plot.id);
@@ -110,6 +130,7 @@ export default function TambahPlot() {
           description="Jalan ke tiap sudut kebun, catat titik lewat GPS, tap di peta, atau ketik koordinat."
         >
           <MapView
+            ref={mapRef}
             plots={plots}
             onPickLocation={handlePickLocation}
             pickedPosition={null}
@@ -135,6 +156,7 @@ export default function TambahPlot() {
               <span className="text-brand-800 font-medium">
                 Poligon selesai — {drawingPoints.length} titik, ~
                 {areaHa < 1 ? `${Math.round(areaHa * 10000)} m²` : `${areaHa.toFixed(2)} ha`}
+                {capturingSnapshot && ' · Mengambil foto bukti…'}
               </span>
               <button type="button" onClick={resetDrawing} className="text-xs text-slate-500 hover:underline">
                 Ubah poligon
@@ -153,7 +175,7 @@ export default function TambahPlot() {
                 accuracyM={null}
                 onUseGps={() => {}}
                 onSubmit={handleSubmit}
-                submitting={saving}
+                submitting={saving || capturingSnapshot}
                 hideGpsButton
                 bare
               />

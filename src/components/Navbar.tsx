@@ -3,9 +3,9 @@ import { Link } from 'react-router-dom';
 const NAV_LINKS = [
   { label: 'Beranda', to: '/' },
   { label: 'Tentang Kami', to: '/tentang' },
-  { label: 'Platform', to: '#' },
-  { label: 'Untuk Siapa', to: '#' },
-  { label: 'Harga', to: '#' },
+  { label: 'Platform', to: '/#fitur-platform' },
+  { label: 'Untuk Siapa', to: '/#model-nilai' },
+  { label: 'Harga', to: '/#model-bisnis' },
 ];
 
 export default function Navbar() {
@@ -19,7 +19,11 @@ export default function Navbar() {
 
         <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600">
           {NAV_LINKS.map((link) =>
-            link.to.startsWith('#') ? (
+            link.to.includes('#') ? (
+              // Anchor lintas-halaman: <a> biasa (bukan react-router <Link>) supaya kalau
+              // dipencet dari luar "/" (mis. dari /masuk) browser navigasi penuh ke "/"
+              // dulu baru lompat ke section -- <Link> SPA tidak akan scroll ke hash
+              // section pada halaman tujuan yang berbeda dari halaman asal.
               <a key={link.label} href={link.to} className="hover:text-slate-900 transition-colors">
                 {link.label}
               </a>

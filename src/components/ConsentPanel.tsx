@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
-import { grantConsent, revokeConsent, listActiveConsents, attemptAccess } from '../lib/consent';
-import { useAppContext } from '../context/AppContext';
+import { grantConsent, revokeConsent, listActiveConsents } from '../lib/consent';
 import Card from './ui/Card';
 import Button from './ui/Button';
 import Input from './ui/Input';
+import Select from './ui/Select';
 import Checkbox from './ui/Checkbox';
 import EmptyState from './ui/EmptyState';
 import type { ConsentRecord } from '../types';
@@ -13,24 +13,17 @@ const SCOPE_OPTIONS = ['lokasi', 'status', 'dokumen'];
 
 interface ConsentPanelProps {
   kartuId: string;
-  // 'agen' (default): beri izin + simulasikan akses (alat demo). 'petani': hanya lihat +
-  // cabut izin sendiri — tidak boleh memberi izin baru atau memakai simulasi akses.
+  // 'agen' (default): beri izin ke pihak lain. 'petani': hanya lihat + cabut izin sendiri —
+  // tidak boleh memberi izin baru.
   mode?: 'agen' | 'petani';
 }
 
 export default function ConsentPanel({ kartuId, mode = 'agen' }: ConsentPanelProps) {
-  const { refreshNotif } = useAppContext();
   const [consents, setConsents] = useState<ConsentRecord[]>([]);
-  // Satu sumber kebenaran untuk nama pihak — preset cuma isi cepat ke field yang sama,
-  // BUKAN state terpisah yang bisa saling menimpa diam-diam (dulu: mengetik di kotak
-  // custom diam-diam mengalahkan preset yang masih terlihat ter-highlight, membingungkan).
   const [partyName, setPartyName] = useState(PRESET_PARTIES[0]);
   const [scope, setScope] = useState<string[]>(['lokasi', 'status']);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const [accessWho, setAccessWho] = useState('');
-  const [accessResult, setAccessResult] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     try {
@@ -75,26 +68,6 @@ export default function ConsentPanel({ kartuId, mode = 'agen' }: ConsentPanelPro
     }
   };
 
-  const handleAttemptAccess = async () => {
-    const who = accessWho.trim();
-    if (!who) return;
-    setBusy(true);
-    setError(null);
-    try {
-      const result = await attemptAccess(kartuId, who);
-      setAccessResult(
-        result.authorized
-          ? `"${who}" BERHASIL mengakses data (izin aktif).`
-          : `"${who}" DITOLAK — akses tanpa izin terdeteksi, notif dikirim.`,
-      );
-      refreshNotif();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Gagal simulasi akses.');
-    } finally {
-      setBusy(false);
-    }
-  };
-
   return (
     <Card className="space-y-4">
       <h2 className="text-sm font-semibold text-slate-700">Consent & Akses</h2>
@@ -102,22 +75,13 @@ export default function ConsentPanel({ kartuId, mode = 'agen' }: ConsentPanelPro
       {mode === 'agen' && (
         <div className="space-y-2">
           <p className="text-xs font-medium text-slate-600">Beri izin akses ke:</p>
-          <div className="flex flex-wrap gap-2">
+          <Select value={partyName} onChange={setPartyName} className="w-full">
             {PRESET_PARTIES.map((p) => (
-              <button
-                key={p}
-                type="button"
-                onClick={() => setPartyName(p)}
-                className={`text-xs px-2 py-1 rounded-full border ${
-                  partyName === p
-                    ? 'bg-brand-800 text-white border-brand-800'
-                    : 'border-slate-300 text-slate-600'
-                }`}
-              >
+              <option key={p} value={p}>
                 {p}
-              </button>
+              </option>
             ))}
-          </div>
+          </Select>
           <Input
             value={partyName}
             onChange={(e) => setPartyName(e.target.value)}
@@ -126,7 +90,7 @@ export default function ConsentPanel({ kartuId, mode = 'agen' }: ConsentPanelPro
           />
           <div className="flex flex-wrap gap-3">
             {SCOPE_OPTIONS.map((s) => (
-              <label key={s} className="flex items-center gap-1 text-xs text-slate-600">
+              <label key={s} className="flex items-center gap-1.5 text-xs text-slate-600">
                 <Checkbox checked={scope.includes(s)} onChange={() => toggleScope(s)} />
                 {s}
               </label>
@@ -169,24 +133,6 @@ export default function ConsentPanel({ kartuId, mode = 'agen' }: ConsentPanelPro
           </ul>
         )}
       </div>
-
-      {mode === 'agen' && (
-        <div className="border-t border-slate-100 pt-3 space-y-2">
-          <p className="text-xs font-medium text-slate-600">Demo: Simulasikan akses pihak lain</p>
-          <div className="flex gap-2">
-            <Input
-              value={accessWho}
-              onChange={(e) => setAccessWho(e.target.value)}
-              placeholder="Nama pihak, mis. Orang Asing"
-              className="flex-1 text-sm"
-            />
-            <Button variant="secondary" onClick={handleAttemptAccess} disabled={busy || !accessWho.trim()}>
-              Coba akses
-            </Button>
-          </div>
-          {accessResult && <p className="text-xs text-slate-600">{accessResult}</p>}
-        </div>
-      )}
 
       {error && <p className="text-xs text-red-600">{error}</p>}
     </Card>

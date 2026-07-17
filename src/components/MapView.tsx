@@ -1,4 +1,5 @@
-import Map3D, { type Map3DMarker, type Map3DPolygon } from './Map3D';
+import { forwardRef } from 'react';
+import Map3D, { type Map3DHandle, type Map3DMarker, type Map3DPolygon } from './Map3D';
 import type { Plot } from '../types';
 
 const PANGALENGAN_CENTER = { lat: -7.15, lng: 107.62 };
@@ -15,13 +16,10 @@ interface MapViewProps {
   className?: string;
 }
 
-export default function MapView({
-  plots,
-  onPickLocation,
-  pickedPosition,
-  drawingPoints,
-  className,
-}: MapViewProps) {
+const MapView = forwardRef<Map3DHandle, MapViewProps>(function MapView(
+  { plots, onPickLocation, pickedPosition, drawingPoints, className },
+  ref,
+) {
   const markers: Map3DMarker[] = plots.map((plot) => ({
     id: plot.id,
     lat: plot.lat,
@@ -59,6 +57,7 @@ export default function MapView({
 
   return (
     <Map3D
+      ref={ref}
       center={PANGALENGAN_CENTER}
       zoom={DEFAULT_ZOOM}
       markers={markers}
@@ -67,4 +66,6 @@ export default function MapView({
       className={className}
     />
   );
-}
+});
+
+export default MapView;

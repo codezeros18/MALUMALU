@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { listPetani, listPlotByPetani } from '../lib/db';
 import EmptyState from '../components/ui/EmptyState';
+import PageLoader from '../components/ui/PageLoader';
 import type { Petani, Plot } from '../types';
 
 interface PetaniRow {
@@ -33,6 +34,10 @@ export default function PetaniList() {
     })();
   }, []);
 
+  if (loading) {
+    return <PageLoader />;
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -43,9 +48,7 @@ export default function PetaniList() {
         </p>
       </div>
 
-      {loading ? (
-        <p className="text-sm text-slate-500">Memuat…</p>
-      ) : rows.length === 0 ? (
+      {rows.length === 0 ? (
         <EmptyState message="Belum ada petani terdaftar di device ini." />
       ) : (
         <div className="overflow-x-auto border border-slate-200 rounded-lg">

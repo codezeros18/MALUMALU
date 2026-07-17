@@ -9,6 +9,7 @@ import NearbyMap from '../components/NearbyMap';
 import Badge from '../components/ui/Badge';
 import Button from '../components/ui/Button';
 import EmptyState from '../components/ui/EmptyState';
+import PageLoader from '../components/ui/PageLoader';
 import type { Kartu, Petani, Plot, PetaniDocument } from '../types';
 
 interface ContactState {
@@ -127,7 +128,7 @@ export default function PetaniTerdekat() {
   };
 
   if (loading) {
-    return <p className="text-sm text-slate-500">Memuat data dari Supabase…</p>;
+    return <PageLoader />;
   }
 
   if (error) {

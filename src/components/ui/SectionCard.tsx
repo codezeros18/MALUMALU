@@ -3,16 +3,26 @@ import type { ReactNode } from 'react';
 interface SectionCardProps {
   title: string;
   description?: string;
+  actions?: ReactNode;
   children: ReactNode;
   className?: string;
 }
 
-export default function SectionCard({ title, description, children, className = '' }: SectionCardProps) {
+export default function SectionCard({
+  title,
+  description,
+  actions,
+  children,
+  className = '',
+}: SectionCardProps) {
   return (
-    <div className={`bg-white border border-slate-200 rounded-xl overflow-hidden ${className}`}>
-      <div className="px-5 py-4 border-b border-slate-100">
-        <p className="text-sm font-semibold text-slate-900">{title}</p>
-        {description && <p className="text-xs text-slate-500 mt-0.5">{description}</p>}
+    <div className={`bg-white border border-slate-200 rounded-xl ${className}`}>
+      <div className="px-5 py-4 border-b border-slate-100 flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-slate-900">{title}</p>
+          {description && <p className="text-xs text-slate-500 mt-0.5">{description}</p>}
+        </div>
+        {actions && <div className="shrink-0">{actions}</div>}
       </div>
       <div className="p-5">{children}</div>
     </div>

@@ -4,10 +4,10 @@ import {
   addHashEntry,
   listHashEntries,
   getLastHashEntry,
-  putHashEntryRaw,
   putKartu,
   enqueueSync,
   getDeviceAgentId,
+  putHashEntryRaw,
 } from './db';
 
 const GENESIS_HASH = 'GENESIS';
@@ -98,9 +98,10 @@ export async function verifyChain(providedEntries?: HashChainEntry[]): Promise<V
   return { valid: true, brokenAtIndex: null };
 }
 
-// HANYA UNTUK DEMO tamper-evidence: menimpa payload entri tertentu TANPA menghitung ulang
-// dataHash/hash, supaya verifyChain() sengaja mendeteksi rantai rusak. Jangan dipakai di
-// alur produksi mana pun.
+// HANYA UNTUK DEMO: ubah payload entri tertentu tanpa menghitung ulang hash-nya —
+// dipakai tombol "Simulasi ubah data" di HashChainViewer untuk membuktikan
+// verifyChain() mendeteksi tamper (dataHash tersimpan jadi tidak cocok lagi dengan
+// payload yang sudah diubah).
 export async function simulateTamper(index: number, mutatedPayload: unknown): Promise<void> {
   const entries = await listHashEntries();
   const target = entries.find((entry) => entry.index === index);

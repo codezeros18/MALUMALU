@@ -13,6 +13,7 @@ import Card from '../components/ui/Card';
 import Badge from '../components/ui/Badge';
 import Button from '../components/ui/Button';
 import EmptyState from '../components/ui/EmptyState';
+import PageLoader from '../components/ui/PageLoader';
 import type { Kartu, Petani, Plot, PetaniDocument, HashChainEntry } from '../types';
 
 const RISK_TONE: Record<PolygonRiskResult['risk'], 'aman' | 'perlu-audit' | 'berisiko'> = {
@@ -108,7 +109,7 @@ export default function PaketBuktiEudr() {
   if (!kartuId) return null;
 
   if (loading) {
-    return <p className="text-sm text-slate-500">Memuat…</p>;
+    return <PageLoader />;
   }
 
   if (error) {
